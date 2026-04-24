@@ -1,6 +1,7 @@
 # Stress Conditioned Inventory Risk Dashboard
 
 **Live demo:** https://stress-conditioned-inventory-risk-dashboard-8p6jb8f8l.vercel.app/)
+
 **Author:** Neil Sharma
 
 A live, API backed decision support dashboard for inventory policy under operational stress on the Savannah to Atlanta replenishment lane.

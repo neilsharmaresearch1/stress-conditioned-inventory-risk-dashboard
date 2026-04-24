@@ -1,5 +1,5 @@
 # Stress Conditioned Inventory Risk Dashboard
-
+Live demo: https://stress-conditioned-inventory-risk-dashboard-gc89gtfil.vercel.app/
 **Author:** Neil Sharma
 
 A decision support dashboard for inventory policy under operational stress on the Savannah to Atlanta replenishment lane. The tool shows how stress regime, policy scenario, and days of cover change stockout risk, expected shortage, and recommended coverage decisions.

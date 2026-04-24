@@ -1,0 +1,6 @@
+# Dev/QA screenshots — not part of the deployed site
+qa-*.png
+validation-*.png
+screenshot-*.jpg
+v2-screenshot-*.jpg
+ui-notes.md

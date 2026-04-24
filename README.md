@@ -111,11 +111,4 @@ The current implementation is intentionally lightweight and fully client side. T
 * `.gitignore`  
   Excludes development screenshots and notes
 
-## Running Locally
 
-No install is required.
-
-From the project root, run:
-
-```bash
-python3 -m http.server 5173

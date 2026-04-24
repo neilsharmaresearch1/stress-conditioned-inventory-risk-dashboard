@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Stress-Aware Inventory Decision Dashboard</title>
-  <meta name="description" content="A decision-support tool that estimates stockout risk under uncertainty and recommends minimum feasible inventory coverage based on supply chain stress conditions." />
+  <title>Live Risk Intelligence — Savannah → Atlanta Lane</title>
+  <meta name="description" content="Live disruption signals mapped into model-based stockout risk estimates for the Savannah to Atlanta replenishment lane." />
 
   <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -52,11 +52,11 @@
 
       --font:  'General Sans', 'Helvetica Neue', sans-serif;
       --mono:  'Geist Mono', 'Courier New', monospace;
-      --xs:    clamp(.75rem, .7rem + .25vw, .875rem);
-      --sm:    clamp(.875rem, .8rem + .35vw, 1rem);
-      --base:  clamp(1rem, .95rem + .25vw, 1.125rem);
-      --lg:    clamp(1.125rem, 1rem + .75vw, 1.5rem);
-      --xl:    clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+      --xs:    clamp(.72rem, .68rem + .2vw, .8rem);
+      --sm:    clamp(.8rem, .75rem + .25vw, .9rem);
+      --base:  clamp(.9rem, .85rem + .25vw, 1rem);
+      --lg:    clamp(1rem, .9rem + .5vw, 1.25rem);
+      --xl:    clamp(1.25rem, 1rem + 1vw, 1.75rem);
       --r:     3px; --rm: 4px; --rl: 6px;
       --sh:    0 1px 3px rgba(0,0,0,.4);
       --shm:   0 4px 16px rgba(0,0,0,.5);
@@ -65,309 +65,428 @@
 
     /* ─── BASE ───────────────────────────────────────────────────────────── */
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%;overflow:hidden}
-    html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-    body{font-family:var(--font);font-size:var(--sm);color:var(--text);background:var(--bg);line-height:1.5}
+    html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;height:100%}
+    body{font-family:var(--font);font-size:var(--sm);color:var(--text);background:var(--bg);line-height:1.5;height:100%;overflow:hidden}
     svg{display:block} button{cursor:pointer;background:none;border:none;font:inherit;color:inherit}
     select{font:inherit;color:inherit}
 
-    /* ─── LAYOUT ─────────────────────────────────────────────────────────── */
-    .shell{display:grid;grid-template-columns:252px 1fr;grid-template-rows:48px 18px 1fr;height:100dvh}
+    /* ─── SHELL LAYOUT ───────────────────────────────────────────────────── */
+    /* topbar | hero-ticker | content-area (sidebar + main) */
+    .shell {
+      display: grid;
+      grid-template-rows: 44px auto 1fr;
+      grid-template-columns: 220px 1fr;
+      height: 100dvh;
+      overflow: hidden;
+    }
 
     /* ─── TOPBAR ─────────────────────────────────────────────────────────── */
-    .topbar{
-      grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:0 16px;
-      background:var(--surface);border-bottom:1px solid var(--border);z-index:20
+    .topbar {
+      grid-column: 1 / -1;
+      display: flex; align-items: center; gap: 10px; padding: 0 14px;
+      background: var(--surface); border-bottom: 1px solid var(--border); z-index: 20;
     }
-    .tl{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
-    .tl-logo{flex-shrink:0}
-    .tl-text{min-width:0}
-    .tl-title{font-size:13px;font-weight:700;color:var(--text);letter-spacing:-.01em;line-height:1.2;white-space:nowrap}
-    .tl-sub{font-size:11px;color:var(--text-muted);line-height:1.3}
-    .ta{display:flex;align-items:center;gap:6px;flex-shrink:0}
+    .tl { display:flex; align-items:center; gap:8px; flex:1; min-width:0 }
+    .tl-logo { flex-shrink:0 }
+    .tl-title { font-size:12px; font-weight:700; color:var(--text); letter-spacing:-.01em; line-height:1.2; white-space:nowrap }
+    .tl-sub   { font-size:10px; color:var(--text-faint); line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+    .ta { display:flex; align-items:center; gap:6px; flex-shrink:0 }
 
-    .stress-pill{
-      display:flex;align-items:center;gap:6px;padding:4px 12px;
-      border-radius:var(--rm);border:1px solid var(--border);background:var(--surface-2);
-      font-size:12px;font-weight:700;letter-spacing:.01em;transition:all var(--tr)
+    .live-badge {
+      display:inline-flex; align-items:center; gap:5px; padding:3px 9px;
+      border-radius:var(--rm); font-size:10px; font-weight:700; letter-spacing:.04em;
+      border:1px solid var(--border); background:var(--surface-2); color:var(--text-faint);
+      transition: all var(--tr);
     }
-    .stress-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:background var(--tr)}
+    .live-badge[data-status="live"]   { background:#1a2e1a; color:#4caf50; border-color:#1e3a1e }
+    .live-badge[data-status="stale"]  { background:var(--warn-bg); color:var(--warn); border-color:#3a2408 }
+    .live-badge[data-status="error"]  { background:var(--err-bg); color:var(--err); border-color:#3a1010 }
+    .live-dot { width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0 }
+    .live-dot.pulse[data-status="live"] { animation: pulse 2s infinite }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
-    .proto-badge{
-      display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:3px;
-      background:#2a1a06;color:#e08030;font-size:10px;font-weight:700;
-      letter-spacing:.07em;text-transform:uppercase;border:1px solid #3a2408
+    .proto-badge {
+      display:inline-flex; align-items:center; gap:5px; padding:3px 8px;
+      border-radius:3px; background:#2a1a06; color:#e08030; font-size:9px; font-weight:700;
+      letter-spacing:.07em; text-transform:uppercase; border:1px solid #3a2408
     }
-    .proto-badge svg{width:6px;height:6px}
-    .mock-label{
-      font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
-      color:var(--text-faint);background:var(--surface-2);padding:3px 7px;border-radius:3px;
-      border:1px solid var(--border)
+
+    /* ─── HERO TICKER PANEL ──────────────────────────────────────────────── */
+    .hero {
+      grid-column: 1 / -1;
+      background: #111111;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 1fr 220px;
+      min-height: 0;
     }
-    .icon-btn{
-      display:flex;align-items:center;justify-content:center;width:28px;height:28px;
-      border-radius:var(--rm);color:var(--text-faint);transition:all var(--tr)
+
+    /* Left side: score + KPIs */
+    .hero-main {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: 0;
+      padding: 10px 14px;
+      border-right: 1px solid var(--border);
     }
-    .icon-btn:hover{background:var(--surface-2);color:var(--text-muted)}
+
+    /* Score block */
+    .score-block {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding-right: 18px; border-right: 1px solid var(--border); margin-right: 18px;
+      min-width: 120px;
+    }
+    .score-eyebrow {
+      font-size: 8px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--text-faint); margin-bottom: 3px;
+    }
+    .score-num {
+      font-family: var(--mono); font-size: clamp(2rem, 3vw, 3.2rem);
+      font-weight: 700; color: var(--text); letter-spacing: -.04em; line-height: 1;
+      transition: color .4s;
+    }
+    .score-num.regime-low     { color: var(--ch-low) }
+    .score-num.regime-normal  { color: var(--ch-norm) }
+    .score-num.regime-high    { color: var(--ch-hi) }
+    .score-num.regime-extreme { color: var(--ch-ex) }
+    .score-label {
+      font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      color: var(--text-muted); margin-top: 3px;
+    }
+
+    /* Gauge bar */
+    .gauge-wrap { margin-top: 6px; width: 100% }
+    .gauge-track {
+      width: 100%; height: 4px; border-radius: 3px;
+      background: linear-gradient(to right, var(--ch-low) 0%, var(--ch-norm) 33%, var(--ch-hi) 66%, var(--ch-ex) 100%);
+      position: relative; overflow: visible;
+    }
+    .gauge-thumb {
+      position: absolute; top: 50%; transform: translate(-50%, -50%);
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #fff; border: 2px solid #111;
+      box-shadow: 0 0 0 2px currentColor;
+      transition: left .5s cubic-bezier(.16,1,.3,1), color .4s;
+    }
+
+    /* KPI columns */
+    .hero-kpis {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0;
+    }
+    .hkpi {
+      padding: 4px 12px;
+      border-left: 1px solid var(--border);
+    }
+    .hkpi-lbl {
+      font-size: 8px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--text-faint); margin-bottom: 3px;
+    }
+    .hkpi-val {
+      font-family: var(--mono); font-size: clamp(.9rem, 1.2vw, 1.2rem);
+      font-weight: 700; color: var(--text); letter-spacing: -.02em; line-height: 1.1;
+    }
+    .hkpi-sub { font-size: 9px; color: var(--text-faint); margin-top: 2px }
+    .hkpi-val.ok    { color: var(--ok) }
+    .hkpi-val.warn  { color: var(--warn) }
+    .hkpi-val.err   { color: var(--err) }
+    .hkpi-val.cyan  { color: var(--primary) }
+
+    /* Right side: ticker feed */
+    .ticker-col {
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .ticker-hdr {
+      padding: 6px 10px 4px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .ticker-hdr-lbl {
+      font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--text-faint); flex: 1;
+    }
+    .ticker-count {
+      font-family: var(--mono); font-size: 9px; color: var(--text-faint);
+    }
+    .ticker-feed {
+      flex: 1; overflow-y: auto; overscroll-behavior: contain;
+      padding: 4px 0;
+    }
+    .ticker-feed::-webkit-scrollbar { width: 3px }
+    .ticker-feed::-webkit-scrollbar-track { background: transparent }
+    .ticker-feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px }
+
+    .tick {
+      display: flex; align-items: flex-start; gap: 5px;
+      padding: 3px 10px;
+      font-size: 9px; line-height: 1.4;
+      border-bottom: 1px solid var(--divider);
+      animation: tick-in .25s ease;
+    }
+    @keyframes tick-in {
+      from { opacity: 0; background: rgba(63,168,184,.08) }
+      to   { opacity: 1; background: transparent }
+    }
+    .tick:last-child { border-bottom: none }
+    .tick-ts { font-family: var(--mono); color: var(--text-faint); flex-shrink: 0; font-size: 8px; padding-top: 1px; min-width: 48px }
+    .tick-tag {
+      font-size: 7px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      padding: 1px 4px; border-radius: 2px; flex-shrink: 0; margin-top: 1px;
+    }
+    .tick-tag.DATA   { background: rgba(63,168,184,.15); color: var(--primary) }
+    .tick-tag.RISK   { background: rgba(207,78,78,.15); color: var(--err) }
+    .tick-tag.POLICY { background: rgba(90,170,56,.15); color: var(--ch-norm) }
+    .tick-tag.SOURCE { background: rgba(80,80,80,.25); color: var(--text-muted) }
+    .tick-tag.WARN   { background: rgba(224,128,48,.15); color: var(--warn) }
+    .tick-msg { color: var(--text-muted); flex: 1 }
+    .tick-msg strong { color: var(--text); font-weight: 600 }
 
     /* ─── SIDEBAR ────────────────────────────────────────────────────────── */
-    .sidebar{
-      grid-row:3;background:#111111;border-right:1px solid var(--border);
-      overflow-y:auto;overscroll-behavior:contain;padding:12px 0
+    .sidebar {
+      grid-row: 3;
+      background: #111111;
+      border-right: 1px solid var(--border);
+      overflow-y: auto; overscroll-behavior: contain; padding: 10px 0;
     }
-    .sb-sect{padding:0 12px;margin-bottom:14px}
-    .sb-label{
-      font-size:9px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;
-      color:var(--text-faint);margin-bottom:8px
+    .sb-sect { padding: 0 10px; margin-bottom: 12px }
+    .sb-label {
+      font-size: 8px; font-weight: 700; letter-spacing: .10em; text-transform: uppercase;
+      color: var(--text-faint); margin-bottom: 7px;
     }
-    .ctrl-group{margin-bottom:10px}
-    .ctrl-label{display:block;font-size:11px;font-weight:500;color:var(--text-muted);margin-bottom:4px}
-    .sb-divider{height:1px;background:var(--divider);margin:4px 12px 12px}
+    .ctrl-group { margin-bottom: 9px }
+    .ctrl-label { display:block; font-size:10px; font-weight:500; color:var(--text-muted); margin-bottom:4px }
+    .sb-divider { height:1px; background:var(--divider); margin:2px 10px 10px }
 
     /* Segmented */
-    .seg{display:grid;gap:2px}
-    .seg.c2{grid-template-columns:1fr 1fr} .seg.c3{grid-template-columns:1fr 1fr 1fr}
-    .seg-btn{
-      padding:5px 4px;border-radius:var(--r);border:1px solid var(--border);
-      background:transparent;color:var(--text-muted);font-size:11px;font-weight:600;
-      text-align:center;cursor:pointer;transition:all var(--tr);white-space:nowrap;letter-spacing:.01em
+    .seg { display:grid; gap:2px }
+    .seg.c2 { grid-template-columns:1fr 1fr } .seg.c3 { grid-template-columns:1fr 1fr 1fr }
+    .seg-btn {
+      padding:4px 3px; border-radius:var(--r); border:1px solid var(--border);
+      background:transparent; color:var(--text-muted); font-size:10px; font-weight:600;
+      text-align:center; cursor:pointer; transition:all var(--tr); white-space:nowrap; letter-spacing:.01em
     }
-    .seg-btn:hover:not(.active){background:var(--surface-2);color:var(--text);border-color:#3a3a3a}
-    .seg-btn.active{color:#fff;border-color:transparent}
-    .seg-btn.r-low.active  {background:#1e4d3a;color:#4cbe8a;border-color:#1e4d3a}
-    .seg-btn.r-norm.active {background:#1a3540;color:var(--primary);border-color:#1a3540}
-    .seg-btn.r-hi.active   {background:#3a2208;color:#e08030;border-color:#3a2208}
-    .seg-btn.r-ex.active   {background:#3a1010;color:#cf4e4e;border-color:#3a1010}
-    .seg-btn.sc-bl.active  {background:#1a3540;color:var(--primary);border-color:#1a3540}
-    .seg-btn.sc-ss.active  {background:#1a2e1a;color:#4caf50;border-color:#1a2e1a}
-    .seg-btn.sc-tm.active  {background:#281a40;color:#9b6fd4;border-color:#281a40}
+    .seg-btn:hover:not(.active) { background:var(--surface-2); color:var(--text); border-color:#3a3a3a }
+    .seg-btn.active { color:#fff; border-color:transparent }
+    .seg-btn.r-low.active   { background:#1e4d3a; color:#4cbe8a; border-color:#1e4d3a }
+    .seg-btn.r-norm.active  { background:#1a3540; color:var(--primary); border-color:#1a3540 }
+    .seg-btn.r-hi.active    { background:#3a2208; color:#e08030; border-color:#3a2208 }
+    .seg-btn.r-ex.active    { background:#3a1010; color:#cf4e4e; border-color:#3a1010 }
+    .seg-btn.sc-bl.active   { background:#1a3540; color:var(--primary); border-color:#1a3540 }
+    .seg-btn.sc-ss.active   { background:#1a2e1a; color:#4caf50; border-color:#1a2e1a }
+    .seg-btn.sc-tm.active   { background:#281a40; color:#9b6fd4; border-color:#281a40 }
 
     /* Select */
-    .ctrl-sel{
-      width:100%;padding:5px 28px 5px 8px;border-radius:var(--r);border:1px solid var(--border);
-      background:var(--surface-2) url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 8px center;
-      color:var(--text);font-size:11px;font-weight:500;appearance:none;cursor:pointer;
+    .ctrl-sel {
+      width:100%; padding:4px 24px 4px 7px; border-radius:var(--r); border:1px solid var(--border);
+      background:var(--surface-2) url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 7px center;
+      color:var(--text); font-size:10px; font-weight:500; appearance:none; cursor:pointer;
       transition:border-color var(--tr)
     }
-    .ctrl-sel:focus{outline:1px solid var(--primary);outline-offset:1px}
+    .ctrl-sel:focus { outline:1px solid var(--primary); outline-offset:1px }
 
     /* Slider */
-    .sl-row{display:flex;align-items:center;gap:8px}
-    .sl-val{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--primary);min-width:30px;text-align:right}
-    input[type=range]{-webkit-appearance:none;flex:1;height:3px;border-radius:2px;background:#2a2a2a;cursor:pointer;outline:none}
-    input[type=range]::-webkit-slider-thumb{
-      -webkit-appearance:none;width:13px;height:13px;border-radius:50%;
-      background:var(--primary);border:2px solid #111;
-      box-shadow:0 0 0 1px var(--primary);transition:box-shadow var(--tr)
+    .sl-row { display:flex; align-items:center; gap:7px }
+    .sl-val { font-family:var(--mono); font-size:10px; font-weight:700; color:var(--primary); min-width:26px; text-align:right }
+    input[type=range] { -webkit-appearance:none; flex:1; height:3px; border-radius:2px; background:#2a2a2a; cursor:pointer; outline:none }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance:none; width:12px; height:12px; border-radius:50%;
+      background:var(--primary); border:2px solid #111;
+      box-shadow:0 0 0 1px var(--primary); transition:box-shadow var(--tr)
     }
-    input[type=range]::-webkit-slider-thumb:hover{box-shadow:0 0 0 4px var(--primary-dim)}
+    input[type=range]::-webkit-slider-thumb:hover { box-shadow:0 0 0 4px var(--primary-dim) }
 
-    /* Stress decomposition */
-    .stress-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
-    .stress-bar-label{font-size:9px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint);width:72px;flex-shrink:0}
-    .stress-bar-track{flex:1;height:3px;border-radius:2px;background:#222;overflow:hidden}
-    .stress-bar-fill{height:100%;border-radius:2px;transition:width .4s var(--tr),background .4s}
-    .stress-bar-val{font-family:var(--mono);font-size:9px;color:var(--text-muted);min-width:28px;text-align:right}
+    /* Stress decomp bars */
+    .stress-bar-row { display:flex; align-items:center; gap:7px; margin-bottom:4px }
+    .stress-bar-label { font-size:8px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--text-faint); width:62px; flex-shrink:0 }
+    .stress-bar-track { flex:1; height:3px; border-radius:2px; background:#222; overflow:hidden }
+    .stress-bar-fill { height:100%; border-radius:2px; transition:width .4s var(--tr), background .4s }
+    .stress-bar-val { font-family:var(--mono); font-size:8px; color:var(--text-muted); min-width:24px; text-align:right }
 
     /* Cost inputs */
-    .cost-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
-    .cost-input-wrap{display:flex;flex-direction:column;gap:3px}
-    .cost-input-wrap label{font-size:9px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint)}
-    .cost-input{
-      width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:var(--r);
-      background:var(--surface-2);color:var(--text);font-family:var(--mono);font-size:11px;font-weight:600
+    .cost-row { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-bottom:7px }
+    .cost-input-wrap { display:flex; flex-direction:column; gap:3px }
+    .cost-input-wrap label { font-size:8px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--text-faint) }
+    .cost-input {
+      width:100%; padding:4px 7px; border:1px solid var(--border); border-radius:var(--r);
+      background:var(--surface-2); color:var(--text); font-family:var(--mono); font-size:10px; font-weight:600
     }
-    .cost-input:focus{outline:1px solid var(--primary);outline-offset:1px}
+    .cost-input:focus { outline:1px solid var(--primary); outline-offset:1px }
 
-    /* ─── MAIN ───────────────────────────────────────────────────────────── */
-    .main{
-      grid-row:3;overflow-y:auto;overscroll-behavior:contain;
-      background:#0e0e0e;padding:12px 14px;display:flex;flex-direction:column;gap:10px
+    /* ─── MAIN AREA ──────────────────────────────────────────────────────── */
+    .main {
+      grid-row: 3;
+      overflow-y: auto; overscroll-behavior: contain;
+      background: var(--bg);
+      padding: 10px 12px;
+      display: flex; flex-direction: column; gap: 8px;
     }
+
+    /* ─── PANEL BASE ─────────────────────────────────────────────────────── */
+    .panel {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--rl); padding: 10px 12px; box-shadow: var(--sh);
+    }
+    .panel-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .panel-title {
+      font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      color: var(--text-faint);
+    }
+    .panel-badge {
+      font-size: 8px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      padding: 2px 6px; border-radius: 3px; border: 1px solid var(--border);
+      background: var(--surface-2); color: var(--text-faint);
+    }
+
+    /* ─── ROW 2: THREE PANELS ────────────────────────────────────────────── */
+    .row2 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px }
+
+    /* Risk Drivers */
+    .driver-row { display:flex; align-items:center; gap:8px; margin-bottom:5px }
+    .driver-label { font-size:9px; color:var(--text-muted); min-width: 90px }
+    .driver-track { flex:1; height:3px; border-radius:2px; background:#1e1e1e; overflow:hidden }
+    .driver-fill  { height:100%; border-radius:2px; transition:width .5s var(--tr), background .4s }
+    .driver-val   { font-family:var(--mono); font-size:9px; color:var(--text-faint); min-width:32px; text-align:right }
+    .driver-na    { font-size:9px; color:var(--text-faint); font-style:italic }
+
+    /* Policy Ideas */
+    .policy-list { display:flex; flex-direction:column; gap:5px }
+    .policy-item {
+      display:flex; align-items:flex-start; gap:6px;
+      padding:6px 8px; border-radius:var(--rm);
+      background:var(--surface-2); border:1px solid var(--divider);
+      font-size:9px; color:var(--text-muted); line-height:1.45;
+    }
+    .policy-dot { width:5px; height:5px; border-radius:50%; background:var(--primary); flex-shrink:0; margin-top:3px }
+
+    /* System Coverage */
+    .coverage-list { display:flex; flex-direction:column; gap:4px }
+    .cov-item { display:flex; align-items:center; gap:7px; padding:4px 0; border-bottom:1px solid var(--divider) }
+    .cov-item:last-child { border-bottom: none }
+    .cov-status {
+      font-size:7px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+      padding:1px 5px; border-radius:2px; flex-shrink:0; min-width:52px; text-align:center;
+    }
+    .cov-status.active  { background:#1a2e1a; color:#4caf50; border:1px solid #1e3a1e }
+    .cov-status.warn    { background:var(--warn-bg); color:var(--warn); border:1px solid #3a2408 }
+    .cov-status.off     { background:var(--surface-2); color:var(--text-faint); border:1px solid var(--border) }
+    .cov-status.future  { background:#1a1025; color:#7a5fc0; border:1px solid #2a1a40 }
+    .cov-name { font-size:9px; color:var(--text-muted); flex:1 }
 
     /* ─── REC PANEL ──────────────────────────────────────────────────────── */
-    .rec-panel{
-      background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);
-      padding:14px 18px;box-shadow:var(--sh);position:relative;overflow:hidden
+    .rec-panel {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--rl); padding: 10px 14px;
+      box-shadow: var(--sh); position: relative; overflow: hidden;
     }
-    .rec-panel::before{
-      content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
-      background:var(--rec-accent,var(--ok));border-radius:2px 0 0 2px;transition:background var(--tr)
+    .rec-panel::before {
+      content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+      background:var(--rec-accent, var(--ok)); border-radius:2px 0 0 2px; transition:background var(--tr)
     }
-    .rec-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:10px}
-    .rec-lhs{flex:1;min-width:0}
-    .rec-eyebrow{
-      font-size:9px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;
-      color:var(--text-faint);margin-bottom:4px
-    }
-    .rec-main{display:flex;align-items:baseline;gap:8px}
-    .rec-num{
-      font-size:clamp(2rem,2.5vw,3rem);font-weight:700;color:var(--text);
-      letter-spacing:-.04em;line-height:1;font-family:var(--mono)
-    }
-    .rec-unit{font-size:var(--sm);font-weight:500;color:var(--text-muted)}
-    .rec-ci{font-size:11px;color:var(--text-faint);font-family:var(--mono)}
+    .rec-top { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:8px }
+    .rec-lhs { flex:1; min-width:0 }
+    .rec-eyebrow { font-size:8px; font-weight:700; letter-spacing:.10em; text-transform:uppercase; color:var(--text-faint); margin-bottom:3px }
+    .rec-main { display:flex; align-items:baseline; gap:7px }
+    .rec-num { font-size:clamp(1.8rem,2.5vw,2.6rem); font-weight:700; color:var(--text); letter-spacing:-.04em; line-height:1; font-family:var(--mono) }
+    .rec-unit { font-size:var(--sm); font-weight:500; color:var(--text-muted) }
+    .rec-ci { font-size:10px; color:var(--text-faint); font-family:var(--mono) }
 
-    .status-badge{
-      display:inline-flex;align-items:center;gap:5px;padding:5px 12px;
-      border-radius:var(--rm);font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0;
-      letter-spacing:.02em
+    .status-badge {
+      display:inline-flex; align-items:center; gap:5px; padding:4px 10px;
+      border-radius:var(--rm); font-size:10px; font-weight:700; white-space:nowrap; flex-shrink:0; letter-spacing:.02em
     }
-    .status-badge.pass{background:#1f4d22;color:#5dd162;border:1px solid #2a6630}
-    .status-badge.fail{background:#4d1f1f;color:#e05555;border:1px solid #662626}
+    .status-badge.pass { background:#1f4d22; color:#5dd162; border:1px solid #2a6630 }
+    .status-badge.fail { background:#4d1f1f; color:#e05555; border:1px solid #662626 }
 
-    .rec-meta{display:grid;grid-template-columns:repeat(4,1fr);gap:0;
-      padding-top:10px;border-top:1px solid var(--divider)}
-    .rec-meta > div{padding:8px 12px 0 0}
-    .rmi-label{
-      font-size:9px;color:var(--text-faint);margin-bottom:2px;font-weight:700;
-      letter-spacing:.07em;text-transform:uppercase
-    }
-    .rmi-val{
-      font-size:var(--sm);font-weight:700;color:var(--text);font-family:var(--mono);
-      letter-spacing:-.02em
-    }
-    .rmi-ci{font-size:9px;color:var(--text-faint);font-family:var(--mono);margin-top:1px}
+    .rec-meta { display:grid; grid-template-columns:repeat(4,1fr); gap:0; padding-top:8px; border-top:1px solid var(--divider) }
+    .rec-meta > div { padding:6px 10px 0 0 }
+    .rmi-label { font-size:8px; color:var(--text-faint); margin-bottom:2px; font-weight:700; letter-spacing:.07em; text-transform:uppercase }
+    .rmi-val   { font-size:var(--sm); font-weight:700; color:var(--text); font-family:var(--mono); letter-spacing:-.02em }
+    .rmi-ci    { font-size:8px; color:var(--text-faint); font-family:var(--mono); margin-top:1px }
 
-    .rec-narrative{
-      margin-top:10px;padding:8px 12px;background:#131313;border:1px solid var(--divider);
-      border-radius:var(--rm);font-size:11px;color:var(--text-muted);line-height:1.6
+    .rec-narrative {
+      margin-top:8px; padding:6px 10px; background:#131313; border:1px solid var(--divider);
+      border-radius:var(--rm); font-size:10px; color:var(--text-muted); line-height:1.6
     }
 
-    /* ─── METRICS ROW ────────────────────────────────────────────────────── */
-    .metrics-row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-    .kpi{
-      background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);
-      padding:10px 12px;box-shadow:var(--sh)
+    /* ─── KPI ROW ────────────────────────────────────────────────────────── */
+    .kpi-row { display:grid; grid-template-columns:repeat(5,1fr); gap:7px }
+    .kpi {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--rl);
+      padding:8px 10px; box-shadow:var(--sh)
     }
-    .kpi-lbl{
-      font-size:9px;color:var(--text-faint);font-weight:700;margin-bottom:6px;
-      display:flex;align-items:center;gap:4px;letter-spacing:.07em;text-transform:uppercase
-    }
-    .kpi-lbl svg{color:var(--text-faint);flex-shrink:0}
-    .kpi-val{
-      font-size:clamp(1.1rem,.9rem + 1vw,1.6rem);font-weight:700;color:#e8e8e8;
-      font-family:var(--mono);letter-spacing:-.03em;line-height:1;margin-bottom:3px
-    }
-    .kpi-ci{font-size:9px;color:var(--text-faint);font-family:var(--mono)}
-    .kpi.ok  .kpi-val{color:#5dd162}
-    .kpi.warn .kpi-val{color:#e08030}
-    .kpi.err .kpi-val{color:#e05555}
+    .kpi-lbl { font-size:8px; color:var(--text-faint); font-weight:700; margin-bottom:5px; display:flex; align-items:center; gap:4px; letter-spacing:.07em; text-transform:uppercase }
+    .kpi-val { font-size:clamp(1rem,.85rem + .8vw,1.4rem); font-weight:700; color:#e8e8e8; font-family:var(--mono); letter-spacing:-.03em; line-height:1; margin-bottom:2px }
+    .kpi-ci  { font-size:8px; color:var(--text-faint); font-family:var(--mono) }
+    .kpi.ok   .kpi-val { color:#5dd162 }
+    .kpi.warn .kpi-val { color:#e08030 }
+    .kpi.err  .kpi-val { color:#e05555 }
 
     /* ─── BOTTOM ROW ─────────────────────────────────────────────────────── */
-    .bot{display:grid;grid-template-columns:1fr 260px;gap:10px;flex:1;min-height:0;align-items:stretch}
+    .bot { display:grid; grid-template-columns:1fr 240px; gap:8px; flex:1; min-height:160px; align-items:stretch }
 
     /* Chart card */
-    .chart-card{
-      background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);
-      padding:12px 14px;box-shadow:var(--sh);display:flex;flex-direction:column;min-height:0
+    .chart-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--rl);
+      padding:10px 12px; box-shadow:var(--sh); display:flex; flex-direction:column; min-height:0
     }
-    .chart-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;gap:12px}
-    .chart-ttl{font-size:13px;font-weight:700;color:var(--text)}
-    .chart-sub{font-size:11px;color:var(--text-muted);margin-top:2px}
-    .sim-note{
-      font-size:9px;color:var(--text-faint);font-weight:600;
-      background:var(--surface-2);padding:2px 8px;border-radius:3px;border:1px solid var(--divider);
-      white-space:nowrap;align-self:flex-start;flex-shrink:0;letter-spacing:.03em
+    .chart-hdr { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:7px; gap:10px }
+    .chart-ttl { font-size:12px; font-weight:700; color:var(--text) }
+    .chart-sub { font-size:10px; color:var(--text-muted); margin-top:2px }
+    .sim-note {
+      font-size:8px; color:var(--text-faint); font-weight:600;
+      background:var(--surface-2); padding:2px 7px; border-radius:3px; border:1px solid var(--divider);
+      white-space:nowrap; align-self:flex-start; flex-shrink:0; letter-spacing:.03em
     }
-    .legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
-    .leg-item{display:flex;align-items:center;gap:4px;font-size:9px;color:var(--text-muted)}
-    .leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-    .leg-dash{width:12px;height:0;border-top:2px dashed;flex-shrink:0;opacity:.7}
-    .leg-band{width:12px;height:7px;border-radius:2px;flex-shrink:0;opacity:.3}
-    .chart-wrap{flex:1;position:relative;min-height:180px}
+    .legend { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:7px }
+    .leg-item { display:flex; align-items:center; gap:4px; font-size:8px; color:var(--text-muted) }
+    .leg-dot  { width:6px; height:6px; border-radius:50%; flex-shrink:0 }
+    .leg-dash { width:11px; height:0; border-top:2px dashed; flex-shrink:0; opacity:.7 }
+    .leg-band { width:11px; height:6px; border-radius:2px; flex-shrink:0; opacity:.3 }
+    .chart-wrap { flex:1; position:relative; min-height:140px }
 
     /* Decision panel */
-    .dec-card{
-      background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);
-      padding:12px 14px;box-shadow:var(--sh);display:flex;flex-direction:column;gap:0;
-      overflow-y:auto;min-height:0
+    .dec-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--rl);
+      padding:10px 12px; box-shadow:var(--sh); display:flex; flex-direction:column; gap:0;
+      overflow-y:auto; min-height:0
     }
-    .dec-eyebrow{
-      font-size:9px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;
-      color:var(--text-faint);margin-bottom:8px
-    }
-    .dec-bullets{list-style:none;display:flex;flex-direction:column;gap:6px;margin-bottom:9px}
-    .dec-item{display:flex;align-items:flex-start;gap:6px;font-size:11px;color:var(--text-muted);line-height:1.45}
-    .dec-dot{
-      width:5px;height:5px;border-radius:50%;background:var(--primary);
-      flex-shrink:0;margin-top:3px
-    }
-    .dec-divider{height:1px;background:var(--divider);margin-bottom:8px}
-    .dec-action{
-      padding:8px 10px;background:rgba(63,168,184,.1);border-radius:var(--rm);
-      border:1px solid rgba(63,168,184,.2);flex-shrink:0
-    }
-    .dec-action-lbl{
-      font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
-      color:var(--primary);margin-bottom:3px
-    }
-    .dec-action-txt{font-size:11px;color:#c8c8c8;line-height:1.5}
-
-    /* Cost comparison row */
-    .cost-compare{
-      background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);
-      padding:10px 14px;box-shadow:var(--sh);display:grid;grid-template-columns:1fr 1fr 1fr;gap:0
-    }
-    .cost-cell{padding:0 12px 0 0}
-    .cost-cell-lbl{
-      font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
-      color:var(--text-faint);margin-bottom:3px
-    }
-    .cost-cell-val{
-      font-size:var(--sm);font-weight:700;color:var(--text);font-family:var(--mono);
-      letter-spacing:-.02em
-    }
-    .cost-cell-sub{font-size:9px;color:var(--text-muted);margin-top:2px}
-    .cost-cell.winner .cost-cell-val{color:#5dd162}
-    .cost-cell.winner .cost-cell-lbl::after{content:' ★';color:#5dd162}
+    .dec-eyebrow { font-size:8px; font-weight:700; letter-spacing:.10em; text-transform:uppercase; color:var(--text-faint); margin-bottom:7px }
+    .dec-bullets { list-style:none; display:flex; flex-direction:column; gap:5px; margin-bottom:8px }
+    .dec-item { display:flex; align-items:flex-start; gap:5px; font-size:10px; color:var(--text-muted); line-height:1.45 }
+    .dec-dot { width:4px; height:4px; border-radius:50%; background:var(--primary); flex-shrink:0; margin-top:4px }
+    .dec-divider { height:1px; background:var(--divider); margin-bottom:7px }
+    .dec-action { padding:7px 9px; background:rgba(63,168,184,.1); border-radius:var(--rm); border:1px solid rgba(63,168,184,.2); flex-shrink:0 }
+    .dec-action-lbl { font-size:8px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--primary); margin-bottom:2px }
+    .dec-action-txt { font-size:10px; color:#c8c8c8; line-height:1.5 }
 
     /* Assumptions drawer */
-    .assumptions-wrap{margin-top:4px}
-    .assumptions-toggle{
-      display:flex;align-items:center;gap:6px;font-size:9px;font-weight:700;letter-spacing:.07em;
-      text-transform:uppercase;color:var(--text-faint);cursor:pointer;padding:5px 0;
-      border:none;background:none;transition:color var(--tr);width:100%
+    .assumptions-wrap { margin-top:4px }
+    .assumptions-toggle {
+      display:flex; align-items:center; gap:6px; font-size:8px; font-weight:700; letter-spacing:.07em;
+      text-transform:uppercase; color:var(--text-faint); cursor:pointer; padding:4px 0;
+      border:none; background:none; transition:color var(--tr); width:100%
     }
-    .assumptions-toggle:hover{color:var(--text-muted)}
-    .assumptions-toggle svg{transition:transform var(--tr)}
-    .assumptions-toggle.open svg{transform:rotate(90deg)}
-    .assumptions-body{
-      display:none;padding:10px 12px;background:#131313;border-radius:var(--rm);
-      border:1px solid var(--divider);margin-top:4px
+    .assumptions-toggle:hover { color:var(--text-muted) }
+    .assumptions-toggle svg { transition:transform var(--tr) }
+    .assumptions-toggle.open svg { transform:rotate(90deg) }
+    .assumptions-body {
+      display:none; padding:8px 10px; background:#131313; border-radius:var(--rm);
+      border:1px solid var(--divider); margin-top:4px
     }
-    .assumptions-body.open{display:block}
-    .assump-row{display:flex;justify-content:space-between;align-items:baseline;
-      padding:3px 0;border-bottom:1px solid #1e1e1e;font-size:11px}
-    .assump-row:last-child{border-bottom:none}
-    .assump-key{color:var(--text-muted)}
-    .assump-val{font-family:var(--mono);font-size:9px;color:var(--text-faint)}
+    .assumptions-body.open { display:block }
+    .assump-row { display:flex; justify-content:space-between; align-items:baseline; padding:3px 0; border-bottom:1px solid #1e1e1e; font-size:10px }
+    .assump-row:last-child { border-bottom:none }
+    .assump-key { color:var(--text-muted) }
+    .assump-val { font-family:var(--mono); font-size:8px; color:var(--text-faint) }
 
     /* Fading */
-    .kpi-val,.rec-num,.rmi-val,.kpi-ci,.rmi-ci{transition:opacity 120ms ease}
-    .fading{opacity:0}
-
-    /* ─── LIVE DATA STATUS BAR ───────────────────────────────────────────── */
-    .live-bar{
-      grid-column:1/-1;
-      display:flex;align-items:center;gap:10px;
-      padding:2px 16px;
-      background:#111111;border-bottom:1px solid var(--border);
-      font-size:9px;font-weight:600;letter-spacing:.04em;
-      color:var(--text-faint);transition:background var(--tr)
-    }
-    .live-dot{
-      width:5px;height:5px;border-radius:50%;flex-shrink:0;
-      background:var(--text-faint);transition:background .4s
-    }
-    .live-bar[data-status="live"]   .live-dot { background:#4caf50 }
-    .live-bar[data-status="stale"]  .live-dot { background:var(--warn) }
-    .live-bar[data-status="error"]  .live-dot { background:var(--err) }
-    .live-bar[data-status="live"]   { color:var(--text-muted) }
-    .live-status-txt { flex:1 }
-    .live-ts { font-family:var(--mono);font-size:9px }
-    .live-src { font-family:var(--mono);font-size:9px;color:var(--text-faint);margin-left:6px;flex-shrink:0 }
-    .live-src-fail { color:var(--warn) }
+    .kpi-val,.rec-num,.rmi-val,.kpi-ci,.rmi-ci,.hkpi-val { transition:opacity 120ms ease }
+    .fading { opacity:0 }
   </style>
 </head>
 <body>
@@ -378,7 +497,7 @@
   <header class="topbar">
     <div class="tl">
       <div class="tl-logo">
-        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-label="SAID logo">
+        <svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-label="SAID logo">
           <rect width="28" height="28" rx="6" fill="var(--primary)"/>
           <rect x="5" y="16" width="6" height="7" rx="1" fill="white" opacity=".9"/>
           <rect x="5" y="12" width="6" height="3.5" rx=".5" fill="white" opacity=".5"/>
@@ -388,31 +507,86 @@
           <circle cx="23" cy="5" r="1.5" fill="white" opacity=".85"/>
         </svg>
       </div>
-      <div class="tl-text">
-        <div class="tl-title">Stress-Aware Inventory Decision Dashboard</div>
-        <div class="tl-sub">Estimates stockout risk under uncertainty · recommends minimum feasible and lowest-cost inventory coverage</div>
+      <div>
+        <div class="tl-title">Live Risk Intelligence · Savannah → Atlanta Replenishment Lane</div>
+        <div class="tl-sub">Live disruption signals mapped into model-based stockout risk estimates</div>
       </div>
     </div>
     <div class="ta">
-      <div class="stress-pill" id="stressPill">
-        <div class="stress-dot" id="stressDot"></div>
-        <span id="stressLabel">Normal Stress</span>
+      <div class="live-badge" id="topBadge" data-status="loading">
+        <div class="live-dot" id="topDot"></div>
+        <span id="topBadgeTxt">CONNECTING</span>
       </div>
       <span class="proto-badge">
-        <svg width="7" height="7" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="3"/></svg>
+        <svg width="6" height="6" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="3"/></svg>
         LIVE SIGNAL MODEL
       </span>
-      <span class="mock-label" id="dataSourceLabel">API-BACKED</span>
     </div>
   </header>
 
-  <!-- ── LIVE DATA STATUS BAR ──────────────────────────────────────────── -->
-  <div class="live-bar" id="liveBar" data-status="loading">
-    <div class="live-dot"></div>
-    <span class="live-status-txt" id="liveStatusTxt">Connecting to live data...</span>
-    <span class="live-ts" id="liveTs"></span>
-    <span class="live-src" id="liveSrc"></span>
-  </div>
+  <!-- ── HERO: LIVE RISK TICKER ─────────────────────────────────────────── -->
+  <section class="hero" aria-label="Live risk ticker">
+
+    <!-- Left: Score + KPIs -->
+    <div class="hero-main">
+
+      <!-- Big score -->
+      <div class="score-block">
+        <div class="score-eyebrow">Risk Score</div>
+        <div class="score-num" id="heroScore">—</div>
+        <div class="score-label" id="heroRegimeLabel">—</div>
+        <div class="gauge-wrap">
+          <div class="gauge-track">
+            <div class="gauge-thumb" id="gaugeThumb" style="left:0%;color:var(--ch-low)"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI columns -->
+      <div class="hero-kpis">
+        <div class="hkpi">
+          <div class="hkpi-lbl">Stockout Risk</div>
+          <div class="hkpi-val" id="hkpiStockout">—</div>
+          <div class="hkpi-sub" id="hkpiStockoutCI">95% CI: —</div>
+        </div>
+        <div class="hkpi">
+          <div class="hkpi-lbl">Rec. Coverage</div>
+          <div class="hkpi-val cyan" id="hkpiRecDays">—</div>
+          <div class="hkpi-sub" id="hkpiRecSub">days of cover</div>
+        </div>
+        <div class="hkpi">
+          <div class="hkpi-lbl">Scenario</div>
+          <div class="hkpi-val" id="hkpiScenario">—</div>
+          <div class="hkpi-sub" id="hkpiScenarioSub">active</div>
+        </div>
+        <div class="hkpi">
+          <div class="hkpi-lbl">Last Updated</div>
+          <div class="hkpi-val" id="hkpiLastTs" style="font-size:.75rem">—</div>
+          <div class="hkpi-sub" id="hkpiNextRefresh">next refresh —</div>
+        </div>
+        <div class="hkpi">
+          <div class="hkpi-lbl">Feed Status</div>
+          <div class="hkpi-val" id="hkpiStatus" style="font-size:.85rem">—</div>
+          <div class="hkpi-sub" id="hkpiStatusSub">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Ticker feed -->
+    <div class="ticker-col">
+      <div class="ticker-hdr">
+        <div class="ticker-hdr-lbl">Signal Log</div>
+        <div class="ticker-count" id="tickerCount">0 entries</div>
+      </div>
+      <div class="ticker-feed" id="tickerFeed">
+        <div class="tick">
+          <span class="tick-ts">—</span>
+          <span class="tick-tag SOURCE">SOURCE</span>
+          <span class="tick-msg">Waiting for first live fetch…</span>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- ── SIDEBAR ────────────────────────────────────────────────────────── -->
   <aside class="sidebar">
@@ -431,7 +605,7 @@
       </div>
 
       <div class="ctrl-group" id="stressDecompSection">
-        <div class="ctrl-label" style="margin-bottom:8px">Stress Components <span class="mock-label" style="font-size:8px;padding:1px 4px">signal-mapped</span></div>
+        <div class="ctrl-label" style="margin-bottom:7px">Stress Components <span style="font-size:8px;padding:1px 4px;border:1px solid var(--border);border-radius:2px;background:var(--surface-2);color:var(--text-faint);letter-spacing:.05em">signal-mapped</span></div>
         <div class="stress-bar-row">
           <div class="stress-bar-label">Throughput</div>
           <div class="stress-bar-track"><div class="stress-bar-fill" id="sb-throughput"></div></div>
@@ -518,7 +692,103 @@
   <!-- ── MAIN ───────────────────────────────────────────────────────────── -->
   <main class="main">
 
-    <!-- Recommendation panel -->
+    <!-- Row 2: Three panels -->
+    <div class="row2">
+
+      <!-- Panel A: Risk Drivers -->
+      <div class="panel">
+        <div class="panel-hdr">
+          <div class="panel-title">Current Risk Drivers</div>
+          <div class="panel-badge" id="driverSourceBadge">—</div>
+        </div>
+        <div id="driversContent">
+          <div class="driver-row">
+            <div class="driver-label">NWS Alerts</div>
+            <div class="driver-track"><div class="driver-fill" id="df-nws" style="width:0%;background:var(--ok)"></div></div>
+            <div class="driver-val" id="dv-nws">—</div>
+          </div>
+          <div class="driver-row">
+            <div class="driver-label">Weather Score</div>
+            <div class="driver-track"><div class="driver-fill" id="df-weather" style="width:0%;background:var(--primary)"></div></div>
+            <div class="driver-val" id="dv-weather">—</div>
+          </div>
+          <div class="driver-row">
+            <div class="driver-label">Traffic Events</div>
+            <div class="driver-track"><div class="driver-fill" id="df-traffic" style="width:0%;background:var(--text-faint)"></div></div>
+            <div class="driver-val driver-na" id="dv-traffic">n/a</div>
+          </div>
+          <div class="driver-row">
+            <div class="driver-label">Traffic Score</div>
+            <div class="driver-track"><div class="driver-fill" id="df-tscore" style="width:0%;background:var(--text-faint)"></div></div>
+            <div class="driver-val driver-na" id="dv-tscore">n/a</div>
+          </div>
+          <div class="driver-row">
+            <div class="driver-label">Port Baseline</div>
+            <div class="driver-track"><div class="driver-fill" id="df-port" style="width:0%;background:var(--warn)"></div></div>
+            <div class="driver-val" id="dv-port">—</div>
+          </div>
+          <div class="driver-row" style="margin-top:6px;border-top:1px solid var(--divider);padding-top:6px">
+            <div class="driver-label" style="color:var(--text-faint);font-size:8px">Sources used</div>
+            <div class="driver-val" id="dv-sources" style="flex:1;text-align:left;font-size:8px;color:var(--text-muted)">—</div>
+          </div>
+          <div class="driver-row">
+            <div class="driver-label" style="color:var(--text-faint);font-size:8px">Source failures</div>
+            <div class="driver-val" id="dv-failures" style="flex:1;text-align:left;font-size:8px;color:var(--warn)">none</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel B: Policy Ideas -->
+      <div class="panel">
+        <div class="panel-hdr">
+          <div class="panel-title">Policy Ideas Right Now</div>
+          <div class="panel-badge" id="policyScenarioBadge">baseline</div>
+        </div>
+        <div class="policy-list" id="policyList">
+          <div class="policy-item"><div class="policy-dot"></div><span>Awaiting live data…</span></div>
+        </div>
+      </div>
+
+      <!-- Panel C: System Coverage -->
+      <div class="panel">
+        <div class="panel-hdr">
+          <div class="panel-title">System Coverage</div>
+          <div class="panel-badge">Data Sources</div>
+        </div>
+        <div class="coverage-list">
+          <div class="cov-item">
+            <div class="cov-status active" id="cov-nws">ACTIVE</div>
+            <div class="cov-name">NWS live alerts (corridor)</div>
+          </div>
+          <div class="cov-item">
+            <div class="cov-status off" id="cov-ga511">NOT CONNECTED</div>
+            <div class="cov-name">GA511 traffic feed</div>
+          </div>
+          <div class="cov-item">
+            <div class="cov-status warn">MANUAL</div>
+            <div class="cov-name">Port baseline (static estimate)</div>
+          </div>
+          <div class="cov-item">
+            <div class="cov-status off">NOT CONNECTED</div>
+            <div class="cov-name">Real inventory levels</div>
+          </div>
+          <div class="cov-item">
+            <div class="cov-status off">NOT CONNECTED</div>
+            <div class="cov-name">Carrier GPS / ETA feed</div>
+          </div>
+          <div class="cov-item">
+            <div class="cov-status future">FUTURE</div>
+            <div class="cov-name">Historical disruption log</div>
+          </div>
+          <div class="cov-item">
+            <div class="cov-status future">FUTURE</div>
+            <div class="cov-name">Multi-SKU scope</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 3: Recommendation + KPI row -->
     <section class="rec-panel" id="recPanel" data-testid="panel-rec">
       <div class="rec-top">
         <div class="rec-lhs">
@@ -530,7 +800,7 @@
           </div>
         </div>
         <div id="statusBadge" class="status-badge pass" data-testid="badge-status">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           <span id="statusTxt">Meets Target</span>
         </div>
       </div>
@@ -559,59 +829,39 @@
       </div>
 
       <div class="rec-narrative" id="recNarrative" data-testid="text-narrative">
-        Loading...
+        Loading…
       </div>
     </section>
 
-    <!-- KPI row -->
-    <div class="metrics-row">
+    <div class="kpi-row">
       <div class="kpi" id="kpiStockout" data-testid="kpi-stockout">
-        <div class="kpi-lbl"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Stockout Prob.</div>
+        <div class="kpi-lbl"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Stockout Prob.</div>
         <div class="kpi-val" id="kv-stockout">—</div>
         <div class="kpi-ci" id="kc-stockout">95% CI: —</div>
       </div>
       <div class="kpi" id="kpiShortage" data-testid="kpi-shortage">
-        <div class="kpi-lbl"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Exp. Shortage</div>
+        <div class="kpi-lbl"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Exp. Shortage</div>
         <div class="kpi-val" id="kv-shortage">—</div>
         <div class="kpi-ci" id="kc-shortage">95% CI: —</div>
       </div>
       <div class="kpi" id="kpiStress" data-testid="kpi-stress">
-        <div class="kpi-lbl"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Stress Index</div>
+        <div class="kpi-lbl"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Stress Index</div>
         <div class="kpi-val" id="kv-stress">—</div>
         <div class="kpi-ci" id="kc-stress">—</div>
       </div>
       <div class="kpi" id="kpiMargin" data-testid="kpi-margin">
-        <div class="kpi-lbl"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Cover Margin</div>
+        <div class="kpi-lbl"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Cover Margin</div>
         <div class="kpi-val" id="kv-margin">—</div>
         <div class="kpi-ci" id="kc-margin">vs. min feasible</div>
       </div>
       <div class="kpi" id="kpiCost" data-testid="kpi-cost">
-        <div class="kpi-lbl"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Policy Cost Index</div>
+        <div class="kpi-lbl"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Policy Cost Index</div>
         <div class="kpi-val" id="kv-cost">—</div>
         <div class="kpi-ci" id="kc-cost">hold + shortage exp.</div>
       </div>
     </div>
 
-    <!-- Cost comparison bar -->
-    <div class="cost-compare" id="costCompare" data-testid="panel-cost">
-      <div class="cost-cell" id="costMin">
-        <div class="cost-cell-lbl">Min Feasible Policy</div>
-        <div class="cost-cell-val" id="cc-min-days">— days</div>
-        <div class="cost-cell-sub" id="cc-min-cost">Est. cost: —</div>
-      </div>
-      <div class="cost-cell" id="costOpt">
-        <div class="cost-cell-lbl">Lowest-Cost Feasible</div>
-        <div class="cost-cell-val" id="cc-opt-days">— days</div>
-        <div class="cost-cell-sub" id="cc-opt-cost">Est. cost: —</div>
-      </div>
-      <div class="cost-cell" id="costSel">
-        <div class="cost-cell-lbl">Current Selection</div>
-        <div class="cost-cell-val" id="cc-sel-days">— days</div>
-        <div class="cost-cell-sub" id="cc-sel-cost">Est. cost: —</div>
-      </div>
-    </div>
-
-    <!-- Chart + Decision -->
+    <!-- Row 4: Chart + Decision Summary -->
     <div class="bot">
       <div class="chart-card">
         <div class="chart-hdr">
@@ -628,15 +878,15 @@
           <div class="leg-item"><div class="leg-dot" style="background:var(--ch-ex)"></div>Extreme</div>
           <div class="leg-item"><div class="leg-dash" style="border-color:var(--ch-tgt)"></div>Target</div>
           <div class="leg-item"><div class="leg-band" style="background:var(--ch-ci-line)"></div>95% CI band</div>
-          <div class="leg-item"><div class="leg-dot" style="background:var(--primary);width:10px;height:10px"></div>Selection</div>
-          <div class="leg-item"><div class="leg-dot" style="background:var(--ok);width:10px;height:10px;border-radius:2px"></div>Min feasible</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--primary);width:9px;height:9px"></div>Selection</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--ok);width:9px;height:9px;border-radius:2px"></div>Min feasible</div>
         </div>
         <div class="chart-wrap">
           <canvas id="riskChart" data-testid="chart-risk"></canvas>
         </div>
         <div class="assumptions-wrap">
           <button class="assumptions-toggle" id="assumpToggle" aria-expanded="false">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
             Model Assumptions
           </button>
           <div class="assumptions-body" id="assumpBody">
@@ -670,7 +920,7 @@
     </div>
 
   </main>
-</div>
+</div><!-- /.shell -->
 
 <script>
 /* ══════════════════════════════════════════════════════════════════════════
@@ -689,9 +939,6 @@
 ══════════════════════════════════════════════════════════════════════════ */
 
 // ── LAYER A: MODEL DATA ──────────────────────────────────────────────────
-// Each entry: [p, lo, hi] = point estimate, 95% CI lower, 95% CI upper
-// per day d ∈ [2,3,4,5,6]
-
 const MODEL = {
   low: {
     baseline: {
@@ -705,8 +952,6 @@ const MODEL = {
       shortage: [[0.09,0.07,0.12],[0.03,0.02,0.05],[0.01,0.01,0.02],[0.005,0.003,0.008],[0.002,0.001,0.004]]
     },
     safety: {
-      // Safety stock: strong non-linear compression at low DoC, diminishing at high DoC
-      // At 2d: ~60% reduction; at 6d: ~40% reduction (proportionally less benefit at high DoC)
       curve: [
         [2.1, 1.6, 2.7],
         [0.82, 0.61, 1.08],
@@ -717,8 +962,6 @@ const MODEL = {
       shortage: [[0.04,0.03,0.05],[0.01,0.008,0.015],[0.004,0.003,0.007],[0.002,0.001,0.003],[0.001,0,0.002]]
     },
     tail: {
-      // Tail mitigation: truncates extreme lead-time events; most effective at HIGH DoC
-      // At 2d: ~30% reduction; at 6d: ~55% reduction (opposite shape to safety stock)
       curve: [
         [3.8, 3.0, 4.7],
         [1.1, 0.82, 1.42],
@@ -775,7 +1018,6 @@ const MODEL = {
       shortage: [[0.88,0.74,1.04],[0.48,0.39,0.58],[0.05,0.037,0.065],[0.021,0.015,0.028],[0.009,0.006,0.014]]
     },
     safety: {
-      // Safety stock very effective at 2d, still meaningful at 4-5d
       curve: [
         [11.2, 9.4, 13.1],
         [4.8, 3.9, 5.8],
@@ -786,8 +1028,6 @@ const MODEL = {
       shortage: [[0.38,0.30,0.47],[0.14,0.11,0.18],[0.025,0.018,0.034],[0.010,0.007,0.015],[0.005,0.003,0.008]]
     },
     tail: {
-      // Tail mitigation at high stress: strong effect at 4-5-6d, modest at 2-3d
-      // (extreme lead-time events dominate the residual risk at higher DoC)
       curve: [
         [21.0, 18.6, 23.5],
         [7.8, 6.6, 9.1],
@@ -811,8 +1051,6 @@ const MODEL = {
       shortage: [[1.70,1.48,1.94],[1.05,0.89,1.22],[0.58,0.48,0.69],[0.04,0.030,0.052],[0.018,0.012,0.026]]
     },
     safety: {
-      // Safety stock changes the effective position but cannot eliminate
-      // the fundamental instability at extreme stress — shape changes, not just scale
       curve: [
         [18.5, 15.8, 21.4],
         [9.4, 7.8, 11.1],
@@ -823,8 +1061,6 @@ const MODEL = {
       shortage: [[0.74,0.61,0.88],[0.42,0.34,0.51],[0.18,0.14,0.23],[0.025,0.017,0.034],[0.011,0.007,0.016]]
     },
     tail: {
-      // Tail mitigation at extreme stress: very effective at 4-6d (removes residual tail risk)
-      // but limited at 2-3d where TOTAL risk is still dominated by normal-distribution failures
       curve: [
         [34.0, 30.4, 37.7],
         [16.5, 14.2, 18.9],
@@ -837,7 +1073,7 @@ const MODEL = {
   }
 };
 
-// ── STRESS OBJECT (structured for Phase 1 API readiness) ────────────────
+// ── STRESS OBJECT ────────────────────────────────────────────────────────
 const STRESS_DATA = {
   low:     { score: 0.14, label:'Low Stress',     regime:'low',
              components:{ throughput_z: 0.18, leadtime_var_z: 0.12, ops_disruption: 0.08 },
@@ -864,24 +1100,18 @@ const CHART_BG = {
 };
 
 // ── LAYER B: DECISION LOGIC ──────────────────────────────────────────────
-function getCurve(regime, scenario) {
-  return MODEL[regime][scenario].curve; // array of [p, lo, hi]
-}
-function getShortage(regime, scenario) {
-  return MODEL[regime][scenario].shortage;
-}
+function getCurve(regime, scenario) { return MODEL[regime][scenario].curve; }
+function getShortage(regime, scenario) { return MODEL[regime][scenario].shortage; }
 function getMinFeasible(regime, scenario, target) {
   const curve = getCurve(regime, scenario);
-  for (let i=0; i<DAYS.length; i++) {
-    if (curve[i][0] <= target) return DAYS[i];
-  }
-  return null; // no feasible policy in range
+  for (let i=0; i<DAYS.length; i++) { if (curve[i][0] <= target) return DAYS[i]; }
+  return null;
 }
 function estimateCost(days, scenario, regime, holdingCost, shortageCost) {
   const dIdx = DAYS.indexOf(days);
   if (dIdx < 0) return null;
-  const shortage = getShortage(regime, scenario)[dIdx][0]; // expected shortage (demand-days)
-  const holding  = days * holdingCost;                     // holding cost per unit per day × days held
+  const shortage = getShortage(regime, scenario)[dIdx][0];
+  const holding  = days * holdingCost;
   const shortageExp = shortage * shortageCost;
   return { total: holding + shortageExp, holding, shortageExp };
 }
@@ -897,20 +1127,16 @@ function getOptimalFeasible(regime, scenario, target, holdingCost, shortageCost)
   return { days: bestDays, cost: bestCost === Infinity ? null : bestCost };
 }
 
-// ── LAYER C: NARRATIVE GENERATOR ────────────────────────────────────────
-// Fully computed from outputs — not keyed on [regime][scenario] lookup tables
+// ── NARRATIVE GENERATORS ─────────────────────────────────────────────────
 function buildNarrative(o) {
-  // o = computed outputs object (see updateDashboard)
   const { regime, scenario, daysOfCover, targetProb, meetsTarget,
           selectedProb, selectedProbLo, selectedProbHi,
           minDays, optDays, coverageMargin, holdingCost, shortageCost,
           selectedCost, optCost, shortage } = o;
-
   const r = regime, sc = scenario, d = daysOfCover, t = targetProb;
   const sp = selectedProb.toFixed(2);
   const stressWord = { low:'low', normal:'moderate', high:'elevated', extreme:'extreme' }[r];
   const scWord = { baseline:'baseline', safety:'with safety stock adjustment', tail:'with tail mitigation' }[sc];
-
   if (!meetsTarget) {
     const gap = selectedProb - targetProb;
     return `At ${d} days of cover under ${stressWord} stress (${scWord}), stockout probability is ` +
@@ -925,9 +1151,7 @@ function buildNarrative(o) {
     const marginTxt = margin > 0 ? `, with ${margin}-day buffer above minimum` : ', exactly at minimum';
     return `At ${d} days of cover under ${stressWord} stress (${scWord}), stockout probability is ` +
       `${sp}% [95% CI: ${selectedProbLo.toFixed(2)}–${selectedProbHi.toFixed(2)}%] — within the ${t}% target${marginTxt}. ` +
-      (optDays
-        ? `Lowest-cost feasible policy is ${optDays} days (est. cost index: ${optCost ? optCost.toFixed(2) : '—'}).`
-        : '') +
+      (optDays ? `Lowest-cost feasible policy is ${optDays} days (est. cost index: ${optCost ? optCost.toFixed(2) : '—'}).` : '') +
       (shortage < 0.01 ? ' Expected shortage is negligible under this policy.' : '');
   }
 }
@@ -937,7 +1161,6 @@ function buildBullets(o) {
           selectedProb, selectedProbLo, selectedProbHi,
           minDays, optDays, coverageMargin, shortage, shortageHi,
           selectedCost, optCost, holdingCost, shortageCost } = o;
-
   const sp = selectedProb.toFixed(2);
   const stressWord = { low:'low', normal:'moderate', high:'elevated', extreme:'extreme' }[regime];
   const scEffect = {
@@ -945,21 +1168,16 @@ function buildBullets(o) {
     safety:'Safety stock is active: curve compression is non-proportional, greatest at low coverage.',
     tail:'Tail mitigation is active: most effective at high coverage levels where extreme lead-time events dominate residual risk.'
   }[scenario];
-
   const b1 = meetsTarget
     ? `Selected policy (${daysOfCover}d) keeps stockout at ${sp}% — ${(targetProb - selectedProb).toFixed(2)} pp below the ${targetProb}% target.`
     : `Selected policy (${daysOfCover}d) yields ${sp}% stockout [CI: ${selectedProbLo.toFixed(2)}–${selectedProbHi.toFixed(2)}%] — ${(selectedProb - targetProb).toFixed(2)} pp above the ${targetProb}% target.`;
-
   const b2 = minDays
     ? `Minimum feasible policy is ${minDays} days under current ${stressWord} stress conditions.`
     : `No policy in the 2–6 day range meets the ${targetProb}% target. Consider adjusting the target or scenario.`;
-
   const b3 = optDays && optCost
     ? `Lowest-cost feasible policy is ${optDays} days (est. cost index: ${optCost.toFixed(2)}).`
     : `Cost optimization requires at least one feasible policy within the current range.`;
-
   const b4 = scEffect;
-
   const action = meetsTarget
     ? (coverageMargin > 1
         ? `Coverage is above minimum. Consider whether ${coverageMargin} days of excess buffer is cost-justified given est. shortage cost of $${shortageCost}/unit.`
@@ -967,8 +1185,44 @@ function buildBullets(o) {
     : (minDays
         ? `Immediate action: increase coverage to at least ${minDays} days. Under ${stressWord} stress, the ${daysOfCover}-day policy is ${(selectedProb - targetProb).toFixed(1)} pp outside the service constraint.`
         : `No feasible policy exists at current stress level and scenario. Escalate: activate emergency mitigation or revise the service target.`);
-
   return { b1, b2, b3, b4, action };
+}
+
+// ── POLICY IDEAS GENERATOR ────────────────────────────────────────────────
+function buildPolicyIdeas(regime, scenario, minDays, daysOfCover, meetsTarget, coverageMargin, stressScore) {
+  const ideas = [];
+  const stressWord = { low:'low', normal:'moderate', high:'elevated', extreme:'extreme' }[regime];
+
+  if (!meetsTarget && minDays) {
+    ideas.push(`Increase days of cover to ${minDays}d immediately — current ${daysOfCover}d policy fails the service constraint under ${stressWord} stress.`);
+  } else if (coverageMargin !== null && coverageMargin > 2) {
+    ideas.push(`Current ${daysOfCover}d coverage is ${coverageMargin}d above minimum under ${stressWord} stress — evaluate cost reduction opportunity.`);
+  }
+
+  if (scenario === 'baseline' && (regime === 'high' || regime === 'extreme')) {
+    ideas.push(`High stress detected — consider switching to Safety Stock scenario to reduce tail exposure on the Savannah–Atlanta lane.`);
+  }
+  if (scenario === 'safety') {
+    ideas.push(`Safety stock adjustment active. Non-proportional compression: largest benefit at lowest coverage levels.`);
+  }
+  if (scenario === 'tail') {
+    ideas.push(`Tail mitigation active. Most effective at 5–6d coverage; limited benefit at 2–3d under high stress.`);
+  }
+
+  if (regime === 'low' || regime === 'normal') {
+    ideas.push(`Low corridor disruption signals from NWS — standard coverage tiers appear adequate. Continue monitoring.`);
+  }
+  if (regime === 'high' || regime === 'extreme') {
+    ideas.push(`Elevated stress: proactively communicate with DC operators and verify inbound shipment ETAs for the Savannah → Atlanta lane.`);
+  }
+
+  ideas.push(`GA511 traffic feed not connected — traffic-side disruptions are not reflected in current risk estimates.`);
+
+  // Ensure we always have 4–5
+  if (ideas.length < 4) {
+    ideas.push(`Monitor NWS alerts for active corridor weather events — current signal: ${stressScore < 0.2 ? 'no active alerts' : 'disruption signals present'}.`);
+  }
+  return ideas.slice(0, 5);
 }
 
 // ── STATE ────────────────────────────────────────────────────────────────
@@ -978,18 +1232,258 @@ let state = {
   holdingCost:0.80, shortageCost:18
 };
 
+// ── TICKER ───────────────────────────────────────────────────────────────
+const MAX_TICKS = 12;
+const tickerEntries = [];
+
+function nowHHMM() {
+  const d = new Date();
+  const h = d.getHours(), m = d.getMinutes();
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+
+function addTick(tag, msg) {
+  const ts = nowHHMM();
+  tickerEntries.unshift({ ts, tag, msg });
+  if (tickerEntries.length > MAX_TICKS) tickerEntries.pop();
+  renderTicker();
+}
+
+function addTickBatch(entries) {
+  // entries = [{tag, msg}, ...]
+  const ts = nowHHMM();
+  for (let i = entries.length - 1; i >= 0; i--) {
+    tickerEntries.unshift({ ts, tag: entries[i].tag, msg: entries[i].msg });
+  }
+  while (tickerEntries.length > MAX_TICKS) tickerEntries.pop();
+  renderTicker();
+}
+
+function renderTicker() {
+  const feed = document.getElementById('tickerFeed');
+  const count = document.getElementById('tickerCount');
+  if (!feed) return;
+  feed.innerHTML = tickerEntries.map(e => `
+    <div class="tick">
+      <span class="tick-ts">${e.ts}</span>
+      <span class="tick-tag ${e.tag}">${e.tag}</span>
+      <span class="tick-msg">${e.msg}</span>
+    </div>
+  `).join('');
+  if (count) count.textContent = tickerEntries.length + ' entries';
+}
+
+// Build ticker entries from a successful API response
+function buildTicksFromPayload(d) {
+  const ss = d.source_summary || {};
+  const nwsAlerts   = typeof ss.weather_alert_count === 'number' ? ss.weather_alert_count : '?';
+  const weatherScore = typeof ss.weather_score === 'number' ? ss.weather_score.toFixed(3) : '?';
+  const portScore    = typeof ss.baseline_port_score === 'number' ? ss.baseline_port_score.toFixed(3) : '?';
+  const stressScore  = typeof d.stress_score === 'number' ? d.stress_score.toFixed(3) : '?';
+  const regime       = d.regime || state.regime;
+  const regimeLabel  = { low:'Low Stress', normal:'Normal Stress', high:'High Stress', extreme:'Extreme Stress' }[regime] || regime;
+  const recDays      = typeof d.recommended_days === 'number' ? d.recommended_days : '?';
+  const scenario     = d.scenario || state.scenario;
+  const trafficEnabled = ss.traffic_source_enabled;
+
+  const entries = [];
+  entries.push({ tag:'SOURCE', msg:`NWS checked: <strong>${nwsAlerts}</strong> active corridor alert${nwsAlerts !== 1 ? 's' : ''}` });
+  entries.push({ tag:'SOURCE', msg:`Traffic feed: <strong>${trafficEnabled === false ? 'n/a, GA511 key not configured' : (ss.traffic_event_count ?? 'unknown') + ' events'}</strong>` });
+  entries.push({ tag:'DATA', msg:`Weather score <strong>${weatherScore}</strong>, port baseline <strong>${portScore}</strong>` });
+  entries.push({ tag:'RISK', msg:`Composite stress score <strong>${stressScore}</strong> → <strong>${regimeLabel}</strong>` });
+  entries.push({ tag:'POLICY', msg:`Scenario ${scenario}, ${recDays}d recommended coverage` });
+  entries.push({ tag:'DATA', msg:`Next refresh in <strong>60 seconds</strong>` });
+  return entries;
+}
+
+// ── HERO PANEL UPDATE ─────────────────────────────────────────────────────
+function updateHero(score, regime, recDays, stockoutPct, stockoutCiLo, stockoutCiHi, scenario, ts, status) {
+  const scoreEl = document.getElementById('heroScore');
+  const regimeLbl = document.getElementById('heroRegimeLabel');
+  const gaugeThumb = document.getElementById('gaugeThumb');
+
+  const regimeColors = { low:'regime-low', normal:'regime-normal', high:'regime-high', extreme:'regime-extreme' };
+  const regimeLabels = { low:'Low Stress', normal:'Normal Stress', high:'High Stress', extreme:'Extreme Stress' };
+  const regimeCSSVars = { low:'var(--ch-low)', normal:'var(--ch-norm)', high:'var(--ch-hi)', extreme:'var(--ch-ex)' };
+
+  // Score
+  scoreEl.textContent = typeof score === 'number' ? score.toFixed(3) : '—';
+  scoreEl.className = 'score-num ' + (regimeColors[regime] || '');
+  if (regimeLbl) regimeLbl.textContent = regimeLabels[regime] || regime;
+
+  // Gauge thumb: score 0–1 → 0–100%
+  if (gaugeThumb && typeof score === 'number') {
+    const pct = Math.min(Math.max(score * 100, 3), 97);
+    gaugeThumb.style.left = pct + '%';
+    gaugeThumb.style.color = regimeCSSVars[regime] || 'var(--text)';
+  }
+
+  // Hero KPIs
+  const stockoutEl = document.getElementById('hkpiStockout');
+  if (stockoutEl) {
+    const pct = typeof stockoutPct === 'number' ? stockoutPct : null;
+    stockoutEl.textContent = pct !== null ? pct.toFixed(2) + '%' : '—';
+    stockoutEl.className = 'hkpi-val' + (pct > 10 ? ' err' : pct > 4 ? ' warn' : pct !== null ? ' ok' : '');
+    const ciEl = document.getElementById('hkpiStockoutCI');
+    if (ciEl && typeof stockoutCiLo === 'number' && typeof stockoutCiHi === 'number') {
+      ciEl.textContent = `95% CI: ${stockoutCiLo.toFixed(2)}–${stockoutCiHi.toFixed(2)}%`;
+    }
+  }
+
+  const recDaysEl = document.getElementById('hkpiRecDays');
+  if (recDaysEl) recDaysEl.textContent = recDays !== null ? recDays + 'd' : '—';
+
+  const scEl = document.getElementById('hkpiScenario');
+  const scSubEl = document.getElementById('hkpiScenarioSub');
+  if (scEl) {
+    const scLabels = { baseline:'Baseline', safety:'Safety Stock', tail:'Tail Mit.' };
+    scEl.textContent = scLabels[scenario] || scenario;
+  }
+  if (scSubEl) scSubEl.textContent = 'active scenario';
+
+  const tsEl = document.getElementById('hkpiLastTs');
+  if (tsEl && ts) {
+    tsEl.textContent = new Date(ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  }
+
+  const statusEl = document.getElementById('hkpiStatus');
+  const statusSubEl = document.getElementById('hkpiStatusSub');
+  if (statusEl) {
+    const statusMap = {
+      live:  { txt:'Active', cls:'ok',   sub:'feed live' },
+      stale: { txt:'Stale',  cls:'warn', sub:'last known data' },
+      error: { txt:'Failed', cls:'err',  sub:'using fallback' },
+      loading: { txt:'—',   cls:'',     sub:'connecting…' }
+    };
+    const s = statusMap[status] || statusMap.loading;
+    statusEl.textContent = s.txt;
+    statusEl.className = 'hkpi-val ' + s.cls;
+    if (statusSubEl) statusSubEl.textContent = s.sub;
+  }
+}
+
+// Update top badge
+function updateTopBadge(status) {
+  const badge = document.getElementById('topBadge');
+  const txt   = document.getElementById('topBadgeTxt');
+  if (!badge) return;
+  badge.dataset.status = status;
+  if (txt) {
+    txt.textContent = {
+      live:'LIVE', stale:'STALE', error:'OFFLINE', loading:'CONNECTING'
+    }[status] || 'CONNECTING';
+  }
+}
+
+// Update next-refresh countdown
+let _countdownTimer = null;
+let _nextRefreshAt  = null;
+function startCountdown(seconds) {
+  _nextRefreshAt = Date.now() + seconds * 1000;
+  if (_countdownTimer) clearInterval(_countdownTimer);
+  _countdownTimer = setInterval(() => {
+    const el = document.getElementById('hkpiNextRefresh');
+    if (!el) return;
+    const remaining = Math.max(0, Math.round((_nextRefreshAt - Date.now()) / 1000));
+    el.textContent = `next refresh in ${remaining}s`;
+  }, 1000);
+}
+
+// ── RISK DRIVERS UPDATE ───────────────────────────────────────────────────
+function updateDrivers(sourceSummary, regime) {
+  const ss = sourceSummary || {};
+
+  // NWS alerts — treat count 0 as low risk
+  const nwsCount = typeof ss.weather_alert_count === 'number' ? ss.weather_alert_count : null;
+  const nwsPct   = nwsCount !== null ? Math.min(nwsCount * 25, 100) : 0;
+  const nwsFill  = document.getElementById('df-nws');
+  const nwsVal   = document.getElementById('dv-nws');
+  if (nwsFill) { nwsFill.style.width = nwsPct + '%'; nwsFill.style.background = nwsCount > 0 ? 'var(--warn)' : 'var(--ok)'; }
+  if (nwsVal)  nwsVal.textContent = nwsCount !== null ? nwsCount + ' alert' + (nwsCount !== 1 ? 's' : '') : '—';
+
+  // Weather score 0–1
+  const wScore = typeof ss.weather_score === 'number' ? ss.weather_score : null;
+  const wFill  = document.getElementById('df-weather');
+  const wVal   = document.getElementById('dv-weather');
+  if (wFill && wScore !== null) { wFill.style.width = (wScore * 100) + '%'; wFill.style.background = wScore > 0.5 ? 'var(--err)' : wScore > 0.2 ? 'var(--warn)' : 'var(--primary)'; }
+  if (wVal)  wVal.textContent = wScore !== null ? wScore.toFixed(3) : '—';
+
+  // Traffic
+  const trafficEnabled = ss.traffic_source_enabled;
+  const tEventFill = document.getElementById('df-traffic');
+  const tEventVal  = document.getElementById('dv-traffic');
+  const tScoreFill = document.getElementById('df-tscore');
+  const tScoreVal  = document.getElementById('dv-tscore');
+
+  if (trafficEnabled === false) {
+    if (tEventFill) { tEventFill.style.width = '0%'; tEventFill.style.background = 'var(--text-faint)'; }
+    if (tEventVal)  { tEventVal.textContent = 'n/a'; tEventVal.className = 'driver-val driver-na'; }
+    if (tScoreFill) { tScoreFill.style.width = '0%'; }
+    if (tScoreVal)  { tScoreVal.textContent = 'n/a'; tScoreVal.className = 'driver-val driver-na'; }
+  } else {
+    const tEvents = typeof ss.traffic_event_count === 'number' ? ss.traffic_event_count : null;
+    const tPct    = tEvents !== null ? Math.min(tEvents * 10, 100) : 0;
+    if (tEventFill) { tEventFill.style.width = tPct + '%'; tEventFill.style.background = tEvents > 5 ? 'var(--err)' : 'var(--warn)'; }
+    if (tEventVal)  { tEventVal.textContent = tEvents !== null ? tEvents : '—'; tEventVal.className = 'driver-val'; }
+    const tScore = typeof ss.traffic_score === 'number' ? ss.traffic_score : null;
+    if (tScoreFill && tScore !== null) { tScoreFill.style.width = (tScore * 100) + '%'; tScoreFill.style.background = tScore > 0.5 ? 'var(--err)' : 'var(--warn)'; }
+    if (tScoreVal)  { tScoreVal.textContent = tScore !== null ? tScore.toFixed(3) : '—'; tScoreVal.className = 'driver-val'; }
+  }
+
+  // Port baseline
+  const portScore = typeof ss.baseline_port_score === 'number' ? ss.baseline_port_score : null;
+  const portFill  = document.getElementById('df-port');
+  const portVal   = document.getElementById('dv-port');
+  if (portFill && portScore !== null) { portFill.style.width = (portScore * 100) + '%'; portFill.style.background = portScore > 0.2 ? 'var(--warn)' : 'var(--ok)'; }
+  if (portVal)  portVal.textContent = portScore !== null ? portScore.toFixed(3) : '—';
+
+  // Sources
+  const dvSources  = document.getElementById('dv-sources');
+  const dvFailures = document.getElementById('dv-failures');
+  if (dvSources) {
+    const src = Array.isArray(ss.sources_used) ? ss.sources_used : (typeof ss.sources_used === 'string' ? [ss.sources_used] : []);
+    dvSources.textContent = src.length ? src.join(', ') : '—';
+  }
+  if (dvFailures) {
+    const fails = Array.isArray(ss.source_failures) ? ss.source_failures : [];
+    dvFailures.textContent = fails.length ? fails.join(', ') : 'none';
+    dvFailures.style.color = fails.length ? 'var(--warn)' : 'var(--text-faint)';
+  }
+
+  // Driver panel badge — show NWS + port
+  const badge = document.getElementById('driverSourceBadge');
+  if (badge) {
+    const src = Array.isArray(ss.sources_used) ? ss.sources_used.length : 0;
+    badge.textContent = src + ' source' + (src !== 1 ? 's' : '') + ' active';
+  }
+}
+
+// ── POLICY IDEAS PANEL ───────────────────────────────────────────────────
+function renderPolicyIdeas(ideas, scenario) {
+  const list = document.getElementById('policyList');
+  const badge = document.getElementById('policyScenarioBadge');
+  if (list) {
+    list.innerHTML = ideas.map(idea => `
+      <div class="policy-item">
+        <div class="policy-dot"></div>
+        <span>${idea}</span>
+      </div>
+    `).join('');
+  }
+  if (badge) {
+    const scLabels = { baseline:'baseline', safety:'safety stock', tail:'tail mit.' };
+    badge.textContent = scLabels[scenario] || scenario;
+  }
+}
+
 // ── CHART ────────────────────────────────────────────────────────────────
 function cssVar(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
 
 const ctx = document.getElementById('riskChart').getContext('2d');
 
-// CI fill dataset helper
-function buildCIDataset(regime, scenario, alpha) {
+function buildCIDataset(regime, scenario) {
   const curve = getCurve(regime, scenario);
-  return {
-    lo: curve.map(c=>c[1]),
-    hi: curve.map(c=>c[2])
-  };
+  return { lo: curve.map(c=>c[1]), hi: curve.map(c=>c[2]) };
 }
 
 let chart;
@@ -1000,122 +1494,71 @@ function initChart() {
   const textMuted = cssVar('--text-muted');
   const textFaint = cssVar('--text-faint');
   const border = cssVar('--border');
-
   const datasets = [];
 
-  // Ghost curves for all regimes (all scenarios use baseline for comparison)
   ['low','normal','high','extreme'].forEach(r => {
     const c = getCurve(r, scenario);
     const isActive = r === regime;
     datasets.push({
-      label: r,
-      data: c.map(p=>p[0]),
-      borderColor: CHART_COLORS[r],
-      backgroundColor: 'transparent',
-      borderWidth: isActive ? 2.5 : 1.1,
-      pointRadius: 0,
-      tension: 0.35,
-      fill: false,
-      borderDash: isActive ? [] : [4,3],
-      order: isActive ? 2 : 3,
-      _role: 'curve'
+      label: r, data: c.map(p=>p[0]),
+      borderColor: CHART_COLORS[r], backgroundColor: 'transparent',
+      borderWidth: isActive ? 2.5 : 1.1, pointRadius: 0, tension: 0.35,
+      fill: false, borderDash: isActive ? [] : [4,3],
+      order: isActive ? 2 : 3, _role: 'curve'
     });
   });
 
-  // CI band for active regime only (filled area between lo and hi)
   const ci = buildCIDataset(regime, scenario);
-  // hi line (top of CI band) — index 4
   datasets.push({
-    label: 'CI_hi',
-    data: ci.hi,
-    borderColor: 'transparent',
-    backgroundColor: cssVar('--ch-ci'),
-    borderWidth: 0,
-    pointRadius: 0,
-    tension: 0.35,
-    fill: '+1', // fill between this and next dataset
-    order: 4,
-    _role: 'ci'
+    label: 'CI_hi', data: ci.hi, borderColor: 'transparent',
+    backgroundColor: cssVar('--ch-ci'), borderWidth: 0, pointRadius: 0,
+    tension: 0.35, fill: '+1', order: 4, _role: 'ci'
   });
-  // lo line (bottom of CI band) — index 5
   datasets.push({
-    label: 'CI_lo',
-    data: ci.lo,
-    borderColor: cssVar('--ch-ci-line'),
-    backgroundColor: 'transparent',
-    borderWidth: 0.8,
-    borderDash: [2,2],
-    pointRadius: 0,
-    tension: 0.35,
-    fill: false,
-    order: 5,
-    _role: 'ci'
+    label: 'CI_lo', data: ci.lo, borderColor: cssVar('--ch-ci-line'),
+    backgroundColor: 'transparent', borderWidth: 0.8, borderDash: [2,2],
+    pointRadius: 0, tension: 0.35, fill: false, order: 5, _role: 'ci'
+  });
+  datasets.push({
+    label: 'Target', data: DAYS.map(()=>targetProb),
+    borderColor: 'rgba(122,57,187,.7)', borderWidth: 1.5, borderDash: [6,4],
+    pointRadius: 0, fill: false, order: 1, _role: 'target'
   });
 
-  // Target line — index 6
-  datasets.push({
-    label: 'Target',
-    data: DAYS.map(()=>targetProb),
-    borderColor: 'rgba(122,57,187,.7)',
-    borderWidth: 1.5,
-    borderDash: [6,4],
-    pointRadius: 0,
-    fill: false,
-    order: 1,
-    _role: 'target'
-  });
-
-  // Selected policy point — index 7
   const selIdx = DAYS.indexOf(daysOfCover);
   const selProb = activeCurve[selIdx][0];
   datasets.push({
     label: 'Selection',
-    data: DAYS.map((d,i) => i===selIdx ? selProb : null),
-    borderColor: cssVar('--primary'),
-    backgroundColor: cssVar('--primary'),
-    pointRadius: DAYS.map((_,i)=>i===selIdx?8:0),
-    pointHoverRadius: 10,
-    showLine: false,
-    fill: false,
-    order: -1,
-    _role: 'sel'
+    data: DAYS.map((_,i)=>i===selIdx?selProb:null),
+    borderColor: cssVar('--primary'), backgroundColor: cssVar('--primary'),
+    pointRadius: DAYS.map((_,i)=>i===selIdx?8:0), pointHoverRadius: 10,
+    showLine: false, fill: false, order: -1, _role: 'sel'
   });
 
-  // Min-feasible policy point — index 8
   const minDays = getMinFeasible(regime, scenario, targetProb);
   const minIdx  = minDays ? DAYS.indexOf(minDays) : -1;
   const minProb = minIdx >= 0 ? activeCurve[minIdx][0] : null;
   datasets.push({
     label: 'MinFeasible',
-    data: DAYS.map((d,i) => (i===minIdx && minIdx!==selIdx) ? minProb : null),
-    borderColor: cssVar('--ok'),
-    backgroundColor: cssVar('--ok'),
+    data: DAYS.map((_,i)=>(i===minIdx&&minIdx!==selIdx)?minProb:null),
+    borderColor: cssVar('--ok'), backgroundColor: cssVar('--ok'),
     pointRadius: DAYS.map((_,i)=>(i===minIdx&&i!==selIdx)?8:0),
     pointStyle: DAYS.map((_,i)=>(i===minIdx&&i!==selIdx)?'rect':'circle'),
-    pointHoverRadius: 10,
-    showLine: false,
-    fill: false,
-    order: -2,
-    _role: 'min'
+    pointHoverRadius: 10, showLine: false, fill: false, order: -2, _role: 'min'
   });
 
   chart = new Chart(ctx, {
     type: 'line',
     data: { labels: DAYS.map(d=>d+'d'), datasets },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: false,
       animation: { duration: 320, easing: 'easeInOutQuart' },
       interaction: { mode:'index', intersect:false },
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: surface,
-          titleColor: cssVar('--text'),
-          bodyColor: textMuted,
-          borderColor: border,
-          borderWidth: 1,
-          padding: 10,
+          backgroundColor: surface, titleColor: cssVar('--text'),
+          bodyColor: textMuted, borderColor: border, borderWidth: 1, padding: 10,
           titleFont: { family:"'General Sans',sans-serif", weight:'600', size:11 },
           bodyFont:  { family:"'General Sans',sans-serif", size:11 },
           callbacks: {
@@ -1135,14 +1578,11 @@ function initChart() {
       },
       scales: {
         x: {
-          grid: { color: border, drawTicks: false },
-          border: { display: false },
+          grid: { color: border, drawTicks: false }, border: { display: false },
           ticks: { color: textMuted, font:{ family:"'General Sans',sans-serif", size:10 }, padding:6 }
         },
         y: {
-          min: 0, max: 55,
-          grid: { color: border },
-          border: { display: false },
+          min: 0, max: 55, grid: { color: border }, border: { display: false },
           ticks: { color: textMuted, font:{ family:"'General Sans',sans-serif", size:10 }, padding:6, callback: v => v+'%' }
         }
       }
@@ -1161,7 +1601,6 @@ function updateChart() {
   const minIdx  = minDays ? DAYS.indexOf(minDays) : -1;
   const minProb = minIdx >= 0 ? activeCurve[minIdx][0] : null;
 
-  // Ghost curves (indices 0-3)
   ['low','normal','high','extreme'].forEach((r,i) => {
     const c = getCurve(r, scenario);
     const isActive = r === regime;
@@ -1171,39 +1610,30 @@ function updateChart() {
     chart.data.datasets[i].order = isActive ? 2 : 3;
   });
 
-  // CI band (indices 4, 5)
   chart.data.datasets[4].data = ci.hi;
   chart.data.datasets[4].backgroundColor = cssVar('--ch-ci');
   chart.data.datasets[5].data = ci.lo;
   chart.data.datasets[5].borderColor = cssVar('--ch-ci-line');
-
-  // Target line (index 6)
   chart.data.datasets[6].data = DAYS.map(()=>targetProb);
-
-  // Selection point (index 7)
   chart.data.datasets[7].data        = DAYS.map((_,i)=>i===selIdx?selProb:null);
   chart.data.datasets[7].pointRadius = DAYS.map((_,i)=>i===selIdx?8:0);
   chart.data.datasets[7].borderColor    = cssVar('--primary');
   chart.data.datasets[7].backgroundColor= cssVar('--primary');
-
-  // Min feasible point (index 8)
   chart.data.datasets[8].data        = DAYS.map((_,i)=>(i===minIdx&&i!==selIdx)?minProb:null);
   chart.data.datasets[8].pointRadius = DAYS.map((_,i)=>(i===minIdx&&i!==selIdx)?8:0);
   chart.data.datasets[8].borderColor    = cssVar('--ok');
   chart.data.datasets[8].backgroundColor= cssVar('--ok');
 
-  // Recalc Y max
   const allVals = ['low','normal','high','extreme'].flatMap(r=>getCurve(r,scenario).map(p=>p[2]));
   chart.options.scales.y.max = Math.min(Math.ceil(Math.max(...allVals,10)/10)*10+5, 55);
   chart.options.plugins.tooltip.backgroundColor = surface;
   chart.options.plugins.tooltip.titleColor = cssVar('--text');
   chart.options.plugins.tooltip.bodyColor  = cssVar('--text-muted');
   chart.options.plugins.tooltip.borderColor= cssVar('--border');
-
   chart.update();
 }
 
-// ── MAIN UPDATE ──────────────────────────────────────────────────────────
+// ── MAIN DASHBOARD UPDATE ─────────────────────────────────────────────────
 function updateDashboard() {
   const { regime, scenario, daysOfCover, targetProb, holdingCost, shortageCost } = state;
   const curve     = getCurve(regime, scenario);
@@ -1227,21 +1657,18 @@ function updateDashboard() {
     holdingCost, shortageCost
   };
 
-  // Fade numeric elements
-  document.querySelectorAll('.kpi-val,.rec-num,.rmi-val,.kpi-ci,.rmi-ci').forEach(e=>e.classList.add('fading'));
+  document.querySelectorAll('.kpi-val,.rec-num,.rmi-val,.kpi-ci,.rmi-ci,.hkpi-val').forEach(e=>e.classList.add('fading'));
 
   setTimeout(() => {
-    // ── Recommendation panel
+    // Rec panel
     document.getElementById('recNum').textContent  = minDays || '—';
     document.getElementById('recCI').textContent   = minDays
       ? `(${regime} stress, ${scenario} scenario)`
       : '(no feasible policy in range)';
 
-    // Accent bar color
     const accents = { low:'--low-c', normal:'--primary', high:'--hi-c', extreme:'--ex-c' };
     document.getElementById('recPanel').style.setProperty('--rec-accent', `var(${accents[regime]})`);
 
-    // Status badge
     const badge    = document.getElementById('statusBadge');
     const statusTxt = document.getElementById('statusTxt');
     if (meetsTarget) {
@@ -1256,7 +1683,6 @@ function updateDashboard() {
       statusTxt.textContent = 'Fails Target';
     }
 
-    // Meta row
     document.getElementById('rmSel').textContent = daysOfCover + ' days';
     document.getElementById('rmSelStkout').textContent = `P(stockout) = ${sp.toFixed(2)}% [${spLo.toFixed(2)}–${spHi.toFixed(2)}%]`;
     document.getElementById('rmMin').textContent = minDays ? minDays + ' days' : 'N/A';
@@ -1270,11 +1696,9 @@ function updateDashboard() {
       : coverageMargin < 0 ? 'below minimum — policy fails'
       : coverageMargin === 0 ? 'at minimum threshold'
       : `${coverageMargin}d buffer above minimum`;
-
-    // Narrative
     document.getElementById('recNarrative').textContent = buildNarrative(outputs);
 
-    // ── KPIs
+    // KPIs
     const kpiS = document.getElementById('kpiStockout');
     kpiS.className = 'kpi' + (sp > targetProb*2 ? ' err' : sp > targetProb ? ' warn' : ' ok');
     document.getElementById('kv-stockout').textContent = sp.toFixed(2) + '%';
@@ -1303,37 +1727,11 @@ function updateDashboard() {
       document.getElementById('kc-cost').textContent = `hold ${selectedCost.holding.toFixed(2)} + short ${selectedCost.shortageExp.toFixed(2)}`;
     }
 
-    // ── Cost compare
-    if (minDays) {
-      const minCost = estimateCost(minDays, scenario, regime, holdingCost, shortageCost);
-      document.getElementById('costMin').className = 'cost-cell' + (minDays===optDays?' winner':'');
-      document.getElementById('cc-min-days').textContent = minDays + ' days';
-      document.getElementById('cc-min-cost').textContent = minCost ? `Cost index: ${minCost.total.toFixed(2)} (hold ${minCost.holding.toFixed(2)} + exp.short ${minCost.shortageExp.toFixed(2)})` : '—';
-    } else {
-      document.getElementById('cc-min-days').textContent = 'No feasible policy';
-      document.getElementById('cc-min-cost').textContent = `Target ≤${targetProb}% unachievable in 2–6d range`;
-    }
-    if (optDays) {
-      const o = estimateCost(optDays, scenario, regime, holdingCost, shortageCost);
-      document.getElementById('costOpt').className = 'cost-cell winner';
-      document.getElementById('cc-opt-days').textContent = optDays + ' days';
-      document.getElementById('cc-opt-cost').textContent = o ? `Cost index: ${o.total.toFixed(2)} (hold ${o.holding.toFixed(2)} + exp.short ${o.shortageExp.toFixed(2)})` : '—';
-    } else {
-      document.getElementById('costOpt').className = 'cost-cell';
-      document.getElementById('cc-opt-days').textContent = '—';
-      document.getElementById('cc-opt-cost').textContent = 'No feasible policy';
-    }
-    const selCostCard = document.getElementById('costSel');
-    const sameAsOpt = daysOfCover === optDays;
-    selCostCard.className = 'cost-cell' + (sameAsOpt?' winner':'');
-    document.getElementById('cc-sel-days').textContent = daysOfCover + ' days';
-    document.getElementById('cc-sel-cost').textContent = selectedCost
-      ? `Cost index: ${selectedCost.total.toFixed(2)} (hold ${selectedCost.holding.toFixed(2)} + exp.short ${selectedCost.shortageExp.toFixed(2)})`
-      : '—';
+    // Stress decomp
+    document.querySelectorAll('[data-regime]').forEach(b=>b.classList.remove('active'));
+    const regBtn = document.querySelector(`[data-regime="${regime}"]`);
+    if (regBtn) regBtn.classList.add('active');
 
-    // ── Stress indicator + decomposition
-    document.getElementById('stressLabel').textContent = stressData.label;
-    document.getElementById('stressDot').style.background = stressData.dotColor;
     const comp = stressData.components;
     function setBar(id, val) {
       document.getElementById('sb-'+id).style.width = (val*100)+'%';
@@ -1348,7 +1746,7 @@ function updateDashboard() {
     document.getElementById('sb-composite').style.background =
       stressData.score > 0.7 ? 'var(--err)' : stressData.score > 0.45 ? 'var(--warn)' : 'var(--primary)';
 
-    // ── Decision summary
+    // Decision summary
     const bullets = buildBullets(outputs);
     document.getElementById('db1').textContent = bullets.b1;
     document.getElementById('db2').textContent = bullets.b2;
@@ -1356,41 +1754,53 @@ function updateDashboard() {
     document.getElementById('db4').textContent = bullets.b4;
     document.getElementById('decAction').textContent = bullets.action;
 
-    // Unfade
-    document.querySelectorAll('.kpi-val,.rec-num,.rmi-val,.kpi-ci,.rmi-ci').forEach(e=>e.classList.remove('fading'));
+    // Hero update (model-based fallback)
+    updateHero(
+      stressData.score, regime,
+      minDays, sp, spLo, spHi,
+      scenario, null, _currentStatus
+    );
 
-    // Chart
+    // Policy ideas
+    const ideas = buildPolicyIdeas(regime, scenario, minDays, daysOfCover, meetsTarget, coverageMargin, stressData.score);
+    renderPolicyIdeas(ideas, scenario);
+
+    document.querySelectorAll('.kpi-val,.rec-num,.rmi-val,.kpi-ci,.rmi-ci,.hkpi-val').forEach(e=>e.classList.remove('fading'));
     updateChart();
   }, 100);
 }
 
-// ── LIVE-FETCH GUARD ────────────────────────────────────────────────────
-// Set true while applyPayload is running so slider/scenario handlers skip
-// the re-fetch they would normally trigger, preventing infinite loops.
+// ── LIVE DATA GUARD & TIMERS ──────────────────────────────────────────────
 let _applyingPayload = false;
 let _sliderFetchTimer = null;
+let _currentStatus = 'loading';
 
-// ── EVENT HANDLERS ───────────────────────────────────────────────────────
+// ── EVENT HANDLERS ────────────────────────────────────────────────────────
 document.getElementById('regimeGroup').addEventListener('click', e=>{
   const btn = e.target.closest('[data-regime]'); if(!btn) return;
   document.querySelectorAll('[data-regime]').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active'); state.regime = btn.dataset.regime; updateDashboard();
+  if (!_applyingPayload) addTick('DATA', `Regime manually set to <strong>${btn.dataset.regime}</strong>`);
 });
 document.getElementById('scenarioGroup').addEventListener('click', e=>{
   const btn = e.target.closest('[data-scenario]'); if(!btn) return;
   document.querySelectorAll('[data-scenario]').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active'); state.scenario = btn.dataset.scenario; updateDashboard();
-  if (!_applyingPayload) LiveData.fetchLatest(); // re-fetch with new scenario param
+  if (!_applyingPayload) {
+    addTick('DATA', `Scenario changed to <strong>${btn.dataset.scenario}</strong> — fetching live data`);
+    LiveData.fetchLatest();
+  }
 });
-// Debounce slider re-fetches: update UI on every tick, but only hit the API
-// after the user stops dragging for 400 ms to avoid flooding the endpoint.
 document.getElementById('docsSlider').addEventListener('input', e=>{
   state.daysOfCover = +e.target.value;
   document.getElementById('docsVal').textContent = state.daysOfCover+'d';
   updateDashboard();
   if (!_applyingPayload) {
     clearTimeout(_sliderFetchTimer);
-    _sliderFetchTimer = setTimeout(() => LiveData.fetchLatest(), 400);
+    _sliderFetchTimer = setTimeout(() => {
+      addTick('DATA', `Days of cover set to <strong>${state.daysOfCover}d</strong> — fetching live data`);
+      LiveData.fetchLatest();
+    }, 400);
   }
 });
 document.getElementById('targetSel').addEventListener('change', e=>{
@@ -1404,17 +1814,13 @@ document.getElementById('shortageCost').addEventListener('change', e=>{
 });
 
 // Assumptions drawer
-const assumpToggle = document.getElementById('assumpToggle');
-const assumpBody   = document.getElementById('assumpBody');
-assumpToggle.addEventListener('click', ()=>{
-  const open = assumpBody.classList.toggle('open');
-  assumpToggle.classList.toggle('open', open);
-  assumpToggle.setAttribute('aria-expanded', open);
+document.getElementById('assumpToggle').addEventListener('click', ()=>{
+  const open = document.getElementById('assumpBody').classList.toggle('open');
+  document.getElementById('assumpToggle').classList.toggle('open', open);
+  document.getElementById('assumpToggle').setAttribute('aria-expanded', open);
 });
 
-// Dark-only — always force dark theme regardless of system preference
 document.documentElement.setAttribute('data-theme', 'dark');
-
 
 /* ══════════════════════════════════════════════════════════════════════════
    LIVE DATA MODULE
@@ -1427,106 +1833,49 @@ document.documentElement.setAttribute('data-theme', 'dark');
      stockout_probability  — DECIMAL 0.0–1.0 (e.g. 0.038 = 3.8%)
      stockout_ci_low/high  — DECIMAL 0.0–1.0
      All other numeric fields are used as-is.
-
-   Status transitions:
-     loading → live       first fetch succeeded
-     loading → error      first fetch failed (runs on fallback)
-     live    → live       subsequent fetch succeeded
-     live    → stale      two consecutive poll intervals missed
-     stale   → live       fetch recovered
 ══════════════════════════════════════════════════════════════════════════ */
 const LiveData = (() => {
-  // ── Constants ──────────────────────────────────────────────────────────
-  const POLL_INTERVAL = 60_000; // ms
+  const POLL_INTERVAL = 60_000;
 
-  // ── buildEndpoint() ────────────────────────────────────────────────────
-  // Constructs the fetch URL from current user-controlled state so the
-  // backend can return scenario- and days-aware estimates.
   function buildEndpoint() {
-    const params = new URLSearchParams({
-      days:     state.daysOfCover,
-      scenario: state.scenario
-    });
+    const params = new URLSearchParams({ days: state.daysOfCover, scenario: state.scenario });
     return '/api/latest?' + params.toString();
   }
 
-  // ── Private state ──────────────────────────────────────────────────────
-  let lastSuccessTime = null;   // Date.now() of last successful fetch
-  let lastPayload     = null;   // most recent successful payload
+  let lastSuccessTime = null;
+  let lastPayload     = null;
   let pollTimer       = null;
 
-  // ── setStatus(status, message, isoTimestamp?) ──────────────────────────
-  // Updates the live-bar strip. Gracefully no-ops if elements are missing.
   function setStatus(status, message, isoTimestamp, sourceSummary) {
-    const bar    = document.getElementById('liveBar');
-    const txt    = document.getElementById('liveStatusTxt');
-    const tsEl   = document.getElementById('liveTs');
-    const lbl    = document.getElementById('dataSourceLabel');
-    const srcEl  = document.getElementById('liveSrc');
-    if (!bar) return;
+    _currentStatus = status;
+    updateTopBadge(status);
 
-    bar.dataset.status = status;
-    if (txt)  txt.textContent  = message;
-    if (tsEl) tsEl.textContent = isoTimestamp
-      ? 'Last updated ' + new Date(isoTimestamp).toLocaleTimeString()
-      : '';
-    if (lbl)  lbl.textContent  =
-      status === 'live'  ? 'API-BACKED'    :
-      status === 'stale' ? 'STALE'         : 'FALLBACK';
+    // Update hero status fields
+    const recDays = lastPayload
+      ? (typeof lastPayload.recommended_days === 'number' ? lastPayload.recommended_days
+       : typeof lastPayload.minimum_feasible_days === 'number' ? lastPayload.minimum_feasible_days
+       : null)
+      : null;
+    const stockPct = lastPayload && typeof lastPayload.stockout_probability === 'number'
+      ? lastPayload.stockout_probability * 100 : null;
+    const stockLo  = lastPayload && typeof lastPayload.stockout_ci_low === 'number'
+      ? lastPayload.stockout_ci_low * 100 : null;
+    const stockHi  = lastPayload && typeof lastPayload.stockout_ci_high === 'number'
+      ? lastPayload.stockout_ci_high * 100 : null;
+    const score    = lastPayload && typeof lastPayload.stress_score === 'number'
+      ? lastPayload.stress_score : STRESS_DATA[state.regime].score;
 
-    // Source summary — compact inline display in the live bar
-    if (srcEl && sourceSummary && typeof sourceSummary === 'object') {
-      const s = sourceSummary;
-      const parts = [];
-      // sources_used is an array from the API
-      if (Array.isArray(s.sources_used) && s.sources_used.length) {
-        parts.push('Sources: ' + s.sources_used.join(', '));
-      } else if (typeof s.sources_used === 'string' && s.sources_used) {
-        parts.push('Sources: ' + s.sources_used);
-      }
-      if (typeof s.weather_alert_count === 'number') parts.push('Weather alerts: ' + s.weather_alert_count);
-      // traffic: show n/a if disabled, actual count if enabled
-      if (s.traffic_source_enabled === false) {
-        parts.push('Traffic: n/a');
-      } else if (typeof s.traffic_event_count === 'number') {
-        parts.push('Traffic events: ' + s.traffic_event_count);
-      }
-      if (typeof s.weather_score === 'number') parts.push('Weather score: ' + s.weather_score.toFixed(3));
-      if (typeof s.traffic_score === 'number' && s.traffic_source_enabled !== false) {
-        parts.push('Traffic score: ' + s.traffic_score.toFixed(3));
-      }
-      if (typeof s.baseline_port_score === 'number') parts.push('Port baseline: ' + s.baseline_port_score.toFixed(3));
-      const failTxt = Array.isArray(s.source_failures) && s.source_failures.length
-        ? ' · Source issue: ' + s.source_failures.join(', ')
-        : '';
-      srcEl.textContent = parts.join(' · ') + failTxt;
-      srcEl.className = 'live-src' + (failTxt ? ' live-src-fail' : '');
-    } else if (srcEl) {
-      srcEl.textContent = '';
-    }
+    updateHero(score, state.regime, recDays, stockPct, stockLo, stockHi, state.scenario, isoTimestamp, status);
   }
 
-  // ── applyPayload(payload) ──────────────────────────────────────────────
-  // Updates the dashboard from a live payload. Only touches fields that
-  // are present — user-controlled state (slider, scenario) takes a back
-  // seat to live values when the payload provides them.
-  //
-  // IMPORTANT: stockout_probability/ci_low/ci_high arrive as DECIMAL (0–1).
-  // Multiply by 100 before displaying as percent.
   function applyPayload(d) {
     if (!d) return;
 
-    // Sync regime button if the live source changed it
+    // Sync regime
     if (d.regime && d.regime !== state.regime) {
-      const btn = document.querySelector('[data-regime="' + d.regime + '"]');
-      if (btn) {
-        document.querySelectorAll('[data-regime]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        state.regime = d.regime;
-      }
+      state.regime = d.regime;
     }
-
-    // Sync scenario button if the live source confirms/changes it
+    // Sync scenario
     if (d.scenario && d.scenario !== state.scenario) {
       const btn = document.querySelector('[data-scenario="' + d.scenario + '"]');
       if (btn) {
@@ -1535,36 +1884,28 @@ const LiveData = (() => {
         state.scenario = d.scenario;
       }
     }
-
-    // Sync days-of-cover slider if live value is valid
+    // Sync days
     if (typeof d.selected_days_of_cover === 'number' && DAYS.includes(d.selected_days_of_cover)) {
       state.daysOfCover = d.selected_days_of_cover;
       const slider = document.getElementById('docsSlider');
       if (slider) slider.value = d.selected_days_of_cover;
       const slVal = document.getElementById('docsVal');
-      if (slVal)  slVal.textContent = d.selected_days_of_cover + 'd';
+      if (slVal) slVal.textContent = d.selected_days_of_cover + 'd';
     }
 
-    // Recompute the full dashboard with updated state.
-    // _applyingPayload guard prevents slider/scenario handlers from
-    // triggering a recursive fetchLatest() during this update.
     _applyingPayload = true;
     updateDashboard();
     _applyingPayload = false;
 
-    // Overlay specific live KPI values after the dashboard fade-in completes.
-    // These values come from the real model and take precedence over the
-    // embedded MODEL data.
+    // Overlay live KPI values
     setTimeout(() => {
-      // stockout_probability is DECIMAL — convert to percent for display
       if (typeof d.stockout_probability === 'number') {
         const pct = d.stockout_probability * 100;
         document.getElementById('kv-stockout').textContent = pct.toFixed(2) + '%';
         if (typeof d.stockout_ci_low === 'number' && typeof d.stockout_ci_high === 'number') {
           document.getElementById('kc-stockout').textContent =
             '95% CI: ' + (d.stockout_ci_low * 100).toFixed(2) +
-            '\u2013'   + (d.stockout_ci_high * 100).toFixed(2) + '%';
-          // Also overlay the rec panel CI text
+            '\u2013' + (d.stockout_ci_high * 100).toFixed(2) + '%';
           document.getElementById('rmSelStkout').textContent =
             'P(stockout) = ' + pct.toFixed(2) + '% [' +
             (d.stockout_ci_low * 100).toFixed(2) + '\u2013' +
@@ -1589,12 +1930,12 @@ const LiveData = (() => {
       if (typeof d.policy_cost_index === 'number') {
         document.getElementById('kv-cost').textContent = d.policy_cost_index.toFixed(2);
       }
-      // recommended_days drives the big rec number; fall back to minimum_feasible_days
       const recDays = typeof d.recommended_days === 'number' ? d.recommended_days
                     : typeof d.minimum_feasible_days === 'number' ? d.minimum_feasible_days
                     : null;
       if (recDays !== null) {
         document.getElementById('recNum').textContent = recDays;
+        document.getElementById('hkpiRecDays').textContent = recDays + 'd';
       }
       if (typeof d.minimum_feasible_days === 'number') {
         document.getElementById('rmMin').textContent = d.minimum_feasible_days + ' days';
@@ -1602,24 +1943,43 @@ const LiveData = (() => {
       if (typeof d.operational_takeaway === 'string' && d.operational_takeaway) {
         document.getElementById('decAction').textContent = d.operational_takeaway;
       }
-    }, 150); // slight delay so updateDashboard fade-in completes first
+
+      // Hero panel full update with live data
+      const stockPct = typeof d.stockout_probability === 'number' ? d.stockout_probability * 100 : null;
+      const stockLo  = typeof d.stockout_ci_low  === 'number' ? d.stockout_ci_low  * 100 : null;
+      const stockHi  = typeof d.stockout_ci_high === 'number' ? d.stockout_ci_high * 100 : null;
+      updateHero(
+        typeof d.stress_score === 'number' ? d.stress_score : STRESS_DATA[state.regime].score,
+        d.regime || state.regime,
+        recDays, stockPct, stockLo, stockHi,
+        d.scenario || state.scenario,
+        d.timestamp, 'live'
+      );
+
+      // Risk drivers panel
+      if (d.source_summary) updateDrivers(d.source_summary, d.regime || state.regime);
+
+      // Policy ideas panel
+      const minD = typeof d.minimum_feasible_days === 'number' ? d.minimum_feasible_days
+                 : getMinFeasible(state.regime, state.scenario, state.targetProb);
+      const covM = minD ? state.daysOfCover - minD : null;
+      const metT = (d.stockout_probability * 100) <= state.targetProb;
+      const ideas = buildPolicyIdeas(
+        d.regime || state.regime,
+        d.scenario || state.scenario,
+        minD, state.daysOfCover, metT, covM,
+        typeof d.stress_score === 'number' ? d.stress_score : STRESS_DATA[state.regime].score
+      );
+      renderPolicyIdeas(ideas, d.scenario || state.scenario);
+
+    }, 150);
   }
 
-  // ── fetchLiveData() ────────────────────────────────────────────────────
-  // Fetches the endpoint, validates the response shape, and dispatches
-  // the appropriate status. Never throws — all errors are caught and
-  // result in a graceful status update.
   async function fetchLiveData() {
     try {
       const res = await fetch(buildEndpoint(), { cache: 'no-store' });
-
-      if (!res.ok) {
-        throw new Error('HTTP ' + res.status);
-      }
-
+      if (!res.ok) throw new Error('HTTP ' + res.status);
       const d = await res.json();
-
-      // Minimal shape validation — must have both anchor fields
       if (!d || typeof d.timestamp !== 'string' || typeof d.regime !== 'string') {
         throw new Error('Unexpected response shape');
       }
@@ -1629,41 +1989,42 @@ const LiveData = (() => {
       setStatus('live', 'Live data active', d.timestamp, d.source_summary);
       applyPayload(d);
 
+      // Add ticker batch
+      const ticks = buildTicksFromPayload(d);
+      addTickBatch(ticks);
+
+      // Start 60s countdown
+      startCountdown(60);
+
     } catch (err) {
-      // Classify failure: first-load failure vs. stale vs. transient
       const isFirstLoad = lastSuccessTime === null;
       const isStale     = !isFirstLoad && (Date.now() - lastSuccessTime) > POLL_INTERVAL * 2;
 
       if (isFirstLoad) {
         setStatus('error', 'Live endpoint unavailable — running on embedded fallback data.', null);
+        addTick('WARN', `Live fetch failed — using embedded fallback model data`);
       } else if (isStale) {
         setStatus('stale', 'Live data stale — last fetch failed. Showing last known values.', lastPayload?.timestamp ?? null);
+        addTick('WARN', `Live fetch failed — data is stale, showing last known values`);
       } else {
-        // Transient failure within the normal poll window; keep "live" appearance
         setStatus('live', 'Retrying live data\u2026', lastPayload?.timestamp ?? null);
+        addTick('WARN', `Transient fetch failure — retrying on next cycle`);
       }
     }
   }
 
-  // ── startPolling() ─────────────────────────────────────────────────────
-  // Triggers an immediate fetch then starts the 60-second poll loop.
   function startPolling() {
     fetchLiveData();
     pollTimer = setInterval(fetchLiveData, POLL_INTERVAL);
   }
 
-  // Public API — fetchLatest exposed so control handlers can re-fetch
-  // immediately when days or scenario changes without waiting for the poll.
   return { startPolling, fetchLatest: fetchLiveData };
 })();
 
-// (guard flag declared above, before event handlers)
-
-
-// ── INIT ─────────────────────────────────────────────────────────────────
+// ── INIT ──────────────────────────────────────────────────────────────────
 initChart();
-updateDashboard();   // initial render using embedded fallback data
-LiveData.startPolling(); // begin live data fetch + 60s auto-refresh
+updateDashboard();
+LiveData.startPolling();
 </script>
 </body>
 </html>

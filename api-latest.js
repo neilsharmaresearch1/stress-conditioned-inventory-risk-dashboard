@@ -1,27 +1,14 @@
-/**
- * /api/latest
- *
- * True live-data proxy for the dashboard.
- *
- * What it does:
- * - fetches a live JSON payload from process.env.LIVE_DATA_URL
- * - validates the payload shape
- * - returns clean JSON to the dashboard
- * - returns structured errors on config/upstream/validation failure
- *
- * Required Vercel env var:
- *   LIVE_DATA_URL=https://your-live-json-endpoint.example.com/latest.json
- */
+import fs from 'fs/promises';
+import path from 'path';
 
 const ALLOWED_REGIMES = new Set(['low', 'normal', 'high', 'extreme']);
 const ALLOWED_SCENARIOS = new Set(['baseline', 'safety', 'tail']);
-
 const DOC_MIN = 2;
 const DOC_MAX = 6;
-const FETCH_TIMEOUT_MS = 8000;
 
 function sendJson(res, status, body) {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.status(status).json(body);
 }
 
@@ -31,16 +18,14 @@ function isFiniteNumber(value) {
 
 function assertEnum(name, value, allowedSet) {
   if (typeof value !== 'string' || !allowedSet.has(value)) {
-    throw new Error(
-      `${name} must be one of: ${Array.from(allowedSet).join(', ')}. Received: ${JSON.stringify(value)}`
-    );
+    throw new Error(`${name} must be one of: ${Array.from(allowedSet).join(', ')}`);
   }
   return value;
 }
 
 function assertIntegerRange(name, value, min, max) {
   if (!Number.isInteger(value) || value < min || value > max) {
-    throw new Error(`${name} must be an integer between ${min} and ${max}. Received: ${JSON.stringify(value)}`);
+    throw new Error(`${name} must be an integer between ${min} and ${max}`);
   }
   return value;
 }
@@ -52,28 +37,28 @@ function assertNullableIntegerRange(name, value, min, max) {
 
 function assertNumberRange(name, value, min, max) {
   if (!isFiniteNumber(value) || value < min || value > max) {
-    throw new Error(`${name} must be a number between ${min} and ${max}. Received: ${JSON.stringify(value)}`);
+    throw new Error(`${name} must be a number between ${min} and ${max}`);
   }
   return value;
 }
 
 function assertNonNegativeNumber(name, value) {
   if (!isFiniteNumber(value) || value < 0) {
-    throw new Error(`${name} must be a non-negative number. Received: ${JSON.stringify(value)}`);
+    throw new Error(`${name} must be a non-negative number`);
   }
   return value;
 }
 
 function assertString(name, value) {
   if (typeof value !== 'string' || value.trim().length === 0) {
-    throw new Error(`${name} must be a non-empty string. Received: ${JSON.stringify(value)}`);
+    throw new Error(`${name} must be a non-empty string`);
   }
   return value.trim();
 }
 
 function validatePayload(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    throw new Error('Upstream payload must be a JSON object.');
+    throw new Error('Payload must be a JSON object');
   }
 
   const payload = {
@@ -107,7 +92,6 @@ function validatePayload(raw) {
       DOC_MAX
     ),
 
-    // Must be decimals, not percentages. Example: 0.038 = 3.8%
     stockout_probability: assertNumberRange('stockout_probability', raw.stockout_probability, 0, 1),
     stockout_ci_low: assertNumberRange('stockout_ci_low', raw.stockout_ci_low, 0, 1),
     stockout_ci_high: assertNumberRange('stockout_ci_high', raw.stockout_ci_high, 0, 1),
@@ -115,91 +99,44 @@ function validatePayload(raw) {
     expected_shortage: assertNonNegativeNumber('expected_shortage', raw.expected_shortage),
     policy_cost_index: assertNonNegativeNumber('policy_cost_index', raw.policy_cost_index),
 
-    coverage_margin:
-      Number.isInteger(raw.coverage_margin)
-        ? raw.coverage_margin
-        : (() => {
-            throw new Error(`coverage_margin must be an integer. Received: ${JSON.stringify(raw.coverage_margin)}`);
-          })(),
+    coverage_margin: Number.isInteger(raw.coverage_margin)
+      ? raw.coverage_margin
+      : (() => {
+          throw new Error('coverage_margin must be an integer');
+        })(),
 
     operational_takeaway: assertString('operational_takeaway', raw.operational_takeaway),
   };
 
   if (payload.stockout_ci_low > payload.stockout_ci_high) {
-    throw new Error('stockout_ci_low cannot be greater than stockout_ci_high.');
+    throw new Error('stockout_ci_low cannot be greater than stockout_ci_high');
   }
 
   return payload;
 }
 
-async function fetchWithTimeout(url, timeoutMs) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    return await fetch(url, {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-      cache: 'no-store',
-      signal: controller.signal,
-    });
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 'no-store, max-age=0');
-
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET');
-    return sendJson(res, 405, { error: 'Method not allowed', detail: 'Use GET for /api/latest.' });
-  }
-
-  const upstreamUrl = process.env.LIVE_DATA_URL;
-
-  if (!upstreamUrl) {
-    return sendJson(res, 500, {
-      error: 'Missing configuration',
-      detail: 'LIVE_DATA_URL is not set.',
+    return sendJson(res, 405, {
+      error: 'Method not allowed',
+      detail: 'Use GET for /api/latest.'
     });
   }
 
+  res.setHeader('Access-Control-Allow-Origin', '*');
+
   try {
-    const upstreamResponse = await fetchWithTimeout(upstreamUrl, FETCH_TIMEOUT_MS);
-    const rawText = await upstreamResponse.text();
+    const filePath = path.join(process.cwd(), 'data', 'latest.json');
+    const rawText = await fs.readFile(filePath, 'utf8');
+    const rawJson = JSON.parse(rawText);
+    const payload = validatePayload(rawJson);
 
-    if (!upstreamResponse.ok) {
-      return sendJson(res, 502, {
-        error: 'Upstream request failed',
-        detail: `Upstream returned ${upstreamResponse.status} ${upstreamResponse.statusText}.`,
-      });
-    }
-
-    let upstreamJson;
-    try {
-      upstreamJson = JSON.parse(rawText);
-    } catch {
-      return sendJson(res, 502, {
-        error: 'Invalid upstream JSON',
-        detail: 'The upstream source did not return valid JSON.',
-      });
-    }
-
-    const payload = validatePayload(upstreamJson);
     return sendJson(res, 200, payload);
   } catch (error) {
-    if (error.name === 'AbortError') {
-      return sendJson(res, 504, {
-        error: 'Upstream timeout',
-        detail: `The upstream source did not respond within ${FETCH_TIMEOUT_MS}ms.`,
-      });
-    }
-
     return sendJson(res, 500, {
       error: 'Internal server error',
-      detail: error.message || 'Unknown error',
+      detail: error.message || 'Unknown error'
     });
   }
 }

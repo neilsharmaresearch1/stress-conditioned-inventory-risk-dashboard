@@ -366,6 +366,8 @@
     .live-bar[data-status="live"]   { color:var(--text-muted) }
     .live-status-txt { flex:1 }
     .live-ts { font-family:var(--mono);font-size:9px }
+    .live-src { font-family:var(--mono);font-size:9px;color:var(--text-faint);margin-left:6px;flex-shrink:0 }
+    .live-src-fail { color:var(--warn) }
   </style>
 </head>
 <body>
@@ -398,9 +400,9 @@
       </div>
       <span class="proto-badge">
         <svg width="7" height="7" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="3"/></svg>
-        DEMO PROTOTYPE
+        LIVE SIGNAL MODEL
       </span>
-      <span class="mock-label" id="dataSourceLabel">MOCKED OUTPUTS</span>
+      <span class="mock-label" id="dataSourceLabel">API-BACKED</span>
     </div>
   </header>
 
@@ -409,6 +411,7 @@
     <div class="live-dot"></div>
     <span class="live-status-txt" id="liveStatusTxt">Connecting to live data...</span>
     <span class="live-ts" id="liveTs"></span>
+    <span class="live-src" id="liveSrc"></span>
   </div>
 
   <!-- ── SIDEBAR ────────────────────────────────────────────────────────── -->
@@ -428,7 +431,7 @@
       </div>
 
       <div class="ctrl-group" id="stressDecompSection">
-        <div class="ctrl-label" style="margin-bottom:8px">Stress Components <span class="mock-label" style="font-size:8px;padding:1px 4px">illustrative</span></div>
+        <div class="ctrl-label" style="margin-bottom:8px">Stress Components <span class="mock-label" style="font-size:8px;padding:1px 4px">signal-mapped</span></div>
         <div class="stress-bar-row">
           <div class="stress-bar-label">Throughput</div>
           <div class="stress-bar-track"><div class="stress-bar-fill" id="sb-throughput"></div></div>
@@ -616,7 +619,7 @@
             <div class="chart-ttl">Days of Cover vs. Stockout Probability</div>
             <div class="chart-sub">Active curve highlighted · CI band shown · Target, selection, and min-feasible annotated</div>
           </div>
-          <span class="sim-note" id="simNote">Mocked outputs · N = 10,000 trials (Phase 1)</span>
+          <span class="sim-note" id="simNote">Live disruption signals · model-based risk estimates</span>
         </div>
         <div class="legend">
           <div class="leg-item"><div class="leg-dot" style="background:var(--ch-low)"></div>Low</div>
@@ -645,7 +648,7 @@
             <div class="assump-row"><span class="assump-key">Shortage model</span><span class="assump-val">Lost sales (unmet demand not backfilled)</span></div>
             <div class="assump-row"><span class="assump-key">Review period</span><span class="assump-val">Continuous (s, Q policy)</span></div>
             <div class="assump-row"><span class="assump-key">Cost frame</span><span class="assump-val">Holding cost + E[shortage] × penalty (no fixed order cost)</span></div>
-            <div class="assump-row"><span class="assump-key">Current status</span><span class="assump-val">All outputs are illustrative mocks</span></div>
+            <div class="assump-row"><span class="assump-key">Signal source</span><span class="assump-val">Live NWS/GA511 signals mapped to stress-conditioned risk estimates</span></div>
           </div>
         </div>
       </div>
@@ -1361,6 +1364,12 @@ function updateDashboard() {
   }, 100);
 }
 
+// ── LIVE-FETCH GUARD ────────────────────────────────────────────────────
+// Set true while applyPayload is running so slider/scenario handlers skip
+// the re-fetch they would normally trigger, preventing infinite loops.
+let _applyingPayload = false;
+let _sliderFetchTimer = null;
+
 // ── EVENT HANDLERS ───────────────────────────────────────────────────────
 document.getElementById('regimeGroup').addEventListener('click', e=>{
   const btn = e.target.closest('[data-regime]'); if(!btn) return;
@@ -1371,11 +1380,18 @@ document.getElementById('scenarioGroup').addEventListener('click', e=>{
   const btn = e.target.closest('[data-scenario]'); if(!btn) return;
   document.querySelectorAll('[data-scenario]').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active'); state.scenario = btn.dataset.scenario; updateDashboard();
+  if (!_applyingPayload) LiveData.fetchLatest(); // re-fetch with new scenario param
 });
+// Debounce slider re-fetches: update UI on every tick, but only hit the API
+// after the user stops dragging for 400 ms to avoid flooding the endpoint.
 document.getElementById('docsSlider').addEventListener('input', e=>{
   state.daysOfCover = +e.target.value;
   document.getElementById('docsVal').textContent = state.daysOfCover+'d';
   updateDashboard();
+  if (!_applyingPayload) {
+    clearTimeout(_sliderFetchTimer);
+    _sliderFetchTimer = setTimeout(() => LiveData.fetchLatest(), 400);
+  }
 });
 document.getElementById('targetSel').addEventListener('change', e=>{
   state.targetProb = +e.target.value; updateDashboard();
@@ -1421,8 +1437,18 @@ document.documentElement.setAttribute('data-theme', 'dark');
 ══════════════════════════════════════════════════════════════════════════ */
 const LiveData = (() => {
   // ── Constants ──────────────────────────────────────────────────────────
-  const ENDPOINT      = '/api/latest';
   const POLL_INTERVAL = 60_000; // ms
+
+  // ── buildEndpoint() ────────────────────────────────────────────────────
+  // Constructs the fetch URL from current user-controlled state so the
+  // backend can return scenario- and days-aware estimates.
+  function buildEndpoint() {
+    const params = new URLSearchParams({
+      days:     state.daysOfCover,
+      scenario: state.scenario
+    });
+    return '/api/latest?' + params.toString();
+  }
 
   // ── Private state ──────────────────────────────────────────────────────
   let lastSuccessTime = null;   // Date.now() of last successful fetch
@@ -1431,11 +1457,12 @@ const LiveData = (() => {
 
   // ── setStatus(status, message, isoTimestamp?) ──────────────────────────
   // Updates the live-bar strip. Gracefully no-ops if elements are missing.
-  function setStatus(status, message, isoTimestamp) {
-    const bar  = document.getElementById('liveBar');
-    const txt  = document.getElementById('liveStatusTxt');
-    const tsEl = document.getElementById('liveTs');
-    const lbl  = document.getElementById('dataSourceLabel');
+  function setStatus(status, message, isoTimestamp, sourceSummary) {
+    const bar    = document.getElementById('liveBar');
+    const txt    = document.getElementById('liveStatusTxt');
+    const tsEl   = document.getElementById('liveTs');
+    const lbl    = document.getElementById('dataSourceLabel');
+    const srcEl  = document.getElementById('liveSrc');
     if (!bar) return;
 
     bar.dataset.status = status;
@@ -1444,8 +1471,39 @@ const LiveData = (() => {
       ? 'Last updated ' + new Date(isoTimestamp).toLocaleTimeString()
       : '';
     if (lbl)  lbl.textContent  =
-      status === 'live'  ? 'LIVE'          :
-      status === 'stale' ? 'STALE'         : 'MOCKED OUTPUTS';
+      status === 'live'  ? 'API-BACKED'    :
+      status === 'stale' ? 'STALE'         : 'FALLBACK';
+
+    // Source summary — compact inline display in the live bar
+    if (srcEl && sourceSummary && typeof sourceSummary === 'object') {
+      const s = sourceSummary;
+      const parts = [];
+      // sources_used is an array from the API
+      if (Array.isArray(s.sources_used) && s.sources_used.length) {
+        parts.push('Sources: ' + s.sources_used.join(', '));
+      } else if (typeof s.sources_used === 'string' && s.sources_used) {
+        parts.push('Sources: ' + s.sources_used);
+      }
+      if (typeof s.weather_alert_count === 'number') parts.push('Weather alerts: ' + s.weather_alert_count);
+      // traffic: show n/a if disabled, actual count if enabled
+      if (s.traffic_source_enabled === false) {
+        parts.push('Traffic: n/a');
+      } else if (typeof s.traffic_event_count === 'number') {
+        parts.push('Traffic events: ' + s.traffic_event_count);
+      }
+      if (typeof s.weather_score === 'number') parts.push('Weather score: ' + s.weather_score.toFixed(3));
+      if (typeof s.traffic_score === 'number' && s.traffic_source_enabled !== false) {
+        parts.push('Traffic score: ' + s.traffic_score.toFixed(3));
+      }
+      if (typeof s.baseline_port_score === 'number') parts.push('Port baseline: ' + s.baseline_port_score.toFixed(3));
+      const failTxt = Array.isArray(s.source_failures) && s.source_failures.length
+        ? ' · Source issue: ' + s.source_failures.join(', ')
+        : '';
+      srcEl.textContent = parts.join(' · ') + failTxt;
+      srcEl.className = 'live-src' + (failTxt ? ' live-src-fail' : '');
+    } else if (srcEl) {
+      srcEl.textContent = '';
+    }
   }
 
   // ── applyPayload(payload) ──────────────────────────────────────────────
@@ -1468,6 +1526,16 @@ const LiveData = (() => {
       }
     }
 
+    // Sync scenario button if the live source confirms/changes it
+    if (d.scenario && d.scenario !== state.scenario) {
+      const btn = document.querySelector('[data-scenario="' + d.scenario + '"]');
+      if (btn) {
+        document.querySelectorAll('[data-scenario]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.scenario = d.scenario;
+      }
+    }
+
     // Sync days-of-cover slider if live value is valid
     if (typeof d.selected_days_of_cover === 'number' && DAYS.includes(d.selected_days_of_cover)) {
       state.daysOfCover = d.selected_days_of_cover;
@@ -1477,12 +1545,16 @@ const LiveData = (() => {
       if (slVal)  slVal.textContent = d.selected_days_of_cover + 'd';
     }
 
-    // Recompute the full dashboard with updated state
+    // Recompute the full dashboard with updated state.
+    // _applyingPayload guard prevents slider/scenario handlers from
+    // triggering a recursive fetchLatest() during this update.
+    _applyingPayload = true;
     updateDashboard();
+    _applyingPayload = false;
 
     // Overlay specific live KPI values after the dashboard fade-in completes.
-    // These values come from the real model (Phase 1) or the static stub
-    // (Phase 0) and take precedence over the embedded MODEL data.
+    // These values come from the real model and take precedence over the
+    // embedded MODEL data.
     setTimeout(() => {
       // stockout_probability is DECIMAL — convert to percent for display
       if (typeof d.stockout_probability === 'number') {
@@ -1492,6 +1564,11 @@ const LiveData = (() => {
           document.getElementById('kc-stockout').textContent =
             '95% CI: ' + (d.stockout_ci_low * 100).toFixed(2) +
             '\u2013'   + (d.stockout_ci_high * 100).toFixed(2) + '%';
+          // Also overlay the rec panel CI text
+          document.getElementById('rmSelStkout').textContent =
+            'P(stockout) = ' + pct.toFixed(2) + '% [' +
+            (d.stockout_ci_low * 100).toFixed(2) + '\u2013' +
+            (d.stockout_ci_high * 100).toFixed(2) + '%]';
         }
       }
       if (typeof d.expected_shortage === 'number') {
@@ -1503,12 +1580,24 @@ const LiveData = (() => {
       if (typeof d.coverage_margin === 'number') {
         const m = d.coverage_margin;
         document.getElementById('kv-margin').textContent = (m >= 0 ? '+' : '') + m + 'd';
+        document.getElementById('rmMargin').textContent = (m >= 0 ? '+' : '') + m + ' days';
+        document.getElementById('rmMarginTxt').textContent =
+          m < 0 ? 'below minimum — policy fails'
+               : m === 0 ? 'at minimum threshold'
+               : m + 'd buffer above minimum';
       }
       if (typeof d.policy_cost_index === 'number') {
         document.getElementById('kv-cost').textContent = d.policy_cost_index.toFixed(2);
       }
+      // recommended_days drives the big rec number; fall back to minimum_feasible_days
+      const recDays = typeof d.recommended_days === 'number' ? d.recommended_days
+                    : typeof d.minimum_feasible_days === 'number' ? d.minimum_feasible_days
+                    : null;
+      if (recDays !== null) {
+        document.getElementById('recNum').textContent = recDays;
+      }
       if (typeof d.minimum_feasible_days === 'number') {
-        document.getElementById('recNum').textContent = d.minimum_feasible_days;
+        document.getElementById('rmMin').textContent = d.minimum_feasible_days + ' days';
       }
       if (typeof d.operational_takeaway === 'string' && d.operational_takeaway) {
         document.getElementById('decAction').textContent = d.operational_takeaway;
@@ -1522,7 +1611,7 @@ const LiveData = (() => {
   // result in a graceful status update.
   async function fetchLiveData() {
     try {
-      const res = await fetch(ENDPOINT, { cache: 'no-store' });
+      const res = await fetch(buildEndpoint(), { cache: 'no-store' });
 
       if (!res.ok) {
         throw new Error('HTTP ' + res.status);
@@ -1537,7 +1626,7 @@ const LiveData = (() => {
 
       lastPayload     = d;
       lastSuccessTime = Date.now();
-      setStatus('live', 'Live data active', d.timestamp);
+      setStatus('live', 'Live data active', d.timestamp, d.source_summary);
       applyPayload(d);
 
     } catch (err) {
@@ -1563,9 +1652,12 @@ const LiveData = (() => {
     pollTimer = setInterval(fetchLiveData, POLL_INTERVAL);
   }
 
-  // Public API
-  return { startPolling };
+  // Public API — fetchLatest exposed so control handlers can re-fetch
+  // immediately when days or scenario changes without waiting for the poll.
+  return { startPolling, fetchLatest: fetchLiveData };
 })();
+
+// (guard flag declared above, before event handlers)
 
 
 // ── INIT ─────────────────────────────────────────────────────────────────

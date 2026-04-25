@@ -1,7 +1,7 @@
 # Stress Conditioned Inventory Risk Dashboard
 
 **Live demo:** https://stress-conditioned-inventory-risk-dashboard-8p6jb8f8l.vercel.app/  
-**Author:** Neil Sharma Gokul
+**Author:** Neil Sharma 
 
 ## Executive Summary
 

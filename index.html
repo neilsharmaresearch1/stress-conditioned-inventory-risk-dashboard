@@ -440,6 +440,16 @@
       border: 1px solid var(--border); background: var(--surface-2); color: var(--text-faint);
     }
 
+    /* Ticker view toggle buttons */
+    .ticker-view-btn {
+      font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+      padding: 2px 7px; border-radius: 3px; border: 1px solid var(--border);
+      background: transparent; color: var(--text-faint); cursor: pointer;
+      transition: all var(--tr);
+    }
+    .ticker-view-btn:hover { background: var(--surface-2); color: var(--text-muted) }
+    .ticker-view-btn.active { background: var(--primary-bg); color: var(--primary); border-color: rgba(63,168,184,.3) }
+
     .ticker-feed {
       flex: 1;
       overflow-y: auto;
@@ -918,6 +928,10 @@
         <div class="ticker-panel">
           <div class="panel-hdr">
             <div class="panel-title">Signal Log</div>
+            <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
+              <button id="tickerViewExec" class="ticker-view-btn active" onclick="setTickerView('exec')" title="Show policy, risk, and mode events only">Executive</button>
+              <button id="tickerViewTech" class="ticker-view-btn"         onclick="setTickerView('tech')" title="Show all diagnostic entries">Technical</button>
+            </div>
             <div class="panel-badge" id="tickerCount">0 entries</div>
           </div>
           <div class="ticker-feed" id="tickerFeed">
@@ -1386,6 +1400,17 @@ function setMode(mode) {
 // ── TICKER ────────────────────────────────────────────────────────────────
 const MAX_TICKS = 14;
 const tickerEntries = [];
+let _tickerView = 'exec'; // 'exec' | 'tech'
+const EXEC_TAGS = new Set(['POLICY','RISK','MODE','WARN']);
+
+function setTickerView(view) {
+  _tickerView = view;
+  const execBtn = document.getElementById('tickerViewExec');
+  const techBtn = document.getElementById('tickerViewTech');
+  if (execBtn) execBtn.classList.toggle('active', view === 'exec');
+  if (techBtn) techBtn.classList.toggle('active', view === 'tech');
+  renderTicker();
+}
 
 function nowHHMM() {
   const d = new Date(), h = d.getHours(), m = d.getMinutes();
@@ -1406,13 +1431,18 @@ function renderTicker() {
   const feed = document.getElementById('tickerFeed');
   const countEl = document.getElementById('tickerCount');
   if (!feed) return;
-  feed.innerHTML = tickerEntries.map(e => `
+  const visible = _tickerView === 'exec'
+    ? tickerEntries.filter(e => EXEC_TAGS.has(e.tag))
+    : tickerEntries;
+  feed.innerHTML = visible.length
+    ? visible.map(e => `
     <div class="tick">
       <span class="tick-ts">${e.ts}</span>
       <span class="tick-tag ${e.tag}">${e.tag}</span>
       <span class="tick-msg">${e.msg}</span>
-    </div>`).join('');
-  if (countEl) countEl.textContent = tickerEntries.length + ' entries';
+    </div>`).join('')
+    : `<div class="tick"><span class="tick-ts">—</span><span class="tick-tag SOURCE">SOURCE</span><span class="tick-msg">Waiting for first live fetch…</span></div>`;
+  if (countEl) countEl.textContent = visible.length + ' of ' + tickerEntries.length + ' entries';
 }
 function buildTicksFromPayload(d) {
   const ss = d.source_summary || {};
@@ -1463,7 +1493,7 @@ function updateHero(score, regime, recDays, stockPct, stockLo, stockHi, scenario
     ciEl.textContent = `95% CI: ${stockLo.toFixed(2)}–${stockHi.toFixed(2)}%`;
 
   const rdEl = document.getElementById('hkpiRecDays');
-  if (rdEl) rdEl.textContent = recDays !== null ? recDays + 'd' : '—';
+  if (rdEl) rdEl.textContent = recDays !== null ? recDays + 'd' : '6d+';
 
   const scEl = document.getElementById('hkpiScenario');
   if (scEl) scEl.textContent = { baseline:'Baseline', safety:'Safety Stock', tail:'Tail Mit.' }[scenario] || scenario || '—';
@@ -1728,20 +1758,20 @@ function updateDashboard() {
 
   setTimeout(() => {
     // Rec panel
-    document.getElementById('recNum').textContent = minDays || '—';
-    document.getElementById('recCI').textContent  = minDays ? `(${regime} stress, ${scenario})` : '(no feasible policy in range)';
+    document.getElementById('recNum').textContent = minDays !== null ? minDays : '6d+';
+    document.getElementById('recCI').textContent  = minDays ? `(${regime} stress, ${scenario})` : '(above 6d range — strengthen mitigation)';
 
     // Pass/fail (authoritative: sp vs targetProb)
     applyPassFail(meetsTarget, regime);
 
     document.getElementById('rmSel').textContent      = daysOfCover + ' days';
     document.getElementById('rmSelStkout').textContent = `P(stockout) = ${sp.toFixed(2)}% [${spLo.toFixed(2)}–${spHi.toFixed(2)}%]`;
-    document.getElementById('rmMin').textContent       = minDays ? minDays + ' days' : 'N/A';
-    document.getElementById('rmMinCI').textContent     = minDays ? `≤ ${targetProb}% constraint` : 'target unachievable';
+    document.getElementById('rmMin').textContent       = minDays !== null ? minDays + ' days' : '> 6 days';
+    document.getElementById('rmMinCI').textContent     = minDays ? `≤ ${targetProb}% constraint` : 'exceeds modeled range';
     document.getElementById('rmOpt').textContent       = optDays ? optDays + ' days' : 'N/A';
     document.getElementById('rmOptCI').textContent     = optCost ? `cost index: ${optCost.toFixed(2)}` : '—';
-    document.getElementById('rmMargin').textContent    = coverageMargin !== null ? (coverageMargin >= 0 ? '+' : '') + coverageMargin + ' days' : '—';
-    document.getElementById('rmMarginTxt').textContent = coverageMargin === null ? 'no feasible baseline'
+    document.getElementById('rmMargin').textContent    = coverageMargin !== null ? (coverageMargin >= 0 ? '+' : '') + coverageMargin + ' days' : 'n/a';
+    document.getElementById('rmMarginTxt').textContent = coverageMargin === null ? 'no policy in 2–6d range meets target'
       : coverageMargin < 0 ? 'below minimum — fails'
       : coverageMargin === 0 ? 'at minimum threshold'
       : coverageMargin + 'd buffer';
@@ -1908,35 +1938,65 @@ const LiveData = (() => {
           const rmM  = document.getElementById('rmMargin');    if (rmM)  rmM.textContent  = (m >= 0 ? '+' : '') + m + ' days';
           const rmMT = document.getElementById('rmMarginTxt'); if (rmMT) rmMT.textContent = m < 0 ? 'below minimum — fails' : m === 0 ? 'at minimum threshold' : m + 'd buffer';
         }
-        if (typeof d.recommended_days === 'number')        { const rn = document.getElementById('recNum'); if (rn) rn.textContent = d.recommended_days; }
-        else if (typeof d.minimum_feasible_days === 'number') { const rn = document.getElementById('recNum'); if (rn) rn.textContent = d.minimum_feasible_days; }
-        if (typeof d.minimum_feasible_days === 'number')   { const rm = document.getElementById('rmMin');  if (rm) rm.textContent = d.minimum_feasible_days + ' days'; }
-        if (typeof d.operational_takeaway === 'string' && d.operational_takeaway) {
-          const da = document.getElementById('decAction'); if (da) da.textContent = d.operational_takeaway;
-        }
-        // Hero full overlay
+        { const rn = document.getElementById('recNum');
+          if (rn) rn.textContent = d.recommended_days !== null && d.recommended_days !== undefined ? d.recommended_days
+            : d.minimum_feasible_days !== null && d.minimum_feasible_days !== undefined ? d.minimum_feasible_days : '6d+'; }
+        { const rm = document.getElementById('rmMin');
+          if (rm) rm.textContent = (d.minimum_feasible_days !== null && d.minimum_feasible_days !== undefined) ? d.minimum_feasible_days + ' days' : '> 6 days'; }
+        // Hero full overlay — decision summary + takeaway handled below with unified API values
         const sp2 = typeof d.stockout_probability === 'number' ? d.stockout_probability * 100 : null;
         const sl2 = typeof d.stockout_ci_low  === 'number' ? d.stockout_ci_low  * 100 : null;
         const sh2 = typeof d.stockout_ci_high === 'number' ? d.stockout_ci_high * 100 : null;
-        updateHero(
-          typeof d.stress_score === 'number' ? d.stress_score : STRESS_DATA[state.regime].score,
-          d.regime || state.regime,
-          typeof d.recommended_days === 'number' ? d.recommended_days : (typeof d.minimum_feasible_days === 'number' ? d.minimum_feasible_days : null),
-          sp2, sl2, sh2, d.scenario || state.scenario, d.timestamp, 'live'
-        );
-        // Exec summary
-        const minD2 = typeof d.minimum_feasible_days === 'number' ? d.minimum_feasible_days
-          : getMinFeasible(state.regime, state.scenario, state.targetProb);
-        const sp2pct = sp2 !== null ? sp2 : getCurve(state.regime, state.scenario)[DAYS.indexOf(state.daysOfCover)][0];
-        const exec = document.getElementById('execSummary');
-        if (exec) exec.innerHTML = buildExecSummary(d.regime || state.regime, d.scenario || state.scenario, state.daysOfCover, sp2pct, minD2, false);
+        const liveRegime   = d.regime || state.regime;
+        const liveScenario = d.scenario || state.scenario;
+        const liveScore    = typeof d.stress_score === 'number' ? d.stress_score : STRESS_DATA[liveRegime].score;
+        const minD2 = (d.minimum_feasible_days !== null && d.minimum_feasible_days !== undefined)
+          ? d.minimum_feasible_days
+          : getMinFeasible(liveRegime, liveScenario, state.targetProb);
+        const recD2 = (d.recommended_days !== null && d.recommended_days !== undefined) ? d.recommended_days : minD2;
+        const sp2pct = sp2 !== null ? sp2 : getCurve(liveRegime, liveScenario)[DAYS.indexOf(state.daysOfCover)][0];
+        const sl2pct = sl2 !== null ? sl2 : sp2pct;
+        const sh2pct = sh2 !== null ? sh2 : sp2pct;
+        const covM2  = minD2 !== null ? state.daysOfCover - minD2 : null;
+        const metT2  = sp2pct <= state.targetProb;
 
-        // Policy ideas
-        const covM2 = minD2 ? state.daysOfCover - minD2 : null;
-        const metT2 = sp2 !== null ? sp2 <= state.targetProb : false;
-        const ideas = buildPolicyIdeas(d.regime || state.regime, d.scenario || state.scenario, minD2, state.daysOfCover, metT2, covM2,
-          typeof d.stress_score === 'number' ? d.stress_score : STRESS_DATA[state.regime].score);
-        renderPolicyIdeas(ideas, d.scenario || state.scenario);
+        updateHero(liveScore, liveRegime, recD2, sp2, sl2, sh2, liveScenario, d.timestamp, 'live');
+
+        // Exec summary — use API values as source of truth
+        const exec = document.getElementById('execSummary');
+        if (exec) exec.innerHTML = buildExecSummary(liveRegime, liveScenario, state.daysOfCover, sp2pct, minD2, false);
+
+        // Decision summary — rebuild bullets from API values so they match hero
+        const apiOutputs = {
+          regime: liveRegime, scenario: liveScenario, daysOfCover: state.daysOfCover,
+          targetProb: state.targetProb, meetsTarget: metT2,
+          selectedProb: sp2pct, selectedProbLo: sl2pct, selectedProbHi: sh2pct,
+          minDays: minD2, optDays: minD2, coverageMargin: covM2,
+          shortage: typeof d.expected_shortage === 'number' ? d.expected_shortage : 0,
+          optCost: typeof d.policy_cost_index === 'number' ? d.policy_cost_index : null,
+          holdingCost: state.holdingCost, shortageCost: state.shortageCost
+        };
+        const apiBullets = buildBullets(apiOutputs);
+        const db1e = document.getElementById('db1'), db2e = document.getElementById('db2'),
+              db3e = document.getElementById('db3'), db4e = document.getElementById('db4'),
+              dae  = document.getElementById('decAction');
+        if (db1e) db1e.textContent = apiBullets.b1;
+        if (db2e) db2e.textContent = apiBullets.b2;
+        if (db3e) db3e.textContent = apiBullets.b3;
+        if (db4e) db4e.textContent = apiBullets.b4;
+        // Prefer operational_takeaway from API; fall back to built bullets
+        const takeaway = (typeof d.operational_takeaway === 'string' && d.operational_takeaway)
+          ? d.operational_takeaway : apiBullets.action;
+        if (dae) dae.textContent = takeaway;
+        // Also patch narrative to match API values
+        const recNarEl = document.getElementById('recNarrative');
+        if (recNarEl) recNarEl.textContent = buildNarrative(apiOutputs);
+        // Pass/fail with API values
+        applyPassFail(metT2, liveRegime);
+
+        // Policy ideas — use API values
+        const ideas = buildPolicyIdeas(liveRegime, liveScenario, minD2, state.daysOfCover, metT2, covM2, liveScore);
+        renderPolicyIdeas(ideas, liveScenario);
       }
 
       // Always update drivers (live source layer — shown in both modes)

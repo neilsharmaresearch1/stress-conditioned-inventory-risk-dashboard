@@ -735,10 +735,10 @@
           API controlled
         </div>
         <div class="seg c2" id="regimeGroup">
-          <button class="seg-btn r-low"        data-regime="low"     data-testid="btn-low">Low</button>
-          <button class="seg-btn r-norm active" data-regime="normal"  data-testid="btn-normal">Normal</button>
-          <button class="seg-btn r-hi"          data-regime="high"    data-testid="btn-high">High</button>
-          <button class="seg-btn r-ex"          data-regime="extreme" data-testid="btn-extreme">Extreme</button>
+          <button disabled aria-disabled="true" class="seg-btn r-low"        data-regime="low"     data-testid="btn-low">Low</button>
+          <button disabled aria-disabled="true" class="seg-btn r-norm active" data-regime="normal"  data-testid="btn-normal">Normal</button>
+          <button disabled aria-disabled="true" class="seg-btn r-hi"          data-regime="high"    data-testid="btn-high">High</button>
+          <button disabled aria-disabled="true" class="seg-btn r-ex"          data-regime="extreme" data-testid="btn-extreme">Extreme</button>
         </div>
       </div>
 
@@ -898,6 +898,7 @@
     </div>
 
     <!-- HOW TO READ THIS -->
+      <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:none;color:var(--text);padding:7px 18px 0;">How to read this</div>
     <div class="how-to-bar">
       <div class="how-to-item">
         <div class="how-to-dot"></div>
@@ -1745,7 +1746,7 @@ function updateDashboard() {
   const meetsTarget = sp <= targetProb;
   const minDays  = getMinFeasible(regime, scenario, targetProb);
   const { days:optDays, cost:optCost } = getOptimalFeasible(regime, scenario, targetProb, holdingCost, shortageCost);
-  const coverageMargin = minDays ? daysOfCover - minDays : null;
+  const coverageMargin = minDays != null ? daysOfCover - minDays : null;
   const selectedCost   = estimateCost(daysOfCover, scenario, regime, holdingCost, shortageCost);
   const sd = STRESS_DATA[regime];
 
@@ -1906,7 +1907,7 @@ const LiveData = (() => {
     // Only update displayed regime if in live mode
     if (_mode === 'live') {
       if (d.regime && d.regime !== state.regime) state.regime = d.regime;
-      if (d.scenario && d.scenario !== state.scenario) {
+      if (d.scenario) {
         const btn = document.querySelector('[data-scenario="' + d.scenario + '"]');
         if (btn) { document.querySelectorAll('[data-scenario]').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
         state.scenario = d.scenario;

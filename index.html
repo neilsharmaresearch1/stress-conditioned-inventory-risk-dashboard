@@ -149,6 +149,8 @@
     .ctrl-group  { margin-bottom: 10px }
     .ctrl-label  { display: block; font-size: 11px; font-weight: 500; color: var(--text-muted); margin-bottom: 4px }
     .sb-divider  { height: 1px; background: var(--border); margin: 2px 12px 12px }
+    details > summary::-webkit-details-marker { display:none }
+    details[open] > summary span[aria-hidden="true"] { transform: rotate(180deg); }
 
     /* Mode toggle */
     .mode-toggle-wrap {
@@ -688,7 +690,7 @@
       </svg>
       <div>
         <div class="tl-title">Live Risk Intelligence · Savannah → Atlanta Replenishment Lane</div>
-        <div class="tl-sub">Live disruption signals mapped into model-based stockout risk estimates</div>
+        <div class="tl-sub">This tool estimates whether a grocery replenishment plan has enough inventory coverage when weather, traffic, or port conditions create delivery risk.</div>
       </div>
     </div>
     <div class="ta">
@@ -712,7 +714,7 @@
         <div class="mode-toggle-lbl" data-tip="Live Signal uses real API data to set stress. What-if lets you test a hypothetical scenario.">Mode</div>
         <div class="mode-toggle">
           <button class="mode-btn live-mode active" id="btnLiveMode" onclick="setMode('live')">Live Signal</button>
-          <button class="mode-btn wi-mode"          id="btnWiMode"   onclick="setMode('whatif')">What-if Test</button>
+          <button class="mode-btn wi-mode" id="btnWiMode" onclick="setMode('whatif')">What-if Test</button>
         </div>
       </div>
     </div>
@@ -720,29 +722,64 @@
     <div class="sb-divider"></div>
 
     <div class="sb-sect">
-      <div class="sb-label">Stress Regime</div>
+      <div class="sb-label">Policy Inputs</div>
+      <div class="ctrl-group">
+        <label class="ctrl-label" for="docsSlider" data-tip="How many days of inventory you currently hold. Moving this slider calls the live API with the updated value.">Current Days of Cover</label>
+        <div class="sl-row">
+          <input type="range" id="docsSlider" min="2" max="6" step="1" value="3" data-testid="slider-doc" />
+          <span class="sl-val" id="docsVal">3d</span>
+        </div>
+      </div>
+      <div class="ctrl-group">
+        <label class="ctrl-label" for="targetSel" data-tip="Maximum acceptable chance that demand exceeds inventory during replenishment.">Target running-out probability</label>
+        <select id="targetSel" class="ctrl-sel" data-testid="select-target">
+          <option value="1">≤ 1%</option>
+          <option value="2" selected>≤ 2%</option>
+          <option value="5">≤ 5%</option>
+          <option value="10">≤ 10%</option>
+        </select>
+        <div class="ctrl-note">The target is the maximum running-out risk you are willing to accept.</div>
+        <div class="ctrl-note">A 2% target means the plan should fail no more than about 2 times out of 100 model runs.</div>
+      </div>
+      <div class="ctrl-group">
+        <label class="ctrl-label" data-tip="Baseline = standard assumptions. Safety stock = adds buffer. Tail mitigation = targets worst-case tail risk.">Scenario</label>
+        <div class="seg c3" id="scenarioGroup">
+          <button class="seg-btn sc-bl active" data-scenario="baseline" data-testid="btn-baseline">Baseline</button>
+          <button class="seg-btn sc-ss" data-scenario="safety" data-testid="btn-safety">Saf. Stock</button>
+          <button class="seg-btn sc-tm" data-scenario="tail" data-testid="btn-tail">Tail Mit.</button>
+        </div>
+        <div class="ctrl-note">Baseline: Normal plan with no extra protection.</div>
+        <div class="ctrl-note">Safety Stock: Adds extra inventory buffer.</div>
+        <div class="ctrl-note">Tail Mitigation: Tests reducing rare worst-case delay risk.</div>
+      </div>
+    </div>
 
-      <!-- Regime label row -->
+    <div class="sb-divider"></div>
+
+    <details class="sb-sect" id="analystDrawer" style="padding-top:4px">
+      <summary style="list-style:none;cursor:pointer;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <span>Analyst Controls <span style="font-weight:500;letter-spacing:0;text-transform:none;color:var(--text-faint)">— advanced assumptions and scenario controls</span></span>
+        <span aria-hidden="true" style="font-size:12px;color:var(--text-faint);transition:transform var(--tr);">▾</span>
+      </summary>
+
+      <div class="sb-label">Disruption level</div>
       <div class="regime-ctrl-label">
-        <label class="ctrl-label" data-tip="The stress level applied to the stockout model. In Live mode this is set by the API.">Live source regime</label>
+        <label class="ctrl-label" data-tip="The stress level applied to the stockout model. In Live mode this is set by the API.">Active regime</label>
         <span class="regime-mode-tag api" id="regimeModeTag">API controlled</span>
       </div>
-
-      <!-- Regime buttons + lock overlay -->
       <div class="regime-ctrl-wrap" style="margin-bottom:8px">
         <div class="regime-lock-overlay visible" id="regimeLockOverlay">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:5px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           API controlled
         </div>
         <div class="seg c2" id="regimeGroup">
-          <button disabled aria-disabled="true" class="seg-btn r-low"        data-regime="low"     data-testid="btn-low">Low</button>
-          <button disabled aria-disabled="true" class="seg-btn r-norm active" data-regime="normal"  data-testid="btn-normal">Normal</button>
-          <button disabled aria-disabled="true" class="seg-btn r-hi"          data-regime="high"    data-testid="btn-high">High</button>
-          <button disabled aria-disabled="true" class="seg-btn r-ex"          data-regime="extreme" data-testid="btn-extreme">Extreme</button>
+          <button disabled aria-disabled="true" class="seg-btn r-low" data-regime="low" data-testid="btn-low">Low</button>
+          <button disabled aria-disabled="true" class="seg-btn r-norm active" data-regime="normal" data-testid="btn-normal">Normal</button>
+          <button disabled aria-disabled="true" class="seg-btn r-hi" data-regime="high" data-testid="btn-high">High</button>
+          <button disabled aria-disabled="true" class="seg-btn r-ex" data-regime="extreme" data-testid="btn-extreme">Extreme</button>
         </div>
       </div>
 
-      <!-- Signal components -->
       <div class="ctrl-group" id="stressDecompSection">
         <div class="ctrl-label" style="margin-bottom:8px">
           Signal Components
@@ -769,64 +806,33 @@
           <div class="stress-bar-val" id="sv-composite" style="font-weight:600"></div>
         </div>
       </div>
-    </div>
 
-    <div class="sb-divider"></div>
+      <div class="sb-divider"></div>
 
-    <div class="sb-sect">
-      <div class="sb-label">Policy Inputs</div>
-      <div class="ctrl-group">
-        <label class="ctrl-label" for="docsSlider" data-tip="How many days of inventory you currently hold. Moving this slider calls the live API with the updated value.">Current Days of Cover</label>
-        <div class="sl-row">
-          <input type="range" id="docsSlider" min="2" max="6" step="1" value="3" data-testid="slider-doc" />
-          <span class="sl-val" id="docsVal">3d</span>
+      <div class="sb-sect" style="padding:0;margin-bottom:12px">
+        <div class="sb-label">Local Cost Frame</div>
+        <div class="cost-row">
+          <div class="cost-input-wrap">
+            <label for="holdingCost">Holding ($/unit-day)</label>
+            <input type="number" id="holdingCost" class="cost-input" value="0.80" min="0.1" max="50" step="0.1" data-testid="input-holding" />
+          </div>
+          <div class="cost-input-wrap">
+            <label for="shortageCost">Shortage ($/unit)</label>
+            <input type="number" id="shortageCost" class="cost-input" value="18" min="1" max="500" step="1" data-testid="input-shortage" />
+          </div>
+        </div>
+        <div class="ctrl-note">Cost inputs affect local comparison estimates. Live API policy cost index is model-based.</div>
+      </div>
+
+      <div class="sb-divider"></div>
+
+      <div class="sb-sect" style="padding:0;margin-bottom:0">
+        <div class="sb-label" style="color:var(--text-faint)">Advanced — Phase 1</div>
+        <div style="font-size:11px;color:var(--text-faint);line-height:1.5">
+          Live stress index feed, demand distribution fitting, multi-SKU scope, lead-time distribution source, and Monte Carlo run configuration will be available when the simulation engine is connected.
         </div>
       </div>
-      <div class="ctrl-group">
-        <label class="ctrl-label" for="targetSel" data-tip="Maximum acceptable chance that demand exceeds inventory during replenishment.">Target Stockout Probability</label>
-        <select id="targetSel" class="ctrl-sel" data-testid="select-target">
-          <option value="1">≤ 1%</option>
-          <option value="2" selected>≤ 2%</option>
-          <option value="5">≤ 5%</option>
-          <option value="10">≤ 10%</option>
-        </select>
-        <div class="ctrl-note">Live API recommendation uses 2% service target.</div>
-      </div>
-      <div class="ctrl-group">
-        <label class="ctrl-label" data-tip="Baseline = standard assumptions. Safety stock = adds buffer. Tail mitigation = targets worst-case tail risk.">Scenario</label>
-        <div class="seg c3" id="scenarioGroup">
-          <button class="seg-btn sc-bl active" data-scenario="baseline" data-testid="btn-baseline">Baseline</button>
-          <button class="seg-btn sc-ss"        data-scenario="safety"   data-testid="btn-safety">Saf. Stock</button>
-          <button class="seg-btn sc-tm"        data-scenario="tail"     data-testid="btn-tail">Tail Mit.</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="sb-divider"></div>
-
-    <div class="sb-sect">
-      <div class="sb-label">Local Cost Frame</div>
-      <div class="cost-row">
-        <div class="cost-input-wrap">
-          <label for="holdingCost">Holding ($/unit-day)</label>
-          <input type="number" id="holdingCost" class="cost-input" value="0.80" min="0.1" max="50" step="0.1" data-testid="input-holding" />
-        </div>
-        <div class="cost-input-wrap">
-          <label for="shortageCost">Shortage ($/unit)</label>
-          <input type="number" id="shortageCost" class="cost-input" value="18" min="1" max="500" step="1" data-testid="input-shortage" />
-        </div>
-      </div>
-      <div class="ctrl-note">Cost inputs affect local comparison estimates. Live API policy cost index is model-based.</div>
-    </div>
-
-    <div class="sb-divider"></div>
-
-    <div class="sb-sect">
-      <div class="sb-label" style="color:var(--text-faint)">Advanced — Phase 1</div>
-      <div style="font-size:11px;color:var(--text-faint);line-height:1.5">
-        Live stress index feed, demand distribution fitting, multi-SKU scope, lead-time distribution source, and Monte Carlo run configuration will be available when the simulation engine is connected.
-      </div>
-    </div>
+    </details>
 
   </aside>
 
@@ -848,19 +854,19 @@
       <div id="operatorStatusPill" style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.08);color:#fff;">Status</div>
       <div style="display:flex;flex-direction:column;gap:2px;min-width:260px;flex:1;">
         <div id="operatorActionTitle" style="font-size:1.1rem;font-weight:700;color:var(--text);letter-spacing:-.02em;">Loading recommendation…</div>
-        <div id="operatorActionSub" style="font-size:12px;color:#c8c8c8;line-height:1.5;">Waiting for live inventory risk estimate.</div>
+        <div id="operatorActionSub" style="font-size:12px;color:#c8c8c8;line-height:1.5;">Waiting for live inventory risk estimate.</div><div id="operatorModeExplain" style="font-size:11px;color:var(--text-faint);line-height:1.5;">Live mode uses current data sources to set the disruption level.</div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:10px;min-width:320px;flex:1;">
         <div style="padding:8px 10px;background:#131313;border:1px solid var(--divider);border-radius:6px;">
-          <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);">Chance of running out</div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);">Chance of running out</div><div style="font-size:10px;color:var(--text-faint);line-height:1.4;margin-top:4px;">Estimated chance that demand exceeds available stock before replenishment arrives.</div>
           <div id="operatorRiskCompare" style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);margin-top:3px;">—</div>
         </div>
         <div style="padding:8px 10px;background:#131313;border:1px solid var(--divider);border-radius:6px;">
-          <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);">Days of stock you need</div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);">Days of stock you need</div><div style="font-size:10px;color:var(--text-faint);line-height:1.4;margin-top:4px;">The minimum coverage level the model recommends to stay under the risk target.</div>
           <div id="operatorCoverageCompare" style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);margin-top:3px;">—</div>
         </div>
         <div style="padding:8px 10px;background:#131313;border:1px solid var(--divider);border-radius:6px;">
-          <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);">Can I trust this estimate?</div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);">Can I trust this estimate?</div><div style="font-size:10px;color:var(--text-faint);line-height:1.4;margin-top:4px;">How complete the live data picture is right now.</div>
           <div id="operatorTrustCompare" style="font-size:13px;font-weight:700;color:var(--text);margin-top:3px;">—</div>
         </div>
       </div>
@@ -915,7 +921,34 @@
       </div>
     </div>
 
-    <!-- CURRENT READOUT (executive summary) -->
+        <div style="display:grid;grid-template-columns:1.15fr .95fr;gap:12px;padding:12px 16px 0;">
+      <div class="card" style="min-height:auto;">
+        <div class="panel-hdr"><div class="panel-title">What this app does</div></div>
+        <div class="card-body" style="font-size:11px;color:var(--text-muted);line-height:1.6;">
+          <div style="margin-bottom:8px;color:var(--text-faint)">The Savannah to Atlanta delivery route represents a replenishment route from port and distribution activity near Savannah toward demand centers around Atlanta.</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div>• It checks live disruption signals such as weather alerts.</div>
+            <div>• It estimates the chance a selected inventory plan runs out before the next replenishment.</div>
+            <div>• It recommends how many days of stock are needed to stay below the risk target.</div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="min-height:auto;">
+        <div class="panel-hdr"><div class="panel-title">How to use this</div></div>
+        <div class="card-body" style="font-size:11px;color:var(--text-muted);line-height:1.6;display:flex;flex-direction:column;gap:6px;">
+          <div>1. Choose how many days of stock you currently plan to hold.</div>
+          <div>2. Pick a scenario, such as baseline, safety stock, or tail mitigation.</div>
+          <div>3. Check whether the app says the plan meets the target or needs more coverage.</div>
+          <div style="margin-top:4px;color:var(--text-faint)">For example, if the current plan has 3 days of stock but the app recommends 5, the plan is 2 days short.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:10px 16px 0;">
+      <div class="method-note" style="margin:0;">This app does not directly track store shelves or real grocery inventory. It estimates risk using disruption signals and a model.</div>
+    </div>
+
+<!-- CURRENT READOUT (executive summary) -->
     <div class="readout-bar">
       <div class="readout-title">Current Readout</div>
       <span id="execSummary">Connecting to live data feed…</span>
@@ -943,7 +976,7 @@
 
       <!-- Methodology note -->
       <div class="method-note">
-        <strong>Note:</strong> Live data does not directly measure grocery stockouts. They measure disruption signals such as weather and port conditions. The model uses those signals to estimate inventory risk on the Savannah → Atlanta replenishment lane.
+        <strong>Note:</strong> Live data sources do not directly measure grocery stockouts. They measure disruption signals such as weather and port conditions. The model uses those signals to estimate inventory risk on the Savannah to Atlanta replenishment lane.
       </div>
 
       <!-- ABOVE FOLD: Ticker (left, wide) + Drivers/Policy (right, stacked) -->
@@ -955,8 +988,8 @@
             <div class="panel-title">What changed?</div>
             <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
               <button id="tickerViewExec" class="ticker-view-btn active" onclick="setTickerView('exec')" title="Show policy, risk, and mode events only">Executive</button>
-              <button id="tickerViewTech" class="ticker-view-btn" onclick="setTickerView('tech')" title="Show all diagnostic entries">Technical log</button>
-              <button id="tickerViewTech" class="ticker-view-btn"         onclick="setTickerView('tech')" title="Show all diagnostic entries">Technical</button>
+              
+              <button id="tickerViewTech" class="ticker-view-btn"         onclick="setTickerView('tech')" title="Show all diagnostic entries">Technical Log</button>
             </div>
             <div class="panel-badge" id="tickerCount">0 entries</div>
           </div>
@@ -980,7 +1013,7 @@
             </div>
             <div class="card-body">
               <div class="driver-row">
-                <div class="driver-label">NWS Alerts</div>
+                <div class="driver-label">National Weather Service alerts</div>
                 <div class="driver-track"><div class="driver-fill" id="df-nws" style="width:0%;background:var(--ok)"></div></div>
                 <div class="driver-val" id="dv-nws">—</div>
               </div>
@@ -1111,9 +1144,9 @@
                 <div class="rmi-ci" id="rmMinCI">≤ 2% target</div>
               </div>
               <div>
-                <div class="rmi-label">Lowest-Cost Option</div>
+                <div class="rmi-label">Lowest Estimated Total Cost</div>
                 <div class="rmi-val" id="rmOpt">— days</div>
-                <div class="rmi-ci" id="rmOptCI">Estimated policy cost: —</div>
+                <div class="rmi-ci" id="rmOptCI">Includes shortage-cost reduction. —</div>
               </div>
               <div>
                 <div class="rmi-label">Stock gap</div>
@@ -1122,7 +1155,7 @@
               </div>
             </div>
 
-            <div class="rec-narrative" id="recNarrative" data-testid="text-narrative">Loading…</div>
+            <div class="rec-narrative" id="recNarrative" data-testid="text-narrative">Loading…</div><div style="margin-top:8px;font-size:10px;color:var(--text-faint);line-height:1.5;">If the plan fails target, the selected number of stock days is not enough to keep estimated running-out risk below the chosen limit. If the plan meets target, the selected number of stock days is enough under the current model estimate.</div>
           </div>
         </div>
 
@@ -1330,7 +1363,7 @@ function buildBullets(o) {
     ? `Minimum required policy is ${minDays}d under current ${sw} stress conditions.`
     : `No policy in the 2–6d range meets the ${targetProb}% target.`;
   const b3 = optDays && optCost
-    ? `Lowest-cost option is ${optDays}d (estimated Estimated policy cost: ${optCost.toFixed(2)}).`
+    ? `Lowest-cost option is ${optDays}d (estimated Includes shortage-cost reduction. ${optCost.toFixed(2)}).`
     : `Cost optimization requires at least one feasible policy in current range.`;
   const action = meetsTarget
     ? (coverageMargin > 1
@@ -1766,10 +1799,9 @@ function applyPassFail(meetsTarget, regime) {
 }
 
 
+function fmtTargetPct(n){ return Number.isInteger(n) ? `${n}%` : `${Number(n).toFixed(2)}%`; }
 function updateOperatorBanner(meetsTarget, selectedProb, targetProb, minDays, daysOfCover, stressScore, sourceSummary, scenario, isWhatIf){
   const riskLimited = sourceSummary && sourceSummary.traffic_source_enabled === false;
-  const near = selectedProb <= targetProb * 1.25;
-  const level = !meetsTarget ? 'red' : (near || riskLimited ? 'yellow' : 'green');
   const bar = document.getElementById('operatorStatusBanner');
   const pill = document.getElementById('operatorStatusPill');
   const title = document.getElementById('operatorActionTitle');
@@ -1778,24 +1810,41 @@ function updateOperatorBanner(meetsTarget, selectedProb, targetProb, minDays, da
   const cov = document.getElementById('operatorCoverageCompare');
   const trust = document.getElementById('operatorTrustCompare');
   const req = minDays != null ? `${minDays} days needed, ${daysOfCover} days selected` : `6d+ needed, ${daysOfCover} days selected`;
-  const pressure = stressScore < 0.2 ? 'Low stress' : stressScore < 0.45 ? 'Moderate stress' : stressScore < 0.7 ? 'High stress' : 'Extreme stress';
+  const regimeLabel = stressScore < 0.2 ? 'Low' : stressScore < 0.45 ? 'Normal' : stressScore < 0.7 ? 'High' : 'Extreme';
+
+  let level = 'green', pillText = 'ON TRACK', titleText = 'PLAN MEETS TARGET';
+  if (!meetsTarget) { level = 'red'; pillText = 'ATTENTION NEEDED'; titleText = 'INCREASE COVERAGE'; }
+  else if (riskLimited) { level = 'yellow'; pillText = 'MONITOR'; titleText = 'PLAN MEETS TARGET'; }
+
   if (bar) {
     bar.style.background = level === 'green' ? '#1a2e1a' : level === 'yellow' ? '#2a1a08' : '#2a1010';
     bar.style.borderBottomColor = level === 'green' ? '#243824' : level === 'yellow' ? '#3a2408' : '#3a1010';
   }
-  if (pill) pill.textContent = level === 'green' ? 'Current plan meets target' : level === 'yellow' ? 'Attention needed' : 'Current plan fails target';
-  if (title) title.textContent = meetsTarget ? 'PLAN MEETS TARGET' : 'INCREASE COVERAGE';
+  if (pill) pill.textContent = pillText;
+  if (title) title.textContent = titleText;
   if (sub) sub.textContent = meetsTarget
-    ? `Current ${daysOfCover}-day policy meets the ${targetProb.toFixed(2)}% target ${isWhatIf ? 'in this hypothetical test' : 'under current live conditions'}.`
-    : `Increase coverage from ${daysOfCover} to ${minDays != null ? minDays : '6d+'} days. Current plan fails the ${targetProb.toFixed(2)}% target.`;
-  if (risk) risk.textContent = `${selectedProb.toFixed(2)}% vs ${targetProb.toFixed(2)}% target`;
+    ? `Current ${daysOfCover}-day policy meets the ${fmtTargetPct(targetProb)} target ${isWhatIf ? 'in this hypothetical test' : 'under current live conditions'}.`
+    : `Increase coverage from ${daysOfCover} to ${minDays != null ? minDays : '6d+'} days. Current plan fails the ${fmtTargetPct(targetProb)} target.`;
+  if (risk) risk.textContent = `${selectedProb.toFixed(2)}% vs ${fmtTargetPct(targetProb)} target`;
   if (cov) cov.textContent = req;
-  if (trust) trust.textContent = riskLimited ? 'Confidence: Medium · Traffic feed not connected' : `Confidence: Medium · ${pressure}`;
+  if (trust) trust.innerHTML = `Confidence: Medium<br><span style="font-weight:500;color:var(--text-muted)">Weather feed active; traffic feed not connected.</span>`;
   const callout = document.getElementById('chartCallout');
   if (callout) callout.textContent = `Recommended: ${minDays != null ? minDays + ' days' : '6d+'}`;
+
+  const execFeed = document.getElementById('tickerFeed');
+  if (execFeed && window.__tickerView === 'exec') {
+    const ts = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    const items = [
+      `Current ${daysOfCover}-day plan ${meetsTarget ? 'meets' : 'fails'} the ${fmtTargetPct(targetProb)} target.`,
+      `Model recommends ${minDays != null ? minDays : '6d+'} days${minDays != null && daysOfCover > minDays ? `; selected plan has ${daysOfCover - minDays} day${daysOfCover - minDays === 1 ? '' : 's'} of buffer.` : ''}`,
+      `Weather feed active; Georgia 511 traffic feed not connected.`,
+      `Current disruption level is ${regimeLabel}.`
+    ];
+    execFeed.innerHTML = items.map(msg => `<div class="tick"><span class="tick-ts">${ts}</span><span class="tick-msg">${msg}</span></div>`).join('');
+    const badge = document.getElementById('tickerCount'); if (badge) badge.textContent = `${items.length} entries`;
+  }
 }
 
-// ── MAIN DASHBOARD UPDATE ─────────────────────────────────────────────────
 function updateDashboard() {
   const { regime, scenario, daysOfCover, targetProb, holdingCost, shortageCost } = state;
   const curve    = getCurve(regime, scenario);
@@ -1830,7 +1879,7 @@ function updateDashboard() {
     document.getElementById('rmMin').textContent       = minDays !== null ? minDays + ' days' : '> 6 days';
     document.getElementById('rmMinCI').textContent     = minDays ? `≤ ${targetProb}% constraint` : 'exceeds modeled range';
     document.getElementById('rmOpt').textContent       = optDays ? optDays + ' days' : 'N/A';
-    document.getElementById('rmOptCI').textContent     = optCost ? `Estimated policy cost: ${optCost.toFixed(2)}` : '—';
+    document.getElementById('rmOptCI').textContent     = optCost ? `Includes shortage-cost reduction. ${optCost.toFixed(2)}` : '—';
     document.getElementById('rmMargin').textContent    = coverageMargin !== null ? (coverageMargin >= 0 ? '+' : '') + coverageMargin + ' days' : 'n/a';
     document.getElementById('rmMarginTxt').textContent = coverageMargin === null ? 'no policy in 2–6d range meets target'
       : coverageMargin < 0 ? 'below minimum — fails'

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -15,45 +15,45 @@
   <style>
     /* ─── DESIGN TOKENS ──────────────────────────────────────────────────── */
     :root {
-      --bg:          #0e0e0e;
-      --surface:     #161616;
-      --surface-2:   #1c1c1c;
-      --surface-3:   #222222;
-      --border:      #2a2a2a;
-      --divider:     #1e1e1e;
-      --text:        #e8e8e8;
-      --text-muted:  #888;
-      --text-faint:  #505050;
-      --primary:     #3fa8b8;
-      --primary-bg:  rgba(63,168,184,.12);
-      --primary-dim: rgba(63,168,184,.08);
-      --ok:          #4caf50;
-      --ok-bg:       #1a2e1a;
-      --warn:        #e08030;
-      --warn-bg:     #2a1a08;
-      --err:         #cf4e4e;
-      --err-bg:      #2a1010;
+      --bg:          #F7F8FC;
+      --surface:     #FFFFFF;
+      --surface-2:   #F1F4FB;
+      --surface-3:   #E8EEF8;
+      --border:      #D7E0F0;
+      --divider:     #E6ECF5;
+      --text:        #18263A;
+      --text-muted:  #2E4665;
+      --text-faint:  #3F5A78;
+      --primary:     #2563EB;
+      --primary-bg:  rgba(37,99,235,.12);
+      --primary-dim: rgba(58,134,255,.10);
+      --ok:          #0F9D7A;
+      --ok-bg:       #ECFBF6;
+      --warn:        #8B5CF6;
+      --warn-bg:     #FCEEF2;
+      --err:         #C81E5B;
+      --err-bg:      #FDEEF3;
       --low-c:       #3fa8b8;
       --hi-c:        #e08030;
       --ex-c:        #cf4e4e;
-      --ch-low:      #3fa8b8;
-      --ch-norm:     #5aaa38;
-      --ch-hi:       #e08030;
-      --ch-ex:       #cf4e4e;
-      --ch-tgt:      #9b6fd4;
-      --ch-ci:       rgba(63,168,184,.12);
-      --ch-ci-line:  rgba(63,168,184,.3);
+      --ch-low:      #3A86FF;
+      --ch-norm:     #2FBF8F;
+      --ch-hi:       #C06C84;
+      --ch-ex:       #D6456B;
+      --ch-tgt:      #7B61FF;
+      --ch-ci:       rgba(58,134,255,.12);
+      --ch-ci-line:  rgba(58,134,255,.25);
       /* What-if mode accent */
-      --wi-accent:   #9b6fd4;
-      --wi-bg:       rgba(155,111,212,.10);
-      --wi-border:   rgba(155,111,212,.30);
+      --wi-accent:   #7C3AED;
+      --wi-bg:       rgba(123,97,255,.10);
+      --wi-border:   rgba(123,97,255,.24);
       --font:  'General Sans', 'Helvetica Neue', sans-serif;
       --mono:  'Geist Mono', 'Courier New', monospace;
       --xs:    .75rem;
       --sm:    .8125rem;
       --base:  .9375rem;
-      --r:     3px; --rm: 5px; --rl: 7px;
-      --sh:    0 1px 4px rgba(0,0,0,.5);
+      --r:     10px; --rm: 12px; --rl: 14px;
+      --sh:    0 12px 30px rgba(30,42,58,.06);
       --tr:    160ms cubic-bezier(.16,1,.3,1);
     }
 
@@ -71,7 +71,7 @@
     [data-tip]::after {
       content: attr(data-tip);
       position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
-      background: #1e1e1e; border: 1px solid #333; border-radius: var(--rm);
+      background: #EEF3FB; border: 1px solid #D7E0F0; border-radius: var(--rm);
       color: var(--text-muted); font-size: 10px; font-weight: 400;
       white-space: normal; min-width: 180px; max-width: 240px; line-height: 1.45;
       padding: 6px 9px; pointer-events: none; opacity: 0;
@@ -102,10 +102,10 @@
     .live-badge {
       display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px;
       border-radius: var(--rm); font-size: 10px; font-weight: 700; letter-spacing: .05em;
-      border: 1px solid var(--border); background: var(--surface-2); color: var(--text-faint);
+      border: 1px solid var(--border); background: rgba(245,248,255,.95); color: var(--text-faint);
       transition: all var(--tr);
     }
-    .live-badge[data-status="live"]  { background: #1a2e1a; color: #4caf50; border-color: #243824 }
+    .live-badge[data-status="live"]  { background: rgba(47,128,237,.10); color: var(--primary); border-color: rgba(47,128,237,.22) }
     .live-badge[data-status="stale"] { background: var(--warn-bg); color: var(--warn); border-color: #3a2408 }
     .live-badge[data-status="error"] { background: var(--err-bg); color: var(--err); border-color: #3a1010 }
     .live-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0 }
@@ -114,7 +114,7 @@
 
     .proto-badge {
       display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px;
-      border-radius: 3px; background: #2a1a06; color: #e08030; font-size: 9px;
+      border-radius: 3px; background: #2a1a06; color: var(--warn); font-size: 9px;
       font-weight: 700; letter-spacing: .07em; text-transform: uppercase; border: 1px solid #3a2408;
     }
 
@@ -126,7 +126,7 @@
     }
     .mode-banner.visible { display: flex }
     .mode-banner-icon { font-size: 11px; color: var(--wi-accent) }
-    .mode-banner-txt  { font-size: 11px; color: #c4aef0; flex: 1 }
+    .mode-banner-txt  { font-size: 11px; color: #7C4DDF; flex: 1 }
     .mode-banner-back {
       font-size: 10px; font-weight: 700; color: var(--wi-accent); cursor: pointer;
       padding: 3px 9px; border: 1px solid var(--wi-border); border-radius: var(--rm);
@@ -137,7 +137,7 @@
     /* ─── SIDEBAR ────────────────────────────────────────────────────────── */
     .sidebar {
       grid-row: 2;
-      background: #111;
+      background: linear-gradient(180deg, #F8FBFF 0%, #EEF4FF 100%);
       border-right: 1px solid var(--border);
       overflow-y: auto;
       overscroll-behavior: contain;
@@ -164,12 +164,12 @@
       display: grid; grid-template-columns: 1fr 1fr; gap: 2px;
     }
     .mode-btn {
-      padding: 6px 4px; border-radius: var(--r); border: 1px solid var(--border);
-      background: transparent; color: var(--text-faint); font-size: 10px; font-weight: 700;
+      padding: 6px 4px; border-radius: var(--r); border: 1px solid rgba(215,224,240,.95);
+      background: rgba(255,255,255,.55); color: var(--text-faint); font-size: 10px; font-weight: 700;
       text-align: center; cursor: pointer; transition: all var(--tr); letter-spacing: .02em;
     }
-    .mode-btn:hover:not(.active) { background: var(--surface-2); color: var(--text); border-color: #3a3a3a }
-    .mode-btn.live-mode.active  { background: #1a2e1a; color: #4caf50; border-color: #243824 }
+    .mode-btn:hover:not(.active) { background: rgba(245,248,255,.95); color: var(--text); border-color: #3a3a3a }
+    .mode-btn.live-mode.active  { background: rgba(47,128,237,.10); color: var(--primary); border-color: rgba(47,128,237,.22) }
     .mode-btn.wi-mode.active    { background: #1a1228; color: var(--wi-accent); border-color: var(--wi-border) }
 
     /* Regime control state — disabled in live mode */
@@ -197,15 +197,15 @@
     .seg.c2 { grid-template-columns: 1fr 1fr }
     .seg.c3 { grid-template-columns: 1fr 1fr 1fr }
     .seg-btn {
-      padding: 5px 4px; border-radius: var(--r); border: 1px solid var(--border);
-      background: transparent; color: var(--text-muted); font-size: 11px; font-weight: 600;
+      padding: 5px 4px; border-radius: var(--r); border: 1px solid rgba(215,224,240,.95);
+      background: rgba(255,255,255,.55); color: var(--text-muted); font-size: 11px; font-weight: 600;
       text-align: center; cursor: pointer; transition: all var(--tr); white-space: nowrap;
     }
-    .seg-btn:hover:not(.active) { background: var(--surface-2); color: var(--text); border-color: #3a3a3a }
-    .seg-btn.active { color: #fff; border-color: transparent }
+    .seg-btn:hover:not(.active) { background: rgba(245,248,255,.95); color: var(--text); border-color: #3a3a3a }
+    .seg-btn.active { color: #fff; border-color: transparent; box-shadow: 0 8px 18px rgba(58,134,255,.14); }
     .seg-btn.r-low.active   { background: #1e4d3a; color: #4cbe8a; border-color: #1e4d3a }
     .seg-btn.r-norm.active  { background: #1a3540; color: var(--primary); border-color: #1a3540 }
-    .seg-btn.r-hi.active    { background: #3a2208; color: #e08030; border-color: #3a2208 }
+    .seg-btn.r-hi.active    { background: #FCEEF2; color: var(--warn); border-color: #3a2208 }
     .seg-btn.r-ex.active    { background: #3a1010; color: #cf4e4e; border-color: #3a1010 }
     .seg-btn.sc-bl.active   { background: #1a3540; color: var(--primary); border-color: #1a3540 }
     .seg-btn.sc-ss.active   { background: #1a2e1a; color: #4caf50; border-color: #1a2e1a }
@@ -215,7 +215,7 @@
     .ctrl-sel {
       width: 100%; padding: 5px 26px 5px 8px; border-radius: var(--r);
       border: 1px solid var(--border);
-      background: var(--surface-2) url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23666' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 8px center;
+      background: rgba(245,248,255,.95) url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23666' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 8px center;
       color: var(--text); font-size: 11px; font-weight: 500; appearance: none; cursor: pointer;
     }
     .ctrl-sel:focus { outline: 1px solid var(--primary); outline-offset: 1px }
@@ -233,7 +233,7 @@
     /* Signal bars */
     .stress-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px }
     .stress-bar-label { font-size: 9px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--text-faint); width: 78px; flex-shrink: 0 }
-    .stress-bar-track { flex: 1; height: 3px; border-radius: 2px; background: #222; overflow: hidden }
+    .stress-bar-track { flex: 1; height: 3px; border-radius: 2px; background: rgba(232,238,248,.85); overflow: hidden }
     .stress-bar-fill  { height: 100%; border-radius: 2px; transition: width .4s var(--tr), background .4s }
     .stress-bar-val   { font-family: var(--mono); font-size: 9px; color: var(--text-muted); min-width: 28px; text-align: right }
 
@@ -243,7 +243,7 @@
     .cost-input-wrap label { font-size: 9px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-faint) }
     .cost-input {
       width: 100%; padding: 5px 8px; border: 1px solid var(--border); border-radius: var(--r);
-      background: var(--surface-2); color: var(--text); font-family: var(--mono); font-size: 11px; font-weight: 600;
+      background: rgba(245,248,255,.95); color: var(--text); font-family: var(--mono); font-size: 11px; font-weight: 600;
     }
     .cost-input:focus { outline: 1px solid var(--primary); outline-offset: 1px }
 
@@ -262,7 +262,7 @@
 
     /* ─── HERO BAR ───────────────────────────────────────────────────────── */
     .hero {
-      background: #111;
+      background: #FFFFFF;
       border-bottom: 1px solid var(--border);
       padding: 12px 18px;
       display: flex;
@@ -281,7 +281,7 @@
       font-size: 9px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
       padding: 2px 8px; border-radius: 3px;
     }
-    .hero-mode-label.live-lbl { background: #1a2e1a; color: #4caf50; border: 1px solid #243824 }
+    .hero-mode-label.live-lbl { background: rgba(73,182,214,.14); color: var(--primary); border: 1px solid rgba(73,182,214,.28) }
     .hero-mode-label.wi-lbl   { background: #1a1228; color: var(--wi-accent); border: 1px solid var(--wi-border) }
 
     /* Score block */
@@ -357,7 +357,7 @@
     }
     .hero-status-row { display: flex; align-items: center; gap: 5px }
     .hero-status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0 }
-    .hero-status-dot.live    { background: var(--ok) }
+    .hero-status-dot.live    { background: var(--primary) }
     .hero-status-dot.stale   { background: var(--warn) }
     .hero-status-dot.error   { background: var(--err) }
     .hero-status-dot.loading { background: var(--text-faint) }
@@ -366,7 +366,7 @@
 
     /* ─── CURRENT READOUT PANEL ──────────────────────────────────────────── */
     .readout-bar {
-      background: #131313;
+      background: rgba(255,255,255,.72);
       border-bottom: 1px solid var(--divider);
       padding: 8px 18px;
       font-size: 11px; color: var(--text-muted); line-height: 1.5;
@@ -380,8 +380,8 @@
 
     /* ─── HOW-TO PANEL ───────────────────────────────────────────────────── */
     .how-to-bar {
-      background: #0f1a1f;
-      border-bottom: 1px solid #1c2a30;
+      background: linear-gradient(90deg, rgba(58,134,255,.08), rgba(123,97,255,.06));
+      border-bottom: 1px solid #D7E6FB;
       padding: 7px 18px;
       display: flex; align-items: center; gap: 20px; flex-shrink: 0; flex-wrap: wrap;
     }
@@ -401,7 +401,7 @@
     /* Methodology note */
     .method-note {
       font-size: 10px; color: var(--text-faint); line-height: 1.5;
-      padding: 7px 12px; background: #131313; border: 1px solid var(--divider);
+      padding: 7px 12px; background: rgba(255,255,255,.72); border: 1px solid var(--border);
       border-radius: var(--rm); flex-shrink: 0;
     }
     .method-note strong { color: var(--text-muted) }
@@ -415,9 +415,9 @@
 
     /* ── TICKER PANEL ─────────────────────────────────────────────────────── */
     .ticker-panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--rl);
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(215,224,240,.9);
+      border-radius: 14px;
       display: flex;
       flex-direction: column;
       min-height: 300px;
@@ -439,17 +439,17 @@
     .panel-badge {
       font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
       padding: 2px 7px; border-radius: 3px;
-      border: 1px solid var(--border); background: var(--surface-2); color: var(--text-faint);
+      border: 1px solid var(--border); background: rgba(245,248,255,.95); color: var(--text-faint);
     }
 
     /* Ticker view toggle buttons */
     .ticker-view-btn {
       font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
-      padding: 2px 7px; border-radius: 3px; border: 1px solid var(--border);
-      background: transparent; color: var(--text-faint); cursor: pointer;
+      padding: 2px 7px; border-radius: 3px; border: 1px solid rgba(215,224,240,.95);
+      background: rgba(255,255,255,.55); color: var(--text-faint); cursor: pointer;
       transition: all var(--tr);
     }
-    .ticker-view-btn:hover { background: var(--surface-2); color: var(--text-muted) }
+    .ticker-view-btn:hover { background: rgba(245,248,255,.95); color: var(--text-muted) }
     .ticker-view-btn.active { background: var(--primary-bg); color: var(--primary); border-color: rgba(63,168,184,.3) }
 
     .ticker-feed {
@@ -495,9 +495,9 @@
 
     /* Generic card */
     .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--rl);
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(215,224,240,.9);
+      border-radius: 14px;
       box-shadow: var(--sh);
     }
     .card-body { padding: 10px 14px }
@@ -506,7 +506,7 @@
     .driver-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--divider) }
     .driver-row:last-child { border-bottom: none }
     .driver-label { font-size: 10px; color: var(--text-muted); min-width: 100px; flex-shrink: 0 }
-    .driver-track { flex: 1; height: 3px; border-radius: 2px; background: #1e1e1e; overflow: hidden }
+    .driver-track { flex: 1; height: 3px; border-radius: 2px; background: #EEF3FB; overflow: hidden }
     .driver-fill  { height: 100%; border-radius: 2px; transition: width .5s var(--tr), background .4s }
     .driver-val   { font-family: var(--mono); font-size: 10px; color: var(--text-faint); min-width: 34px; text-align: right }
     .driver-na    { font-size: 10px; color: var(--text-faint); font-style: italic }
@@ -518,7 +518,7 @@
     .source-layer-note {
       display: none; margin-top: 6px; padding: 5px 8px; border-radius: var(--rm);
       background: var(--wi-bg); border: 1px solid var(--wi-border);
-      font-size: 9px; color: #c4aef0; line-height: 1.4;
+      font-size: 9px; color: #7C4DDF; line-height: 1.4;
     }
     body.what-if-mode .source-layer-note { display: block }
 
@@ -558,9 +558,9 @@
 
     /* ── RECOMMENDATION CARD ─────────────────────────────────────────────── */
     .rec-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--rl);
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(215,224,240,.9);
+      border-radius: 14px;
       box-shadow: var(--sh);
       position: relative; overflow: hidden;
     }
@@ -592,7 +592,7 @@
 
     .rec-narrative {
       margin-top: 10px; padding: 8px 12px;
-      background: #131313; border: 1px solid var(--divider); border-radius: var(--rm);
+      background: rgba(255,255,255,.72); border: 1px solid var(--border); border-radius: var(--rm);
       font-size: 11px; color: var(--text-muted); line-height: 1.6;
     }
 
@@ -605,8 +605,8 @@
 
     /* Chart card */
     .chart-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--rl); padding: 14px 16px; box-shadow: var(--sh);
+      background: var(--surface); border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(58,134,255,.06), 0 2px 10px rgba(30,42,58,.05); backdrop-filter: blur(10px);
+      border-radius: 14px; padding: 14px 16px; box-shadow: var(--sh);
       display: flex; flex-direction: column;
     }
     .chart-hdr  { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px }
@@ -614,7 +614,7 @@
     .chart-sub  { font-size: 10px; color: var(--text-muted); margin-top: 2px }
     .sim-note   {
       font-size: 9px; color: var(--text-faint); font-weight: 600;
-      background: var(--surface-2); padding: 2px 8px; border-radius: 3px;
+      background: rgba(245,248,255,.95); padding: 2px 8px; border-radius: 3px;
       border: 1px solid var(--border); white-space: nowrap; align-self: flex-start; flex-shrink: 0;
     }
     .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px }
@@ -636,7 +636,7 @@
     .assumptions-toggle svg { transition: transform var(--tr) }
     .assumptions-toggle.open svg { transform: rotate(90deg) }
     .assumptions-body {
-      display: none; padding: 10px 12px; background: #131313; border-radius: var(--rm);
+      display: none; padding: 10px 12px; background: rgba(255,255,255,.72); border-radius: var(--rm);
       border: 1px solid var(--divider); margin-top: 6px;
     }
     .assumptions-body.open { display: block }
@@ -650,8 +650,8 @@
 
     /* Decision card */
     .dec-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--rl); padding: 14px 16px; box-shadow: var(--sh);
+      background: var(--surface); border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(58,134,255,.06), 0 2px 10px rgba(30,42,58,.05); backdrop-filter: blur(10px);
+      border-radius: 14px; padding: 14px 16px; box-shadow: var(--sh);
       display: flex; flex-direction: column; gap: 0;
     }
     .dec-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: .10em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 8px }
@@ -661,7 +661,7 @@
     .dec-divider { height: 1px; background: var(--divider); margin-bottom: 10px }
     .dec-action { padding: 9px 12px; background: var(--primary-bg); border-radius: var(--rm); border: 1px solid rgba(63,168,184,.2) }
     .dec-action-lbl { font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--primary); margin-bottom: 3px }
-    .dec-action-txt { font-size: 11px; color: #c8c8c8; line-height: 1.5 }
+    .dec-action-txt { font-size: 11px; color: #41556E; line-height: 1.5 }
 
     /* ─── BOTTOM SPACER ──────────────────────────────────────────────────── */
     .bottom-spacer { height: 24px; flex-shrink: 0 }
@@ -690,6 +690,7 @@
       </svg>
       <div>
         <div class="tl-title">Live Risk Intelligence · Savannah → Atlanta Replenishment Lane</div>
+        <div style="font-size:11px;color:#1E4FA3;font-weight:800;margin-top:4px;line-height:1.3;white-space:normal;">Built by Neil Sharma</div>
         <div class="tl-sub">This tool estimates whether a grocery replenishment plan has enough inventory coverage when weather, traffic, or port conditions create delivery risk.</div>
       </div>
     </div>
@@ -758,8 +759,8 @@
 
     <details class="sb-sect" id="analystDrawer" style="padding-top:4px">
       <summary style="list-style:none;cursor:pointer;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
-        <span>Analyst Controls <span style="font-weight:500;letter-spacing:0;text-transform:none;color:var(--text-faint)">— advanced assumptions and scenario controls</span></span>
-        <span aria-hidden="true" style="font-size:12px;color:var(--text-faint);transition:transform var(--tr);">▾</span>
+        <span>Analyst Controls <span style="font-weight:500;letter-spacing:0;text-transform:none;color:var(--text-muted)">— advanced assumptions, scenarios, and model inputs</span></span>
+        <span aria-hidden="true" style="font-size:12px;color:var(--text-muted);transition:transform var(--tr);">▾</span>
       </summary>
 
       <div class="sb-label">Disruption level</div>
@@ -783,7 +784,7 @@
       <div class="ctrl-group" id="stressDecompSection">
         <div class="ctrl-label" style="margin-bottom:8px">
           Signal Components
-          <span style="font-size:9px;padding:1px 5px;border:1px solid var(--border);border-radius:2px;background:var(--surface-2);color:var(--text-faint);letter-spacing:.04em;margin-left:4px">signal-mapped</span>
+          <span style="font-size:9px;padding:1px 5px;border:1px solid var(--border);border-radius:2px;background:var(--surface-2);color:var(--text-muted);letter-spacing:.04em;margin-left:4px">signal-mapped</span>
         </div>
         <div class="stress-bar-row">
           <div class="stress-bar-label" data-tip="Congestion or throughput constraints at the Savannah port.">Port / flow</div>
@@ -827,8 +828,8 @@
       <div class="sb-divider"></div>
 
       <div class="sb-sect" style="padding:0;margin-bottom:0">
-        <div class="sb-label" style="color:var(--text-faint)">Advanced — Phase 1</div>
-        <div style="font-size:11px;color:var(--text-faint);line-height:1.5">
+        <div class="sb-label" style="color:var(--text-muted)">Advanced — Phase 1</div>
+        <div style="font-size:11px;color:var(--text-muted);line-height:1.5">
           Live stress index feed, demand distribution fitting, multi-SKU scope, lead-time distribution source, and Monte Carlo run configuration will be available when the simulation engine is connected.
         </div>
       </div>
@@ -854,19 +855,19 @@
       <div id="operatorStatusPill" style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.08);color:#fff;">Status</div>
       <div style="display:flex;flex-direction:column;gap:2px;min-width:260px;flex:1;">
         <div id="operatorActionTitle" style="font-size:1.1rem;font-weight:700;color:var(--text);letter-spacing:-.02em;">Loading recommendation…</div>
-        <div id="operatorActionSub" style="font-size:12px;color:#c8c8c8;line-height:1.5;">Waiting for live inventory risk estimate.</div><div id="operatorModeExplain" style="font-size:11px;color:var(--text-faint);line-height:1.5;">Live mode uses current data sources to set the disruption level.</div>
+        <div id="operatorActionSub" style="font-size:13px;color:#23344A;line-height:1.55;font-weight:700;">Connecting to live risk estimate and latest source signals...</div><div id="operatorModeExplain" style="font-size:11px;color:#304761;line-height:1.5;font-weight:700;">Live mode uses current data sources to set the disruption level.</div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:10px;min-width:320px;flex:1;">
-        <div style="padding:8px 10px;background:#131313;border:1px solid var(--divider);border-radius:6px;">
-          <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);">Chance of running out</div><div style="font-size:10px;color:var(--text-faint);line-height:1.4;margin-top:4px;">Estimated chance that demand exceeds available stock before replenishment arrives.</div>
+        <div style="padding:8px 10px;background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(244,247,252,.88));border:1px solid rgba(215,224,240,.95);border-radius:12px;box-shadow:0 6px 18px rgba(58,134,255,.05);">
+          <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);">Chance of running out</div><div style="font-size:10px;color:var(--text-muted);line-height:1.4;margin-top:4px;">Estimated chance that demand exceeds available stock before replenishment arrives.</div>
           <div id="operatorRiskCompare" style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);margin-top:3px;">—</div>
         </div>
-        <div style="padding:8px 10px;background:#131313;border:1px solid var(--divider);border-radius:6px;">
-          <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);">Days of stock you need</div><div style="font-size:10px;color:var(--text-faint);line-height:1.4;margin-top:4px;">The minimum coverage level the model recommends to stay under the risk target.</div>
+        <div style="padding:8px 10px;background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(244,247,252,.88));border:1px solid rgba(215,224,240,.95);border-radius:12px;box-shadow:0 6px 18px rgba(58,134,255,.05);">
+          <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);">Days of stock you need</div><div style="font-size:10px;color:var(--text-muted);line-height:1.4;margin-top:4px;">The minimum coverage level the model recommends to stay under the risk target.</div>
           <div id="operatorCoverageCompare" style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);margin-top:3px;">—</div>
         </div>
-        <div style="padding:8px 10px;background:#131313;border:1px solid var(--divider);border-radius:6px;">
-          <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);">Can I trust this estimate?</div><div style="font-size:10px;color:var(--text-faint);line-height:1.4;margin-top:4px;">How complete the live data picture is right now.</div>
+        <div style="padding:8px 10px;background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(244,247,252,.88));border:1px solid rgba(215,224,240,.95);border-radius:12px;box-shadow:0 6px 18px rgba(58,134,255,.05);">
+          <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);">Can I trust this estimate?</div><div style="font-size:10px;color:var(--text-muted);line-height:1.4;margin-top:4px;">How complete the live data picture is right now.</div>
           <div id="operatorTrustCompare" style="font-size:13px;font-weight:700;color:var(--text);margin-top:3px;">—</div>
         </div>
       </div>
@@ -924,8 +925,8 @@
         <div style="display:grid;grid-template-columns:1.15fr .95fr;gap:12px;padding:12px 16px 0;">
       <div class="card" style="min-height:auto;">
         <div class="panel-hdr"><div class="panel-title">What this app does</div></div>
-        <div class="card-body" style="font-size:11px;color:var(--text-muted);line-height:1.6;">
-          <div style="margin-bottom:8px;color:var(--text-faint)">The Savannah to Atlanta delivery route represents a replenishment route from port and distribution activity near Savannah toward demand centers around Atlanta.</div>
+        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">
+          <div style="margin-bottom:8px;color:var(--text-muted)">The Savannah to Atlanta delivery route represents a replenishment route from port and distribution activity near Savannah toward grocery demand centers around Atlanta.</div>
           <div style="display:flex;flex-direction:column;gap:6px;">
             <div>• It checks live disruption signals such as weather alerts.</div>
             <div>• It estimates the chance a selected inventory plan runs out before the next replenishment.</div>
@@ -935,17 +936,91 @@
       </div>
       <div class="card" style="min-height:auto;">
         <div class="panel-hdr"><div class="panel-title">How to use this</div></div>
-        <div class="card-body" style="font-size:11px;color:var(--text-muted);line-height:1.6;display:flex;flex-direction:column;gap:6px;">
+        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;display:flex;flex-direction:column;gap:6px;">
           <div>1. Choose how many days of stock you currently plan to hold.</div>
           <div>2. Pick a scenario, such as baseline, safety stock, or tail mitigation.</div>
           <div>3. Check whether the app says the plan meets the target or needs more coverage.</div>
-          <div style="margin-top:4px;color:var(--text-faint)">For example, if the current plan has 3 days of stock but the app recommends 5, the plan is 2 days short.</div>
+          <div style="margin-top:4px;color:var(--text-muted)">For example, if the current plan has 3 days of stock but the app recommends 5, the plan is 2 days short.</div>
         </div>
       </div>
     </div>
 
     <div style="padding:10px 16px 0;">
       <div class="method-note" style="margin:0;">This app does not directly track store shelves or real grocery inventory. It estimates risk using disruption signals and a model.</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:10px 16px 0;">
+      <div class="card" style="min-height:auto;">
+        <div class="panel-hdr"><div class="panel-title">How the model works</div></div>
+        <div class="card-body" style="font-size:11px;color:var(--text-muted);line-height:1.6;">Live weather, traffic, and port-related signals are mapped into a disruption estimate. The app then uses that estimate to calculate the chance of running out of stock before replenishment arrives and recommends a safer number of stock days.</div>
+      </div>
+      <div class="card" style="min-height:auto;">
+        <div class="panel-hdr"><div class="panel-title">Why this matters</div></div>
+        <div class="card-body" style="font-size:11px;color:var(--text-muted);line-height:1.6;">Small disruptions in a grocery delivery route can change whether a plan is likely to run out before the next shipment. This app turns those signals into a practical inventory decision.</div>
+      </div>
+    </div>
+
+    <div style="padding:10px 16px 0;">
+      <details class="card" style="min-height:auto;overflow:hidden;">
+        <summary style="cursor:pointer;list-style:none;padding:12px 14px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text);display:flex;justify-content:space-between;align-items:center;">
+          Limitations & assumptions
+          <span aria-hidden="true" style="color:var(--text-muted);">▾</span>
+        </summary>
+        <div class="card-body" style="padding-top:0;font-size:11px;color:var(--text-muted);line-height:1.65;display:flex;flex-direction:column;gap:8px;">
+          <div>This app does not directly observe store shelves, exact inventory levels, truck GPS feeds, or realized grocery demand. It estimates risk from proxy disruption signals and a model.</div>
+          <div>Current recommendations are most useful as decision support, not as a guarantee of actual stock availability.</div>
+          <div>Historical backtesting against real lane-level replenishment outcomes and demand calibration would improve confidence in future versions.</div>
+        </div>
+      </details>
+    </div>
+
+    <div style="padding:10px 16px 0;">
+      <details class="card" style="min-height:auto;overflow:hidden;">
+        <summary style="cursor:pointer;list-style:none;padding:12px 14px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text);display:flex;justify-content:space-between;align-items:center;">
+          Math methodology
+          <span aria-hidden="true" style="color:var(--text-muted);">▾</span>
+        </summary>
+        <div class="card-body" style="padding-top:0;font-size:11px;color:var(--text-muted);line-height:1.7;display:flex;flex-direction:column;gap:8px;">
+          <div><strong style="color:var(--text)">1. Signal aggregation.</strong> Live weather, traffic, and port-related inputs are normalized to a 0–1 scale and combined into a disruption score. This score is mapped into a qualitative disruption level such as Low, Normal, High, or Extreme.</div>
+          <div><strong style="color:var(--text)">2. Risk curve mapping.</strong> For each disruption level, the app uses an estimated relationship between days of stock coverage and the probability of running out before replenishment arrives. Higher disruption shifts the curve upward, meaning more coverage is needed to achieve the same risk limit.</div>
+          <div><strong style="color:var(--text)">3. Policy selection rule.</strong> Let p(d) denote the estimated probability of running out at d days of stock, and let tau denote the selected risk limit. The recommended policy is the smallest d in the allowed range such that p(d) is less than or equal to tau. If no policy from 2 to 6 days satisfies the rule, the app reports 6d+.</div>
+          <div><strong style="color:var(--text)">4. Comparative outputs.</strong> The interface reports the selected plan, the minimum recommended coverage, the gap between them, and a scenario comparison so users can see how the decision changes as disruption increases.</div>
+          <div><strong style="color:var(--text)">5. Practical interpretation.</strong> This is a decision-support approximation, not a direct measurement of shelf inventory. The math helps translate proxy disruption signals into an operational recommendation under uncertainty.</div>
+        </div>
+      </details>
+    </div>
+
+    <div style="padding:10px 16px 0;">
+      <div class="card" style="min-height:auto;">
+        <div class="panel-hdr"><div class="panel-title">Creator note</div></div>
+        <div class="card-body" style="font-size:11px;color:var(--text-muted);line-height:1.6;">Built by <strong style="color:var(--text)">Neil Sharma</strong> as a decision-support prototype exploring how public disruption signals can be translated into clearer operational inventory decisions.</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:10px 16px 0;">
+      <div class="card" style="min-height:auto;">
+        <div class="panel-hdr"><div class="panel-title">Why this matters</div></div>
+        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">Small delays in weather, traffic, or port flow can change whether a grocery inventory plan is likely to run out before the next delivery. This tool turns those signals into a practical stocking recommendation.</div>
+      </div>
+      <div class="card" style="min-height:auto;">
+        <div class="panel-hdr"><div class="panel-title">How it works</div></div>
+        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">Live disruption signals feed a risk model, the model estimates the chance of running out of stock, and the app recommends how many days of coverage are needed to stay below the selected risk limit.</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:12px 16px 0;">
+      <div class="card" style="min-height:auto;">
+        <div class="panel-hdr"><div class="panel-title">Why this matters</div></div>
+        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">This app turns live delivery-route disruption signals into a practical grocery inventory decision.</div>
+      </div>
+      <div class="card" style="min-height:auto;">
+        <div class="panel-hdr"><div class="panel-title">What makes it useful</div></div>
+        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">It compares the current plan with the recommended plan instead of only showing a risk score.</div>
+      </div>
+      <div class="card" style="min-height:auto;">
+        <div class="panel-hdr"><div class="panel-title">Why trust it carefully</div></div>
+        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">It shows what live sources are active and clearly separates current conditions from hypothetical tests.</div>
+      </div>
     </div>
 
 <!-- CURRENT READOUT (executive summary) -->
@@ -1039,7 +1114,7 @@
               </div>
               <div class="driver-meta">
                 <div class="driver-meta-item">Sources: <span id="dv-sources">—</span></div>
-                <div class="driver-meta-item" id="dv-failures-wrap">Failures: <span id="dv-failures" style="color:var(--text-faint)">none</span></div>
+                <div class="driver-meta-item" id="dv-failures-wrap">Failures: <span id="dv-failures" style="color:var(--text-muted)">none</span></div>
               </div>
               <!-- Note shown only in what-if mode -->
               <div class="source-layer-note">
@@ -1155,7 +1230,7 @@
               </div>
             </div>
 
-            <div class="rec-narrative" id="recNarrative" data-testid="text-narrative">Loading…</div><div style="margin-top:8px;font-size:10px;color:var(--text-faint);line-height:1.5;">If the plan fails target, the selected number of stock days is not enough to keep estimated running-out risk below the chosen limit. If the plan meets target, the selected number of stock days is enough under the current model estimate.</div>
+            <div class="rec-narrative" id="recNarrative" data-testid="text-narrative">Loading…</div><div style="margin-top:8px;font-size:10px;color:var(--text-muted);line-height:1.5;">If the plan fails target, the selected number of stock days is not enough to keep estimated running-out risk below the chosen limit. If the plan meets target, the selected number of stock days is enough under the current model estimate.</div>
           </div>
         </div>
 
@@ -1817,17 +1892,17 @@ function updateOperatorBanner(meetsTarget, selectedProb, targetProb, minDays, da
   else if (riskLimited) { level = 'yellow'; pillText = 'MONITOR'; titleText = 'PLAN MEETS TARGET'; }
 
   if (bar) {
-    bar.style.background = level === 'green' ? '#1a2e1a' : level === 'yellow' ? '#2a1a08' : '#2a1010';
-    bar.style.borderBottomColor = level === 'green' ? '#243824' : level === 'yellow' ? '#3a2408' : '#3a1010';
+    bar.style.background = level === 'green' ? '#E9FBF2' : level === 'yellow' ? '#FCEEF2' : '#FFF0F1';
+    bar.style.borderBottomColor = level === 'green' ? '#BEEFD2' : level === 'yellow' ? '#E9B8C7' : '#F3B9BC';
   }
-  if (pill) pill.textContent = pillText;
+  if (pill) { pill.textContent = pillText; pill.style.background = level === 'green' ? '#0F9D7A' : level === 'yellow' ? '#7C3AED' : '#BE123C'; pill.style.borderColor = level === 'green' ? '#0B7A5F' : level === 'yellow' ? '#5B21B6' : '#881337'; pill.style.color = '#FFFFFF'; pill.style.boxShadow = level === 'green' ? '0 10px 24px rgba(15,157,122,.24)' : level === 'yellow' ? '0 10px 24px rgba(124,58,237,.24)' : '0 10px 24px rgba(190,18,60,.30)'; }
   if (title) title.textContent = titleText;
   if (sub) sub.textContent = meetsTarget
     ? `Current ${daysOfCover}-day policy meets the ${fmtTargetPct(targetProb)} target ${isWhatIf ? 'in this hypothetical test' : 'under current live conditions'}.`
     : `Increase coverage from ${daysOfCover} to ${minDays != null ? minDays : '6d+'} days. Current plan fails the ${fmtTargetPct(targetProb)} target.`;
   if (risk) risk.textContent = `${selectedProb.toFixed(2)}% vs ${fmtTargetPct(targetProb)} target`;
   if (cov) cov.textContent = req;
-  if (trust) trust.innerHTML = `Confidence: Medium<br><span style="font-weight:500;color:var(--text-muted)">Weather feed active; traffic feed not connected.</span>`;
+  if (trust) trust.innerHTML = `Confidence: Medium<br><span style="font-weight:500;color:var(--warn)">Weather feed active; traffic feed not connected.</span>`;
   const callout = document.getElementById('chartCallout');
   if (callout) callout.textContent = `Recommended: ${minDays != null ? minDays + ' days' : '6d+'}`;
 

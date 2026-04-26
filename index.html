@@ -960,283 +960,7 @@
       </div>
     </div>
 
-    <div style="padding:10px 16px 0;">
-      <details class="card" style="min-height:auto;overflow:hidden;">
-        <summary style="cursor:pointer;list-style:none;padding:12px 14px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text);display:flex;justify-content:space-between;align-items:center;">
-          Limitations & assumptions
-          <span aria-hidden="true" style="color:var(--text-muted);">▾</span>
-        </summary>
-        <div class="card-body" style="padding-top:0;font-size:11px;color:var(--text-muted);line-height:1.65;display:flex;flex-direction:column;gap:8px;">
-          <div>This app does not directly observe store shelves, exact inventory levels, truck GPS feeds, or realized grocery demand. It estimates risk from proxy disruption signals and a model.</div>
-          <div>Current recommendations are most useful as decision support, not as a guarantee of actual stock availability.</div>
-          <div>Historical backtesting against real lane-level replenishment outcomes and demand calibration would improve confidence in future versions.</div>
-        </div>
-      </details>
-    </div>
-
-    <div style="padding:10px 16px 0;">
-      <details class="card" style="min-height:auto;overflow:hidden;">
-        <summary style="cursor:pointer;list-style:none;padding:12px 14px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text);display:flex;justify-content:space-between;align-items:center;">
-          Math methodology
-          <span aria-hidden="true" style="color:var(--text-muted);">▾</span>
-        </summary>
-        <div class="card-body" style="padding-top:0;font-size:11px;color:var(--text-muted);line-height:1.7;display:flex;flex-direction:column;gap:8px;">
-          <div><strong style="color:var(--text)">1. Signal aggregation.</strong> Live weather, traffic, and port-related inputs are normalized to a 0–1 scale and combined into a disruption score. This score is mapped into a qualitative disruption level such as Low, Normal, High, or Extreme.</div>
-          <div><strong style="color:var(--text)">2. Risk curve mapping.</strong> For each disruption level, the app uses an estimated relationship between days of stock coverage and the probability of running out before replenishment arrives. Higher disruption shifts the curve upward, meaning more coverage is needed to achieve the same risk limit.</div>
-          <div><strong style="color:var(--text)">3. Policy selection rule.</strong> Let p(d) denote the estimated probability of running out at d days of stock, and let tau denote the selected risk limit. The recommended policy is the smallest d in the allowed range such that p(d) is less than or equal to tau. If no policy from 2 to 6 days satisfies the rule, the app reports 6d+.</div>
-          <div><strong style="color:var(--text)">4. Comparative outputs.</strong> The interface reports the selected plan, the minimum recommended coverage, the gap between them, and a scenario comparison so users can see how the decision changes as disruption increases.</div>
-          <div><strong style="color:var(--text)">5. Practical interpretation.</strong> This is a decision-support approximation, not a direct measurement of shelf inventory. The math helps translate proxy disruption signals into an operational recommendation under uncertainty.</div>
-        </div>
-      </details>
-    </div>
-
-    <div style="padding:10px 16px 0;">
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">Creator note</div></div>
-        <div class="card-body" style="font-size:11px;color:var(--text-muted);line-height:1.6;">Built by <strong style="color:var(--text)">Neil Sharma</strong> as a decision-support prototype exploring how public disruption signals can be translated into clearer operational inventory decisions.</div>
-      </div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:10px 16px 0;">
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">Why this matters</div></div>
-        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">Small delays in weather, traffic, or port flow can change whether a grocery inventory plan is likely to run out before the next delivery. This tool turns those signals into a practical stocking recommendation.</div>
-      </div>
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">How it works</div></div>
-        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">Live disruption signals feed a risk model, the model estimates the chance of running out of stock, and the app recommends how many days of coverage are needed to stay below the selected risk limit.</div>
-      </div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:12px 16px 0;">
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">Why this matters</div></div>
-        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">This app turns live delivery-route disruption signals into a practical grocery inventory decision.</div>
-      </div>
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">What makes it useful</div></div>
-        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">It compares the current plan with the recommended plan instead of only showing a risk score.</div>
-      </div>
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">Why trust it carefully</div></div>
-        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">It shows what live sources are active and clearly separates current conditions from hypothetical tests.</div>
-      </div>
-    </div>
-
-<!-- CURRENT READOUT (executive summary) -->
-    <div class="readout-bar">
-      <div class="readout-title">Current Readout</div>
-      <span id="execSummary">Connecting to live data feed…</span>
-    </div>
-
-    <!-- HOW TO READ THIS -->
-      <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:none;color:var(--text);padding:7px 18px 0;">How to read this</div>
-    <div class="how-to-bar">
-      <div class="how-to-item">
-        <div class="how-to-dot"></div>
-        <span><strong>Disruption pressure</strong> shows current disruption pressure from live signals.</span>
-      </div>
-      <div class="how-to-item">
-        <div class="how-to-dot"></div>
-        <span><strong>Chance of running out</strong> estimates the chance the selected coverage policy fails.</span>
-      </div>
-      <div class="how-to-item">
-        <div class="how-to-dot"></div>
-        <span><strong>Days of stock you need</strong> shows the minimum days of inventory needed to meet the service target.</span>
-      </div>
-    </div>
-
-    <!-- SCROLLABLE CONTENT -->
-    <div class="content">
-
-      <!-- Methodology note -->
-      <div class="method-note">
-        <strong>Note:</strong> Live data sources do not directly measure grocery stockouts. They measure disruption signals such as weather and port conditions. The model uses those signals to estimate inventory risk on the Savannah to Atlanta replenishment lane.
-      </div>
-
-      <!-- ABOVE FOLD: Ticker (left, wide) + Drivers/Policy (right, stacked) -->
-      <div class="above-fold">
-
-        <!-- Ticker -->
-        <div class="ticker-panel">
-          <div class="panel-hdr">
-            <div class="panel-title">What changed?</div>
-            <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
-              <button id="tickerViewExec" class="ticker-view-btn active" onclick="setTickerView('exec')" title="Show policy, risk, and mode events only">Executive</button>
-              
-              <button id="tickerViewTech" class="ticker-view-btn"         onclick="setTickerView('tech')" title="Show all diagnostic entries">Technical Log</button>
-            </div>
-            <div class="panel-badge" id="tickerCount">0 entries</div>
-          </div>
-          <div class="ticker-feed" id="tickerFeed">
-            <div class="tick">
-              <span class="tick-ts">—</span>
-              <span class="tick-tag SOURCE">SOURCE</span>
-              <span class="tick-msg">Waiting for first live fetch…</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right column: Drivers + Policy Ideas -->
-        <div class="right-col">
-
-          <!-- Risk Drivers -->
-          <div class="card">
-            <div class="panel-hdr">
-              <div class="panel-title">Risk Drivers</div>
-              <div class="panel-badge" id="driverSourceBadge">—</div>
-            </div>
-            <div class="card-body">
-              <div class="driver-row">
-                <div class="driver-label">National Weather Service alerts</div>
-                <div class="driver-track"><div class="driver-fill" id="df-nws" style="width:0%;background:var(--ok)"></div></div>
-                <div class="driver-val" id="dv-nws">—</div>
-              </div>
-              <div class="driver-row">
-                <div class="driver-label">Weather Score</div>
-                <div class="driver-track"><div class="driver-fill" id="df-weather" style="width:0%;background:var(--primary)"></div></div>
-                <div class="driver-val" id="dv-weather">—</div>
-              </div>
-              <div class="driver-row">
-                <div class="driver-label">Traffic Events</div>
-                <div class="driver-track"><div class="driver-fill" id="df-traffic" style="width:0%"></div></div>
-                <div class="driver-val driver-na" id="dv-traffic">n/a</div>
-              </div>
-              <div class="driver-row">
-                <div class="driver-label">Traffic Score</div>
-                <div class="driver-track"><div class="driver-fill" id="df-tscore" style="width:0%"></div></div>
-                <div class="driver-val driver-na" id="dv-tscore">n/a</div>
-              </div>
-              <div class="driver-row">
-                <div class="driver-label">Port Baseline</div>
-                <div class="driver-track"><div class="driver-fill" id="df-port" style="width:0%;background:var(--warn)"></div></div>
-                <div class="driver-val" id="dv-port">—</div>
-              </div>
-              <div class="driver-meta">
-                <div class="driver-meta-item">Sources: <span id="dv-sources">—</span></div>
-                <div class="driver-meta-item" id="dv-failures-wrap">Failures: <span id="dv-failures" style="color:var(--text-muted)">none</span></div>
-              </div>
-              <!-- Note shown only in what-if mode -->
-              <div class="source-layer-note">
-                Live source layer — these are the actual API signals. The what-if regime above is a hypothetical test; this data reflects current real conditions.
-              </div>
-            </div>
-          </div>
-
-          <!-- Policy Ideas -->
-          <div class="card">
-            <div class="panel-hdr">
-              <div class="panel-title">Policy Ideas</div>
-              <div class="panel-badge" id="policyScenarioBadge">baseline</div>
-            </div>
-            <div class="card-body">
-              <div class="policy-list" id="policyList">
-                <div class="policy-item"><div class="policy-dot"></div><span>Awaiting live data…</span></div>
-              </div>
-            </div>
-          </div>
-
-        </div><!-- /.right-col -->
-      </div><!-- /.above-fold -->
-
-      <!-- MID FOLD: Can I trust this estimate? + Recommendation -->
-      <div class="mid-fold">
-
-        <!-- Can I trust this estimate? -->
-        <div class="card">
-          <div class="panel-hdr">
-            <div class="panel-title">Can I trust this estimate?</div>
-            <div class="panel-badge">Confidence</div>
-          </div>
-          <div class="card-body">
-            <div class="coverage-list">
-              <div class="cov-item">
-                <div class="cov-dot active"></div>
-                <div class="cov-status active">Live source</div>
-                <div class="cov-name">National Weather Service weather feed</div>
-              </div>
-              <div class="cov-item">
-                <div class="cov-dot off"></div>
-                <div class="cov-status off">Not included</div>
-                <div class="cov-name">Georgia 511 traffic feed</div>
-              </div>
-              <div class="cov-item">
-                <div class="cov-dot warn"></div>
-                <div class="cov-status warn">Manual input</div>
-                <div class="cov-name">Port baseline (static estimate)</div>
-              </div>
-              <div class="cov-item">
-                <div class="cov-dot off"></div>
-                <div class="cov-status off">Not included</div>
-                <div class="cov-name">Real inventory levels</div>
-              </div>
-              <div class="cov-item">
-                <div class="cov-dot off"></div>
-                <div class="cov-status off">Not included</div>
-                <div class="cov-name">Truck GPS / estimated arrival time feed</div>
-              </div>
-              <div class="cov-item">
-                <div class="cov-dot future"></div>
-                <div class="cov-status future">Not included</div>
-                <div class="cov-name">Historical disruption log</div>
-              </div>
-              <div class="cov-item">
-                <div class="cov-dot future"></div>
-                <div class="cov-status future">Not included</div>
-                <div class="cov-name">Demand distribution fitting</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Policy Recommendation -->
-        <div class="rec-card" id="recPanel">
-          <div class="rec-card-body">
-            <div class="rec-top">
-              <div>
-                <div class="rec-eyebrow">Policy Recommendation</div>
-                <div class="rec-main">
-                  <span class="rec-num" id="recNum">—</span>
-                  <span class="rec-unit">days of cover</span>
-                  <span class="rec-ci" id="recCI"></span>
-                </div>
-              </div>
-              <div id="statusBadge" class="status-badge pass" data-testid="badge-status">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span id="statusTxt">Meets Target</span>
-              </div>
-            </div>
-
-            <div class="rec-meta">
-              <div>
-                <div class="rmi-label">Selected policy</div>
-                <div class="rmi-val" id="rmSel">— days</div>
-                <div class="rmi-ci" id="rmSelStkout">P(stockout) = —</div>
-              </div>
-              <div>
-                <div class="rmi-label">Minimum Required</div>
-                <div class="rmi-val" id="rmMin">— days</div>
-                <div class="rmi-ci" id="rmMinCI">≤ 2% target</div>
-              </div>
-              <div>
-                <div class="rmi-label">Lowest Estimated Total Cost</div>
-                <div class="rmi-val" id="rmOpt">— days</div>
-                <div class="rmi-ci" id="rmOptCI">Includes shortage-cost reduction. —</div>
-              </div>
-              <div>
-                <div class="rmi-label">Stock gap</div>
-                <div class="rmi-val" id="rmMargin">— days</div>
-                <div class="rmi-ci" id="rmMarginTxt">—</div>
-              </div>
-            </div>
-
-            <div class="rec-narrative" id="recNarrative" data-testid="text-narrative">Loading…</div><div style="margin-top:8px;font-size:10px;color:var(--text-muted);line-height:1.5;">If the plan fails target, the selected number of stock days is not enough to keep estimated running-out risk below the chosen limit. If the plan meets target, the selected number of stock days is enough under the current model estimate.</div>
-          </div>
-        </div>
-
-      </div><!-- /.mid-fold -->
-
-      <!-- LOWER FOLD: Chart + Decision Summary -->
+    <!-- LOWER FOLD: Chart + Decision Summary -->
       <div class="lower-fold">
 
         <div class="chart-card">
@@ -2231,3 +1955,280 @@ LiveData.startPolling();
 </script>
 </body>
 </html>
+    <div style="padding:10px 16px 0;">
+      <details class="card" style="min-height:auto;overflow:hidden;">
+        <summary style="cursor:pointer;list-style:none;padding:12px 14px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text);display:flex;justify-content:space-between;align-items:center;">
+          Limitations & assumptions
+          <span aria-hidden="true" style="color:var(--text-muted);">▾</span>
+        </summary>
+        <div class="card-body" style="padding-top:0;font-size:11px;color:var(--text-muted);line-height:1.65;display:flex;flex-direction:column;gap:8px;">
+          <div>This app does not directly observe store shelves, exact inventory levels, truck GPS feeds, or realized grocery demand. It estimates risk from proxy disruption signals and a model.</div>
+          <div>Current recommendations are most useful as decision support, not as a guarantee of actual stock availability.</div>
+          <div>Historical backtesting against real lane-level replenishment outcomes and demand calibration would improve confidence in future versions.</div>
+        </div>
+      </details>
+    </div>
+
+    <div style="padding:10px 16px 0;">
+      <details class="card" style="min-height:auto;overflow:hidden;">
+        <summary style="cursor:pointer;list-style:none;padding:12px 14px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text);display:flex;justify-content:space-between;align-items:center;">
+          Math methodology
+          <span aria-hidden="true" style="color:var(--text-muted);">▾</span>
+        </summary>
+        <div class="card-body" style="padding-top:0;font-size:11px;color:var(--text-muted);line-height:1.7;display:flex;flex-direction:column;gap:8px;">
+          <div><strong style="color:var(--text)">1. Signal aggregation.</strong> Live weather, traffic, and port-related inputs are normalized to a 0–1 scale and combined into a disruption score. This score is mapped into a qualitative disruption level such as Low, Normal, High, or Extreme.</div>
+          <div><strong style="color:var(--text)">2. Risk curve mapping.</strong> For each disruption level, the app uses an estimated relationship between days of stock coverage and the probability of running out before replenishment arrives. Higher disruption shifts the curve upward, meaning more coverage is needed to achieve the same risk limit.</div>
+          <div><strong style="color:var(--text)">3. Policy selection rule.</strong> Let p(d) denote the estimated probability of running out at d days of stock, and let tau denote the selected risk limit. The recommended policy is the smallest d in the allowed range such that p(d) is less than or equal to tau. If no policy from 2 to 6 days satisfies the rule, the app reports 6d+.</div>
+          <div><strong style="color:var(--text)">4. Comparative outputs.</strong> The interface reports the selected plan, the minimum recommended coverage, the gap between them, and a scenario comparison so users can see how the decision changes as disruption increases.</div>
+          <div><strong style="color:var(--text)">5. Practical interpretation.</strong> This is a decision-support approximation, not a direct measurement of shelf inventory. The math helps translate proxy disruption signals into an operational recommendation under uncertainty.</div>
+        </div>
+      </details>
+    </div>
+
+    <div style="padding:10px 16px 0;">
+      <div class="card" style="min-height:auto;">
+        <div class="panel-hdr"><div class="panel-title">Creator note</div></div>
+        <div class="card-body" style="font-size:11px;color:var(--text-muted);line-height:1.6;">Built by <strong style="color:var(--text)">Neil Sharma</strong> as a decision-support prototype exploring how public disruption signals can be translated into clearer operational inventory decisions.</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:10px 16px 0;">
+      <div class="card" style="min-height:auto;">
+        <div class="panel-hdr"><div class="panel-title">Why this matters</div></div>
+        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">Small delays in weather, traffic, or port flow can change whether a grocery inventory plan is likely to run out before the next delivery. This tool turns those signals into a practical stocking recommendation.</div>
+      </div>
+      <div class="card" style="min-height:auto;">
+        <div class="panel-hdr"><div class="panel-title">How it works</div></div>
+        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">Live disruption signals feed a risk model, the model estimates the chance of running out of stock, and the app recommends how many days of coverage are needed to stay below the selected risk limit.</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:12px 16px 0;">
+      <div class="card" style="min-height:auto;">
+        <div class="panel-hdr"><div class="panel-title">Why this matters</div></div>
+        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">This app turns live delivery-route disruption signals into a practical grocery inventory decision.</div>
+      </div>
+      <div class="card" style="min-height:auto;">
+        <div class="panel-hdr"><div class="panel-title">What makes it useful</div></div>
+        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">It compares the current plan with the recommended plan instead of only showing a risk score.</div>
+      </div>
+      <div class="card" style="min-height:auto;">
+        <div class="panel-hdr"><div class="panel-title">Why trust it carefully</div></div>
+        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">It shows what live sources are active and clearly separates current conditions from hypothetical tests.</div>
+      </div>
+    </div>
+
+<!-- CURRENT READOUT (executive summary) -->
+    <div class="readout-bar">
+      <div class="readout-title">Current Readout</div>
+      <span id="execSummary">Connecting to live data feed…</span>
+    </div>
+
+    <!-- HOW TO READ THIS -->
+      <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:none;color:var(--text);padding:7px 18px 0;">How to read this</div>
+    <div class="how-to-bar">
+      <div class="how-to-item">
+        <div class="how-to-dot"></div>
+        <span><strong>Disruption pressure</strong> shows current disruption pressure from live signals.</span>
+      </div>
+      <div class="how-to-item">
+        <div class="how-to-dot"></div>
+        <span><strong>Chance of running out</strong> estimates the chance the selected coverage policy fails.</span>
+      </div>
+      <div class="how-to-item">
+        <div class="how-to-dot"></div>
+        <span><strong>Days of stock you need</strong> shows the minimum days of inventory needed to meet the service target.</span>
+      </div>
+    </div>
+
+    <!-- SCROLLABLE CONTENT -->
+    <div class="content">
+
+      <!-- Methodology note -->
+      <div class="method-note">
+        <strong>Note:</strong> Live data sources do not directly measure grocery stockouts. They measure disruption signals such as weather and port conditions. The model uses those signals to estimate inventory risk on the Savannah to Atlanta replenishment lane.
+      </div>
+
+      <!-- ABOVE FOLD: Ticker (left, wide) + Drivers/Policy (right, stacked) -->
+      <div class="above-fold">
+
+        <!-- Ticker -->
+        <div class="ticker-panel">
+          <div class="panel-hdr">
+            <div class="panel-title">What changed?</div>
+            <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
+              <button id="tickerViewExec" class="ticker-view-btn active" onclick="setTickerView('exec')" title="Show policy, risk, and mode events only">Executive</button>
+              
+              <button id="tickerViewTech" class="ticker-view-btn"         onclick="setTickerView('tech')" title="Show all diagnostic entries">Technical Log</button>
+            </div>
+            <div class="panel-badge" id="tickerCount">0 entries</div>
+          </div>
+          <div class="ticker-feed" id="tickerFeed">
+            <div class="tick">
+              <span class="tick-ts">—</span>
+              <span class="tick-tag SOURCE">SOURCE</span>
+              <span class="tick-msg">Waiting for first live fetch…</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right column: Drivers + Policy Ideas -->
+        <div class="right-col">
+
+          <!-- Risk Drivers -->
+          <div class="card">
+            <div class="panel-hdr">
+              <div class="panel-title">Risk Drivers</div>
+              <div class="panel-badge" id="driverSourceBadge">—</div>
+            </div>
+            <div class="card-body">
+              <div class="driver-row">
+                <div class="driver-label">National Weather Service alerts</div>
+                <div class="driver-track"><div class="driver-fill" id="df-nws" style="width:0%;background:var(--ok)"></div></div>
+                <div class="driver-val" id="dv-nws">—</div>
+              </div>
+              <div class="driver-row">
+                <div class="driver-label">Weather Score</div>
+                <div class="driver-track"><div class="driver-fill" id="df-weather" style="width:0%;background:var(--primary)"></div></div>
+                <div class="driver-val" id="dv-weather">—</div>
+              </div>
+              <div class="driver-row">
+                <div class="driver-label">Traffic Events</div>
+                <div class="driver-track"><div class="driver-fill" id="df-traffic" style="width:0%"></div></div>
+                <div class="driver-val driver-na" id="dv-traffic">n/a</div>
+              </div>
+              <div class="driver-row">
+                <div class="driver-label">Traffic Score</div>
+                <div class="driver-track"><div class="driver-fill" id="df-tscore" style="width:0%"></div></div>
+                <div class="driver-val driver-na" id="dv-tscore">n/a</div>
+              </div>
+              <div class="driver-row">
+                <div class="driver-label">Port Baseline</div>
+                <div class="driver-track"><div class="driver-fill" id="df-port" style="width:0%;background:var(--warn)"></div></div>
+                <div class="driver-val" id="dv-port">—</div>
+              </div>
+              <div class="driver-meta">
+                <div class="driver-meta-item">Sources: <span id="dv-sources">—</span></div>
+                <div class="driver-meta-item" id="dv-failures-wrap">Failures: <span id="dv-failures" style="color:var(--text-muted)">none</span></div>
+              </div>
+              <!-- Note shown only in what-if mode -->
+              <div class="source-layer-note">
+                Live source layer — these are the actual API signals. The what-if regime above is a hypothetical test; this data reflects current real conditions.
+              </div>
+            </div>
+          </div>
+
+          <!-- Policy Ideas -->
+          <div class="card">
+            <div class="panel-hdr">
+              <div class="panel-title">Policy Ideas</div>
+              <div class="panel-badge" id="policyScenarioBadge">baseline</div>
+            </div>
+            <div class="card-body">
+              <div class="policy-list" id="policyList">
+                <div class="policy-item"><div class="policy-dot"></div><span>Awaiting live data…</span></div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /.right-col -->
+      </div><!-- /.above-fold -->
+
+      <!-- MID FOLD: Can I trust this estimate? + Recommendation -->
+      <div class="mid-fold">
+
+        <!-- Can I trust this estimate? -->
+        <div class="card">
+          <div class="panel-hdr">
+            <div class="panel-title">Can I trust this estimate?</div>
+            <div class="panel-badge">Confidence</div>
+          </div>
+          <div class="card-body">
+            <div class="coverage-list">
+              <div class="cov-item">
+                <div class="cov-dot active"></div>
+                <div class="cov-status active">Live source</div>
+                <div class="cov-name">National Weather Service weather feed</div>
+              </div>
+              <div class="cov-item">
+                <div class="cov-dot off"></div>
+                <div class="cov-status off">Not included</div>
+                <div class="cov-name">Georgia 511 traffic feed</div>
+              </div>
+              <div class="cov-item">
+                <div class="cov-dot warn"></div>
+                <div class="cov-status warn">Manual input</div>
+                <div class="cov-name">Port baseline (static estimate)</div>
+              </div>
+              <div class="cov-item">
+                <div class="cov-dot off"></div>
+                <div class="cov-status off">Not included</div>
+                <div class="cov-name">Real inventory levels</div>
+              </div>
+              <div class="cov-item">
+                <div class="cov-dot off"></div>
+                <div class="cov-status off">Not included</div>
+                <div class="cov-name">Truck GPS / estimated arrival time feed</div>
+              </div>
+              <div class="cov-item">
+                <div class="cov-dot future"></div>
+                <div class="cov-status future">Not included</div>
+                <div class="cov-name">Historical disruption log</div>
+              </div>
+              <div class="cov-item">
+                <div class="cov-dot future"></div>
+                <div class="cov-status future">Not included</div>
+                <div class="cov-name">Demand distribution fitting</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Policy Recommendation -->
+        <div class="rec-card" id="recPanel">
+          <div class="rec-card-body">
+            <div class="rec-top">
+              <div>
+                <div class="rec-eyebrow">Policy Recommendation</div>
+                <div class="rec-main">
+                  <span class="rec-num" id="recNum">—</span>
+                  <span class="rec-unit">days of cover</span>
+                  <span class="rec-ci" id="recCI"></span>
+                </div>
+              </div>
+              <div id="statusBadge" class="status-badge pass" data-testid="badge-status">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span id="statusTxt">Meets Target</span>
+              </div>
+            </div>
+
+            <div class="rec-meta">
+              <div>
+                <div class="rmi-label">Selected policy</div>
+                <div class="rmi-val" id="rmSel">— days</div>
+                <div class="rmi-ci" id="rmSelStkout">P(stockout) = —</div>
+              </div>
+              <div>
+                <div class="rmi-label">Minimum Required</div>
+                <div class="rmi-val" id="rmMin">— days</div>
+                <div class="rmi-ci" id="rmMinCI">≤ 2% target</div>
+              </div>
+              <div>
+                <div class="rmi-label">Lowest Estimated Total Cost</div>
+                <div class="rmi-val" id="rmOpt">— days</div>
+                <div class="rmi-ci" id="rmOptCI">Includes shortage-cost reduction. —</div>
+              </div>
+              <div>
+                <div class="rmi-label">Stock gap</div>
+                <div class="rmi-val" id="rmMargin">— days</div>
+                <div class="rmi-ci" id="rmMarginTxt">—</div>
+              </div>
+            </div>
+
+            <div class="rec-narrative" id="recNarrative" data-testid="text-narrative">Loading…</div><div style="margin-top:8px;font-size:10px;color:var(--text-muted);line-height:1.5;">If the plan fails target, the selected number of stock days is not enough to keep estimated running-out risk below the chosen limit. If the plan meets target, the selected number of stock days is enough under the current model estimate.</div>
+          </div>
+        </div>
+
+      </div><!-- /.mid-fold -->
+
+  

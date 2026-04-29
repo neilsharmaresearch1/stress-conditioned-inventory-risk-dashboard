@@ -1,2234 +1,1636 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Live Risk Intelligence — Savannah → Atlanta Lane</title>
-  <meta name="description" content="Live disruption signals mapped into model-based stockout risk estimates for the Savannah to Atlanta replenishment lane." />
-
-  <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-
+  <title>Stress-Conditioned Inventory Risk Dashboard</title>
   <style>
-    /* ─── DESIGN TOKENS ──────────────────────────────────────────────────── */
-    :root {
-      --bg:          #F7F8FC;
-      --surface:     #FFFFFF;
-      --surface-2:   #F1F4FB;
-      --surface-3:   #E8EEF8;
-      --border:      #D7E0F0;
-      --divider:     #E6ECF5;
-      --text:        #18263A;
-      --text-muted:  #2E4665;
-      --text-faint:  #3F5A78;
-      --primary:     #2563EB;
-      --primary-bg:  rgba(37,99,235,.12);
-      --primary-dim: rgba(58,134,255,.10);
-      --ok:          #0F9D7A;
-      --ok-bg:       #ECFBF6;
-      --warn:        #8B5CF6;
-      --warn-bg:     #FCEEF2;
-      --err:         #C81E5B;
-      --err-bg:      #FDEEF3;
-      --low-c:       #3fa8b8;
-      --hi-c:        #e08030;
-      --ex-c:        #cf4e4e;
-      --ch-low:      #3A86FF;
-      --ch-norm:     #2FBF8F;
-      --ch-hi:       #C06C84;
-      --ch-ex:       #D6456B;
-      --ch-tgt:      #7B61FF;
-      --ch-ci:       rgba(58,134,255,.12);
-      --ch-ci-line:  rgba(58,134,255,.25);
-      /* What-if mode accent */
-      --wi-accent:   #7C3AED;
-      --wi-bg:       rgba(123,97,255,.10);
-      --wi-border:   rgba(123,97,255,.24);
-      --font:  'General Sans', 'Helvetica Neue', sans-serif;
-      --mono:  'Geist Mono', 'Courier New', monospace;
-      --xs:    .75rem;
-      --sm:    .8125rem;
-      --base:  .9375rem;
-      --r:     10px; --rm: 12px; --rl: 14px;
-      --sh:    0 12px 30px rgba(30,42,58,.06);
-      --tr:    160ms cubic-bezier(.16,1,.3,1);
-    }
-
-    /* ─── BASE ───────────────────────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
-    html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility }
-    body { font-family: var(--font); font-size: var(--sm); color: var(--text);
-           background: var(--bg); line-height: 1.5; overflow-x: hidden }
-    svg  { display: block }
-    button { cursor: pointer; background: none; border: none; font: inherit; color: inherit }
-    select { font: inherit; color: inherit }
-
-    /* ─── TOOLTIP ────────────────────────────────────────────────────────── */
-    [data-tip] { position: relative; cursor: help }
-    [data-tip]::after {
-      content: attr(data-tip);
-      position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
-      background: #EEF3FB; border: 1px solid #D7E0F0; border-radius: var(--rm);
-      color: var(--text-muted); font-size: 10px; font-weight: 400;
-      white-space: normal; min-width: 180px; max-width: 240px; line-height: 1.45;
-      padding: 6px 9px; pointer-events: none; opacity: 0;
-      transition: opacity .15s ease; z-index: 100; text-transform: none; letter-spacing: 0;
-    }
-    [data-tip]:hover::after { opacity: 1 }
-
-    /* ─── PAGE SHELL ─────────────────────────────────────────────────────── */
-    .shell {
-      display: grid;
-      grid-template-columns: 218px 1fr;
-      grid-template-rows: 44px 1fr;
-      height: 100dvh;
-      overflow: hidden;
-    }
-
-    /* ─── TOPBAR ─────────────────────────────────────────────────────────── */
-    .topbar {
-      grid-column: 1 / -1;
-      display: flex; align-items: center; gap: 10px; padding: 0 16px;
-      background: var(--surface); border-bottom: 1px solid var(--border); z-index: 30;
-    }
-    .tl { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0 }
-    .tl-title { font-size: 12px; font-weight: 700; color: var(--text); letter-spacing: -.01em; white-space: nowrap }
-    .tl-sub   { font-size: 10px; color: var(--text-faint); white-space: nowrap }
-    .ta { display: flex; align-items: center; gap: 8px; flex-shrink: 0 }
-
-    .live-badge {
-      display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px;
-      border-radius: var(--rm); font-size: 10px; font-weight: 700; letter-spacing: .05em;
-      border: 1px solid var(--border); background: rgba(245,248,255,.95); color: var(--text-faint);
-      transition: all var(--tr);
-    }
-    .live-badge[data-status="live"]  { background: rgba(47,128,237,.10); color: var(--primary); border-color: rgba(47,128,237,.22) }
-    .live-badge[data-status="stale"] { background: var(--warn-bg); color: var(--warn); border-color: #3a2408 }
-    .live-badge[data-status="error"] { background: var(--err-bg); color: var(--err); border-color: #3a1010 }
-    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0 }
-    [data-status="live"] .live-dot { animation: blink 2.4s ease-in-out infinite }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
-
-    .proto-badge {
-      display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px;
-      border-radius: 3px; background: #2a1a06; color: var(--warn); font-size: 9px;
-      font-weight: 700; letter-spacing: .07em; text-transform: uppercase; border: 1px solid #3a2408;
-    }
-
-    /* ─── MODE BANNER (shown in what-if) ────────────────────────────────── */
-    .mode-banner {
-      display: none;
-      background: #1a1228; border-bottom: 1px solid var(--wi-border);
-      padding: 5px 18px; align-items: center; gap: 10px; flex-shrink: 0;
-    }
-    .mode-banner.visible { display: flex }
-    .mode-banner-icon { font-size: 11px; color: var(--wi-accent) }
-    .mode-banner-txt  { font-size: 11px; color: #7C4DDF; flex: 1 }
-    .mode-banner-back {
-      font-size: 10px; font-weight: 700; color: var(--wi-accent); cursor: pointer;
-      padding: 3px 9px; border: 1px solid var(--wi-border); border-radius: var(--rm);
-      background: var(--wi-bg); transition: all var(--tr); flex-shrink: 0;
-    }
-    .mode-banner-back:hover { background: rgba(155,111,212,.2) }
-
-    /* ─── SIDEBAR ────────────────────────────────────────────────────────── */
-    .sidebar {
-      grid-row: 2;
-      background: linear-gradient(180deg, #F8FBFF 0%, #EEF4FF 100%);
-      border-right: 1px solid var(--border);
-      overflow-y: auto;
-      overscroll-behavior: contain;
-      padding: 12px 0;
-    }
-    .sb-sect  { padding: 0 12px; margin-bottom: 14px }
-    .sb-label { font-size: 9px; font-weight: 700; letter-spacing: .10em; text-transform: uppercase;
-                color: var(--text-faint); margin-bottom: 8px }
-    .ctrl-group  { margin-bottom: 10px }
-    .ctrl-label  { display: block; font-size: 11px; font-weight: 500; color: var(--text-muted); margin-bottom: 4px }
-    .sb-divider  { height: 1px; background: var(--border); margin: 2px 12px 12px }
-    details > summary::-webkit-details-marker { display:none }
-    details[open] > summary span[aria-hidden="true"] { transform: rotate(180deg); }
-
-    /* Mode toggle */
-    .mode-toggle-wrap {
-      display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px;
-    }
-    .mode-toggle-lbl {
-      font-size: 9px; font-weight: 700; letter-spacing: .10em; text-transform: uppercase;
-      color: var(--text-faint);
-    }
-    .mode-toggle {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 2px;
-    }
-    .mode-btn {
-      padding: 6px 4px; border-radius: var(--r); border: 1px solid rgba(215,224,240,.95);
-      background: rgba(255,255,255,.55); color: var(--text-faint); font-size: 10px; font-weight: 700;
-      text-align: center; cursor: pointer; transition: all var(--tr); letter-spacing: .02em;
-    }
-    .mode-btn:hover:not(.active) { background: rgba(245,248,255,.95); color: var(--text); border-color: #3a3a3a }
-    .mode-btn.live-mode.active  { background: rgba(47,128,237,.10); color: var(--primary); border-color: rgba(47,128,237,.22) }
-    .mode-btn.wi-mode.active    { background: #1a1228; color: var(--wi-accent); border-color: var(--wi-border) }
-
-    /* Regime control state — disabled in live mode */
-    .regime-ctrl-wrap { position: relative }
-    .regime-lock-overlay {
-      display: none;
-      position: absolute; inset: 0; z-index: 10; border-radius: var(--r);
-      background: rgba(17,17,17,.65); backdrop-filter: blur(1px);
-      align-items: center; justify-content: center;
-      font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-      color: var(--primary); pointer-events: all; cursor: default;
-    }
-    .regime-lock-overlay.visible { display: flex }
-    .regime-ctrl-label { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 8px }
-    .regime-ctrl-label .ctrl-label { margin-bottom: 0 }
-    .regime-mode-tag {
-      font-size: 8px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-      padding: 1px 5px; border-radius: 2px; flex-shrink: 0;
-    }
-    .regime-mode-tag.api   { background: rgba(63,168,184,.12); color: var(--primary); border: 1px solid rgba(63,168,184,.2) }
-    .regime-mode-tag.manual{ background: var(--wi-bg); color: var(--wi-accent); border: 1px solid var(--wi-border) }
-
-    /* Segmented */
-    .seg { display: grid; gap: 2px }
-    .seg.c2 { grid-template-columns: 1fr 1fr }
-    .seg.c3 { grid-template-columns: 1fr 1fr 1fr }
-    .seg-btn {
-      padding: 5px 4px; border-radius: var(--r); border: 1px solid rgba(215,224,240,.95);
-      background: rgba(255,255,255,.55); color: var(--text-muted); font-size: 11px; font-weight: 600;
-      text-align: center; cursor: pointer; transition: all var(--tr); white-space: nowrap;
-    }
-    .seg-btn:hover:not(.active) { background: rgba(245,248,255,.95); color: var(--text); border-color: #3a3a3a }
-    .seg-btn.active { color: #fff; border-color: transparent; box-shadow: 0 8px 18px rgba(58,134,255,.14); }
-    .seg-btn.r-low.active   { background: #1e4d3a; color: #4cbe8a; border-color: #1e4d3a }
-    .seg-btn.r-norm.active  { background: #1a3540; color: var(--primary); border-color: #1a3540 }
-    .seg-btn.r-hi.active    { background: #FCEEF2; color: var(--warn); border-color: #3a2208 }
-    .seg-btn.r-ex.active    { background: #3a1010; color: #cf4e4e; border-color: #3a1010 }
-    .seg-btn.sc-bl.active   { background: #1a3540; color: var(--primary); border-color: #1a3540 }
-    .seg-btn.sc-ss.active   { background: #1a2e1a; color: #4caf50; border-color: #1a2e1a }
-    .seg-btn.sc-tm.active   { background: #281a40; color: #9b6fd4; border-color: #281a40 }
-
-    /* Select */
-    .ctrl-sel {
-      width: 100%; padding: 5px 26px 5px 8px; border-radius: var(--r);
-      border: 1px solid var(--border);
-      background: rgba(245,248,255,.95) url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23666' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 8px center;
-      color: var(--text); font-size: 11px; font-weight: 500; appearance: none; cursor: pointer;
-    }
-    .ctrl-sel:focus { outline: 1px solid var(--primary); outline-offset: 1px }
-
-    /* Slider */
-    .sl-row { display: flex; align-items: center; gap: 8px }
-    .sl-val { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--primary); min-width: 28px; text-align: right }
-    input[type=range] { -webkit-appearance: none; flex: 1; height: 3px; border-radius: 2px; background: #2a2a2a; cursor: pointer; outline: none }
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 13px; height: 13px; border-radius: 50%;
-      background: var(--primary); border: 2px solid #111; box-shadow: 0 0 0 1px var(--primary); transition: box-shadow var(--tr);
-    }
-    input[type=range]::-webkit-slider-thumb:hover { box-shadow: 0 0 0 4px var(--primary-dim) }
-
-    /* Signal bars */
-    .stress-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px }
-    .stress-bar-label { font-size: 9px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--text-faint); width: 78px; flex-shrink: 0 }
-    .stress-bar-track { flex: 1; height: 3px; border-radius: 2px; background: rgba(232,238,248,.85); overflow: hidden }
-    .stress-bar-fill  { height: 100%; border-radius: 2px; transition: width .4s var(--tr), background .4s }
-    .stress-bar-val   { font-family: var(--mono); font-size: 9px; color: var(--text-muted); min-width: 28px; text-align: right }
-
-    /* Cost inputs */
-    .cost-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px }
-    .cost-input-wrap { display: flex; flex-direction: column; gap: 3px }
-    .cost-input-wrap label { font-size: 9px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-faint) }
-    .cost-input {
-      width: 100%; padding: 5px 8px; border: 1px solid var(--border); border-radius: var(--r);
-      background: rgba(245,248,255,.95); color: var(--text); font-family: var(--mono); font-size: 11px; font-weight: 600;
-    }
-    .cost-input:focus { outline: 1px solid var(--primary); outline-offset: 1px }
-
-    /* Helper note */
-    .ctrl-note { font-size: 9px; color: var(--text-faint); line-height: 1.5; margin-top: 4px }
-
-    /* ─── MAIN SCROLL AREA ───────────────────────────────────────────────── */
-    .main {
-      grid-row: 2;
-      overflow-y: auto;
-      overscroll-behavior: contain;
-      background: var(--bg);
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* ─── HERO BAR ───────────────────────────────────────────────────────── */
-    .hero {
-      background: #FFFFFF;
-      border-bottom: 1px solid var(--border);
-      padding: 12px 18px;
-      display: flex;
-      align-items: center;
-      gap: 0;
-      flex-shrink: 0;
-      position: relative;
-      transition: border-color var(--tr);
-    }
-    /* What-if hero accent */
-    body.what-if-mode .hero { border-bottom-color: var(--wi-border) }
-
-    /* Mode label inside hero */
-    .hero-mode-label {
-      position: absolute; top: 8px; right: 18px;
-      font-size: 9px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
-      padding: 2px 8px; border-radius: 3px;
-    }
-    .hero-mode-label.live-lbl { background: rgba(73,182,214,.14); color: var(--primary); border: 1px solid rgba(73,182,214,.28) }
-    .hero-mode-label.wi-lbl   { background: #1a1228; color: var(--wi-accent); border: 1px solid var(--wi-border) }
-
-    /* Score block */
-    .score-block {
-      display: flex; flex-direction: column; justify-content: center;
-      padding-right: 20px;
-      border-right: 1px solid var(--border);
-      margin-right: 20px;
-      flex-shrink: 0;
-    }
-    .score-eyebrow {
-      font-size: 9px; font-weight: 700; letter-spacing: .10em; text-transform: uppercase;
-      color: var(--text-faint); margin-bottom: 1px;
-    }
-    .score-num {
-      font-family: var(--mono); font-size: 2.4rem; font-weight: 700;
-      color: var(--text); letter-spacing: -.04em; line-height: 1; transition: color .3s;
-    }
-    .score-num.regime-low     { color: var(--ch-low) }
-    .score-num.regime-normal  { color: var(--ch-norm) }
-    .score-num.regime-high    { color: var(--ch-hi) }
-    .score-num.regime-extreme { color: var(--ch-ex) }
-    .score-label {
-      font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-      color: var(--text-muted); margin-top: 3px;
-    }
-    .gauge-track {
-      width: 100%; height: 3px; border-radius: 2px; margin-top: 5px;
-      background: linear-gradient(to right, var(--ch-low) 0%, var(--ch-norm) 33%, var(--ch-hi) 66%, var(--ch-ex) 100%);
-      position: relative;
-    }
-    .gauge-thumb {
-      position: absolute; top: 50%; transform: translate(-50%, -50%);
-      width: 9px; height: 9px; border-radius: 50%;
-      background: #fff; border: 2px solid #111; box-shadow: 0 0 0 2px currentColor;
-      transition: left .5s cubic-bezier(.16,1,.3,1), color .3s;
-    }
-
-    /* Hero KPI pills */
-    .hero-kpis {
-      display: flex;
-      gap: 0;
-      flex: 1;
-      min-width: 0;
-    }
-    .hkpi {
-      flex: 1;
-      padding: 2px 16px;
-      border-right: 1px solid var(--border);
-      min-width: 0;
-    }
-    .hkpi:last-child { border-right: none }
-    .hkpi-lbl {
-      font-size: 9px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
-      color: var(--text-faint); margin-bottom: 2px; white-space: nowrap;
-    }
-    .hkpi-val {
-      font-family: var(--mono); font-size: 1.1rem; font-weight: 700;
-      color: var(--text); letter-spacing: -.02em; line-height: 1.1; white-space: nowrap;
-    }
-    .hkpi-val.ok   { color: var(--ok) }
-    .hkpi-val.warn { color: var(--warn) }
-    .hkpi-val.err  { color: var(--err) }
-    .hkpi-val.cyan { color: var(--primary) }
-    .hkpi-sub { font-size: 9px; color: var(--text-faint); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-
-    /* Feed status pill at end of hero */
-    .hero-status {
-      flex-shrink: 0;
-      padding-left: 16px;
-      border-left: 1px solid var(--border);
-      display: flex; flex-direction: column; justify-content: center; gap: 3px;
-    }
-    .hero-status-row { display: flex; align-items: center; gap: 5px }
-    .hero-status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0 }
-    .hero-status-dot.live    { background: var(--primary) }
-    .hero-status-dot.stale   { background: var(--warn) }
-    .hero-status-dot.error   { background: var(--err) }
-    .hero-status-dot.loading { background: var(--text-faint) }
-    .hero-status-lbl { font-size: 10px; font-weight: 700; letter-spacing: .04em; color: var(--text-muted) }
-    .hero-status-ts  { font-family: var(--mono); font-size: 9px; color: var(--text-faint) }
-
-    /* ─── CURRENT READOUT PANEL ──────────────────────────────────────────── */
-    .readout-bar {
-      background: rgba(255,255,255,.72);
-      border-bottom: 1px solid var(--divider);
-      padding: 8px 18px;
-      font-size: 11px; color: var(--text-muted); line-height: 1.5;
-      flex-shrink: 0;
-    }
-    .readout-bar strong { color: var(--text); font-weight: 600 }
-    .readout-bar .readout-title {
-      font-size: 9px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
-      color: var(--text-faint); margin-bottom: 3px;
-    }
-
-    /* ─── HOW-TO PANEL ───────────────────────────────────────────────────── */
-    .how-to-bar {
-      background: linear-gradient(90deg, rgba(58,134,255,.08), rgba(123,97,255,.06));
-      border-bottom: 1px solid #D7E6FB;
-      padding: 7px 18px;
-      display: flex; align-items: center; gap: 20px; flex-shrink: 0; flex-wrap: wrap;
-    }
-    .how-to-item { display: flex; align-items: flex-start; gap: 6px; font-size: 10px; color: var(--text-faint) }
-    .how-to-dot  { width: 5px; height: 5px; border-radius: 50%; background: var(--primary); flex-shrink: 0; margin-top: 4px }
-    .how-to-item strong { color: var(--text-muted); font-weight: 600 }
-
-    /* ─── CONTENT GRID ───────────────────────────────────────────────────── */
-    .content {
-      flex: 1;
-      padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    /* Methodology note */
-    .method-note {
-      font-size: 10px; color: var(--text-faint); line-height: 1.5;
-      padding: 7px 12px; background: rgba(255,255,255,.72); border: 1px solid var(--border);
-      border-radius: var(--rm); flex-shrink: 0;
-    }
-    .method-note strong { color: var(--text-muted) }
-
-    /* ─── ABOVE FOLD ──────────────────────────────────────────────────────── */
-    .above-fold {
-      display: grid;
-      grid-template-columns: 1fr 340px;
-      gap: 12px;
-    }
-
-    /* ── TICKER PANEL ─────────────────────────────────────────────────────── */
-    .ticker-panel {
-      background: rgba(255,255,255,.92);
-      border: 1px solid rgba(215,224,240,.9);
-      border-radius: 14px;
-      display: flex;
-      flex-direction: column;
-      min-height: 300px;
-      box-shadow: var(--sh);
-      transition: border-color var(--tr);
-    }
-    body.what-if-mode .ticker-panel { border-color: var(--wi-border) }
-
-    .panel-hdr {
-      display: flex; align-items: center; gap: 8px;
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-    .panel-title {
-      font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-      color: var(--text-faint); flex: 1;
-    }
-    .panel-badge {
-      font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-      padding: 2px 7px; border-radius: 3px;
-      border: 1px solid var(--border); background: rgba(245,248,255,.95); color: var(--text-faint);
-    }
-
-    /* Ticker view toggle buttons */
-    .ticker-view-btn {
-      font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
-      padding: 2px 7px; border-radius: 3px; border: 1px solid rgba(215,224,240,.95);
-      background: rgba(255,255,255,.55); color: var(--text-faint); cursor: pointer;
-      transition: all var(--tr);
-    }
-    .ticker-view-btn:hover { background: rgba(245,248,255,.95); color: var(--text-muted) }
-    .ticker-view-btn.active { background: var(--primary-bg); color: var(--primary); border-color: rgba(63,168,184,.3) }
-
-    .ticker-feed {
-      flex: 1;
-      overflow-y: auto;
-      overscroll-behavior: contain;
-      padding: 6px 0;
-    }
-    .ticker-feed::-webkit-scrollbar { width: 3px }
-    .ticker-feed::-webkit-scrollbar-track { background: transparent }
-    .ticker-feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px }
-
-    .tick {
-      display: flex; align-items: flex-start; gap: 7px;
-      padding: 5px 14px;
-      border-bottom: 1px solid var(--divider);
-      font-size: 11px; line-height: 1.45;
-      animation: tick-in .2s ease;
-    }
-    .tick:last-child { border-bottom: none }
-    @keyframes tick-in { from { opacity:0; background: rgba(63,168,184,.07) } to { opacity:1; background:transparent } }
-    .tick-ts  { font-family: var(--mono); color: var(--text-faint); font-size: 9px; flex-shrink: 0; padding-top: 2px; min-width: 44px }
-    .tick-tag {
-      font-size: 8px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-      padding: 1px 5px; border-radius: 2px; flex-shrink: 0; margin-top: 2px;
-    }
-    .tick-tag.DATA   { background: rgba(63,168,184,.15); color: var(--primary) }
-    .tick-tag.RISK   { background: rgba(207,78,78,.15);  color: var(--err) }
-    .tick-tag.POLICY { background: rgba(90,170,56,.15);  color: var(--ch-norm) }
-    .tick-tag.SOURCE { background: rgba(80,80,80,.2);    color: var(--text-muted) }
-    .tick-tag.WARN   { background: rgba(224,128,48,.15); color: var(--warn) }
-    .tick-tag.MODE   { background: rgba(155,111,212,.15); color: var(--wi-accent) }
-    .tick-msg { color: var(--text-muted); flex: 1; min-width: 0 }
-    .tick-msg strong { color: var(--text); font-weight: 600 }
-
-    /* ── RIGHT COLUMN STACK ─────────────────────────────────────────────── */
-    .right-col {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      min-width: 0;
-    }
-
-    /* Generic card */
-    .card {
-      background: rgba(255,255,255,.92);
-      border: 1px solid rgba(215,224,240,.9);
-      border-radius: 14px;
-      box-shadow: var(--sh);
-    }
-    .card-body { padding: 10px 14px }
-
-    /* ── RISK DRIVERS ───────────────────────────────────────────────────── */
-    .driver-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--divider) }
-    .driver-row:last-child { border-bottom: none }
-    .driver-label { font-size: 10px; color: var(--text-muted); min-width: 100px; flex-shrink: 0 }
-    .driver-track { flex: 1; height: 3px; border-radius: 2px; background: #EEF3FB; overflow: hidden }
-    .driver-fill  { height: 100%; border-radius: 2px; transition: width .5s var(--tr), background .4s }
-    .driver-val   { font-family: var(--mono); font-size: 10px; color: var(--text-faint); min-width: 34px; text-align: right }
-    .driver-na    { font-size: 10px; color: var(--text-faint); font-style: italic }
-    .driver-meta  { display: flex; justify-content: space-between; padding-top: 6px; margin-top: 2px; border-top: 1px solid var(--divider) }
-    .driver-meta-item { font-size: 9px; color: var(--text-faint) }
-    .driver-meta-item span { color: var(--text-muted) }
-
-    /* Source layer note (visible in what-if) */
-    .source-layer-note {
-      display: none; margin-top: 6px; padding: 5px 8px; border-radius: var(--rm);
-      background: var(--wi-bg); border: 1px solid var(--wi-border);
-      font-size: 9px; color: #7C4DDF; line-height: 1.4;
-    }
-    body.what-if-mode .source-layer-note { display: block }
-
-    /* ── POLICY IDEAS ───────────────────────────────────────────────────── */
-    .policy-list { display: flex; flex-direction: column; gap: 6px }
-    .policy-item {
-      display: flex; align-items: flex-start; gap: 6px;
-      font-size: 11px; color: var(--text-muted); line-height: 1.5;
-    }
-    .policy-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--primary); flex-shrink: 0; margin-top: 5px }
-
-    /* ─── MID FOLD ────────────────────────────────────────────────────────── */
-    .mid-fold {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    /* Coverage checklist */
-    .coverage-list { display: flex; flex-direction: column; gap: 0 }
-    .cov-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--divider) }
-    .cov-item:last-child { border-bottom: none }
-    .cov-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0 }
-    .cov-dot.active  { background: var(--ok) }
-    .cov-dot.warn    { background: var(--warn) }
-    .cov-dot.off     { background: var(--text-faint) }
-    .cov-dot.future  { background: #7a5fc0 }
-    .cov-status {
-      font-size: 8px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
-      min-width: 72px; flex-shrink: 0;
-    }
-    .cov-status.active { color: var(--ok) }
-    .cov-status.warn   { color: var(--warn) }
-    .cov-status.off    { color: var(--text-faint) }
-    .cov-status.future { color: #7a5fc0 }
-    .cov-name { font-size: 10px; color: var(--text-muted); flex: 1 }
-
-    /* ── RECOMMENDATION CARD ─────────────────────────────────────────────── */
-    .rec-card {
-      background: rgba(255,255,255,.92);
-      border: 1px solid rgba(215,224,240,.9);
-      border-radius: 14px;
-      box-shadow: var(--sh);
-      position: relative; overflow: hidden;
-    }
-    .rec-card::before {
-      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-      background: var(--rec-accent, var(--ok)); border-radius: 2px 0 0 2px; transition: background var(--tr);
-    }
-    .rec-card-body { padding: 12px 16px }
-
-    .rec-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px }
-    .rec-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: .10em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 3px }
-    .rec-main  { display: flex; align-items: baseline; gap: 8px }
-    .rec-num   { font-family: var(--mono); font-size: 2.4rem; font-weight: 700; color: var(--text); letter-spacing: -.04em; line-height: 1 }
-    .rec-unit  { font-size: var(--sm); font-weight: 500; color: var(--text-muted) }
-    .rec-ci    { font-size: 10px; color: var(--text-faint); font-family: var(--mono) }
-
-    .status-badge {
-      display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px;
-      border-radius: var(--rm); font-size: 11px; font-weight: 700; white-space: nowrap; flex-shrink: 0;
-    }
-    .status-badge.pass { background: #1f4d22; color: #5dd162; border: 1px solid #2a6630 }
-    .status-badge.fail { background: #4d1f1f; color: #e05555; border: 1px solid #662626 }
-
-    .rec-meta { display: grid; grid-template-columns: repeat(4,1fr); gap: 0; border-top: 1px solid var(--divider); margin-top: 8px; padding-top: 8px }
-    .rec-meta > div { padding-right: 10px }
-    .rmi-label { font-size: 9px; color: var(--text-faint); font-weight: 700; letter-spacing: .07em; text-transform: uppercase; margin-bottom: 2px }
-    .rmi-val   { font-size: var(--sm); font-weight: 700; color: var(--text); font-family: var(--mono); letter-spacing: -.02em }
-    .rmi-ci    { font-size: 9px; color: var(--text-faint); font-family: var(--mono); margin-top: 1px }
-
-    .rec-narrative {
-      margin-top: 10px; padding: 8px 12px;
-      background: rgba(255,255,255,.72); border: 1px solid var(--border); border-radius: var(--rm);
-      font-size: 11px; color: var(--text-muted); line-height: 1.6;
-    }
-
-    /* ─── LOWER FOLD ──────────────────────────────────────────────────────── */
-    .lower-fold {
-      display: grid;
-      grid-template-columns: 1fr 260px;
-      gap: 12px;
-    }
-
-    /* Chart card */
-    .chart-card {
-      background: var(--surface); border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(58,134,255,.06), 0 2px 10px rgba(30,42,58,.05); backdrop-filter: blur(10px);
-      border-radius: 14px; padding: 14px 16px; box-shadow: var(--sh);
-      display: flex; flex-direction: column;
-    }
-    .chart-hdr  { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px }
-    .chart-ttl  { font-size: 13px; font-weight: 700; color: var(--text) }
-    .chart-sub  { font-size: 10px; color: var(--text-muted); margin-top: 2px }
-    .sim-note   {
-      font-size: 9px; color: var(--text-faint); font-weight: 600;
-      background: rgba(245,248,255,.95); padding: 2px 8px; border-radius: 3px;
-      border: 1px solid var(--border); white-space: nowrap; align-self: flex-start; flex-shrink: 0;
-    }
-    .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px }
-    .leg-item { display: flex; align-items: center; gap: 4px; font-size: 9px; color: var(--text-muted) }
-    .leg-dot  { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0 }
-    .leg-dash { width: 12px; height: 0; border-top: 2px dashed; flex-shrink: 0; opacity: .7 }
-    .leg-band { width: 12px; height: 7px; border-radius: 2px; flex-shrink: 0; opacity: .3 }
-    .chart-wrap { position: relative; height: 260px }
-
-    /* Assumptions drawer */
-    .assumptions-wrap { margin-top: 8px }
-    .assumptions-toggle {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
-      color: var(--text-faint); cursor: pointer; padding: 4px 0;
-      border: none; background: none; transition: color var(--tr); width: 100%;
-    }
-    .assumptions-toggle:hover { color: var(--text-muted) }
-    .assumptions-toggle svg { transition: transform var(--tr) }
-    .assumptions-toggle.open svg { transform: rotate(90deg) }
-    .assumptions-body {
-      display: none; padding: 10px 12px; background: rgba(255,255,255,.72); border-radius: var(--rm);
-      border: 1px solid var(--divider); margin-top: 6px;
-    }
-    .assumptions-body.open { display: block }
-    .assump-row {
-      display: flex; justify-content: space-between; align-items: baseline;
-      padding: 3px 0; border-bottom: 1px solid #1e1e1e; font-size: 11px;
-    }
-    .assump-row:last-child { border-bottom: none }
-    .assump-key { color: var(--text-muted) }
-    .assump-val { font-family: var(--mono); font-size: 9px; color: var(--text-faint) }
-
-    /* Decision card */
-    .dec-card {
-      background: var(--surface); border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(58,134,255,.06), 0 2px 10px rgba(30,42,58,.05); backdrop-filter: blur(10px);
-      border-radius: 14px; padding: 14px 16px; box-shadow: var(--sh);
-      display: flex; flex-direction: column; gap: 0;
-    }
-    .dec-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: .10em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 8px }
-    .dec-bullets { list-style: none; display: flex; flex-direction: column; gap: 7px; margin-bottom: 10px }
-    .dec-item  { display: flex; align-items: flex-start; gap: 6px; font-size: 11px; color: var(--text-muted); line-height: 1.5 }
-    .dec-dot   { width: 5px; height: 5px; border-radius: 50%; background: var(--primary); flex-shrink: 0; margin-top: 5px }
-    .dec-divider { height: 1px; background: var(--divider); margin-bottom: 10px }
-    .dec-action { padding: 9px 12px; background: var(--primary-bg); border-radius: var(--rm); border: 1px solid rgba(63,168,184,.2) }
-    .dec-action-lbl { font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--primary); margin-bottom: 3px }
-    .dec-action-txt { font-size: 11px; color: #41556E; line-height: 1.5 }
-
-    /* ─── BOTTOM SPACER ──────────────────────────────────────────────────── */
-    .bottom-spacer { height: 24px; flex-shrink: 0 }
-
-    /* ─── FADE TRANSITION ────────────────────────────────────────────────── */
-    .kpi-val, .rec-num, .rmi-val, .kpi-ci, .rmi-ci, .hkpi-val { transition: opacity 120ms ease }
-    .fading { opacity: 0 }
+    :root{
+      --bg:#0d1320;
+      --panel:#111a2b;
+      --panel-2:#162236;
+      --panel-3:#1b2a42;
+      --line:#263754;
+      --line-2:#32476d;
+      --text:#ebf1fb;
+      --text-dim:#b4c2da;
+      --text-mute:#88a0c3;
+      --accent:#6fb1ff;
+      --accent-2:#9ed1ff;
+      --ok:#39c47a;
+      --ok-bg:rgba(57,196,122,.12);
+      --warn:#f3b64d;
+      --warn-bg:rgba(243,182,77,.12);
+      --bad:#ff7272;
+      --bad-bg:rgba(255,114,114,.12);
+      --violet:#9b7cff;
+      --violet-bg:rgba(155,124,255,.12);
+      --cyan:#55d3ff;
+      --shadow:0 12px 30px rgba(0,0,0,.28);
+      --radius:14px;
+      --radius-sm:10px;
+      --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      --font:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:14px/1.45 var(--font)}
+    body{overflow:hidden}
+    button,input,select{font:inherit}
+    button{cursor:pointer}
+    a{color:var(--accent)}
+    .shell{
+      display:grid;
+      grid-template-columns:300px minmax(0,1fr) 340px;
+      grid-template-rows:64px 48px 1fr;
+      gap:0;
+      height:100vh;
+      background:linear-gradient(180deg,#0b1220 0%, #0d1320 100%);
+    }
+    .topbar{
+      grid-column:1/-1;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 18px;
+      border-bottom:1px solid var(--line);
+      background:rgba(10,16,28,.92);
+      backdrop-filter:blur(10px);
+    }
+    .brand h1{
+      margin:0;
+      font-size:18px;
+      letter-spacing:.2px;
+      font-weight:700;
+    }
+    .brand p{
+      margin:4px 0 0;
+      color:var(--text-mute);
+      font-size:12px;
+    }
+    .topbar-right{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .status-badge{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-start;
+      gap:2px;
+      padding:8px 12px;
+      min-width:138px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.08);
+      background:var(--panel);
+      box-shadow:var(--shadow);
+    }
+    .status-badge .title{
+      font-size:11px;
+      font-weight:800;
+      letter-spacing:.8px;
+      text-transform:uppercase;
+    }
+    .status-badge .sub{
+      font-size:11px;
+      color:var(--text-mute);
+      white-space:nowrap;
+    }
+    .status-badge.live .title{color:var(--ok)}
+    .status-badge.live{
+      background:linear-gradient(180deg, rgba(57,196,122,.14), rgba(57,196,122,.06));
+      border-color:rgba(57,196,122,.28);
+    }
+    .status-badge.whatif .title{color:var(--violet)}
+    .status-badge.whatif{
+      background:linear-gradient(180deg, rgba(155,124,255,.14), rgba(155,124,255,.06));
+      border-color:rgba(155,124,255,.28);
+    }
+    .refresh-pill{
+      padding:8px 12px;
+      border-radius:999px;
+      color:var(--text-dim);
+      border:1px solid var(--line);
+      background:var(--panel);
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .controls{
+      grid-column:1/-1;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:8px 18px;
+      border-bottom:1px solid var(--line);
+      background:var(--panel-2);
+      flex-wrap:wrap;
+    }
+    .seg{
+      display:flex;
+      gap:4px;
+      padding:4px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:var(--panel);
+    }
+    .seg button{
+      border:0;
+      color:var(--text-dim);
+      background:transparent;
+      padding:8px 12px;
+      border-radius:9px;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.2px;
+    }
+    .seg button.active{
+      color:var(--text);
+      background:linear-gradient(180deg, rgba(111,177,255,.18), rgba(111,177,255,.08));
+      box-shadow:inset 0 0 0 1px rgba(111,177,255,.24);
+    }
+    .ctrl{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      color:var(--text-dim);
+      font-size:12px;
+      padding:0 4px;
+    }
+    .ctrl label{font-weight:600}
+    .ctrl select,.ctrl input[type="range"]{
+      accent-color:var(--accent);
+    }
+    .ctrl select{
+      background:var(--panel);
+      color:var(--text);
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:7px 10px;
+    }
+    .btn{
+      border:1px solid var(--line);
+      background:var(--panel);
+      color:var(--text);
+      padding:8px 12px;
+      border-radius:10px;
+      font-weight:700;
+    }
+    .btn:hover{background:var(--panel-2)}
+    .btn.primary{
+      background:linear-gradient(180deg, var(--accent), #5fa4f2);
+      color:#071322;
+      border-color:#79bcff;
+    }
+    .btn.ghost{
+      background:transparent;
+    }
+    .spacer{flex:1}
+    .grid{
+      grid-column:1/-1;
+      display:grid;
+      grid-template-columns:300px minmax(0,1fr) 340px;
+      min-height:0;
+    }
+    .col{
+      min-height:0;
+      overflow:auto;
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .card{
+      background:linear-gradient(180deg, rgba(20,31,49,.98), rgba(16,25,40,.98));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card h3{
+      margin:0;
+      padding:12px 14px;
+      font-size:12px;
+      letter-spacing:.8px;
+      text-transform:uppercase;
+      color:var(--text-dim);
+      border-bottom:1px solid var(--line);
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .card h3 .pill{
+      margin-left:auto;
+      font-size:10px;
+      padding:3px 8px;
+      border-radius:999px;
+      background:var(--panel-3);
+      color:var(--text);
+      border:1px solid var(--line-2);
+      letter-spacing:.5px;
+    }
+    .body{padding:14px}
+    .hero-banner{
+      padding:14px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(111,177,255,.12), rgba(111,177,255,.05));
+    }
+    .hero-banner.pass{
+      background:linear-gradient(180deg, rgba(57,196,122,.14), rgba(57,196,122,.05));
+      border-color:rgba(57,196,122,.22);
+    }
+    .hero-banner.fail{
+      background:linear-gradient(180deg, rgba(255,114,114,.14), rgba(255,114,114,.05));
+      border-color:rgba(255,114,114,.24);
+    }
+    .hero-banner.warn{
+      background:linear-gradient(180deg, rgba(243,182,77,.14), rgba(243,182,77,.05));
+      border-color:rgba(243,182,77,.24);
+    }
+    .hero-banner.whatif{
+      background:linear-gradient(180deg, rgba(155,124,255,.16), rgba(155,124,255,.06));
+      border-color:rgba(155,124,255,.28);
+    }
+    .hero-banner .eyebrow{
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.8px;
+      color:var(--text-dim);
+      font-weight:800;
+      margin-bottom:6px;
+    }
+    .hero-banner .headline{
+      font-size:21px;
+      font-weight:800;
+      line-height:1.2;
+      margin-bottom:8px;
+    }
+    .hero-banner .subtext{
+      color:var(--text-dim);
+      font-size:13px;
+    }
+    .hero-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+    .mode-banner{
+      display:none;
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid rgba(155,124,255,.28);
+      background:rgba(155,124,255,.10);
+      color:var(--text);
+      font-size:12.5px;
+    }
+    .mode-banner.show{display:block}
+    .whatif-regimes{
+      display:none;
+      gap:6px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .whatif-regimes.show{display:flex}
+    .mini-regime{
+      border:1px solid var(--line-2);
+      background:var(--panel-3);
+      color:var(--text);
+      border-radius:999px;
+      padding:7px 10px;
+      font-size:12px;
+      font-weight:700;
+    }
+    .mini-regime.active{
+      background:linear-gradient(180deg, rgba(155,124,255,.24), rgba(155,124,255,.10));
+      border-color:rgba(155,124,255,.42);
+      color:#fff;
+    }
+    .kpis{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+    }
+    .kpi{
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:var(--panel-2);
+      padding:12px;
+      min-width:0;
+    }
+    .kpi .label{
+      color:var(--text-dim);
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.7px;
+      margin-bottom:6px;
+    }
+    .kpi .value{
+      font-size:28px;
+      line-height:1.1;
+      font-weight:800;
+      margin-bottom:4px;
+    }
+    .kpi .help{
+      color:var(--text-mute);
+      font-size:12px;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 8px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:800;
+      letter-spacing:.4px;
+      text-transform:uppercase;
+      border:1px solid transparent;
+    }
+    .chip.pass{color:var(--ok);background:var(--ok-bg);border-color:rgba(57,196,122,.22)}
+    .chip.fail{color:var(--bad);background:var(--bad-bg);border-color:rgba(255,114,114,.24)}
+    .chip.warn{color:var(--warn);background:var(--warn-bg);border-color:rgba(243,182,77,.24)}
+    .mini-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .subcard{
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:var(--panel-2);
+      padding:12px;
+    }
+    .subcard .title{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:8px;
+    }
+    .subcard .title b{
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.7px;
+      color:var(--text-dim);
+    }
+    .subcard .big{
+      font-size:34px;
+      font-weight:800;
+      line-height:1;
+      margin-bottom:6px;
+    }
+    .subcard p{
+      margin:0;
+      color:var(--text-dim);
+      font-size:12.5px;
+    }
+    .decision-list,.bullet-list{
+      margin:0;
+      padding-left:18px;
+      color:var(--text-dim);
+    }
+    .decision-list li,.bullet-list li{
+      margin:0 0 7px;
+    }
+    .chart-header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .chart-header .meta{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      color:var(--text-dim);
+      font-size:12px;
+    }
+    .chart-wrap{
+      position:relative;
+      height:320px;
+      padding:6px 0 2px;
+    }
+    .chart-note{
+      margin-top:8px;
+      font-size:12px;
+      color:var(--text-dim);
+    }
+    .callout{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      background:var(--panel-2);
+      color:var(--text-dim);
+      font-size:12.5px;
+    }
+    .feed-head{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      justify-content:space-between;
+      margin-bottom:10px;
+    }
+    .toggle{
+      display:flex;
+      gap:4px;
+      padding:4px;
+      border-radius:12px;
+      background:var(--panel-2);
+      border:1px solid var(--line);
+    }
+    .toggle button{
+      border:0;
+      padding:7px 10px;
+      border-radius:8px;
+      background:transparent;
+      color:var(--text-dim);
+      font-size:12px;
+      font-weight:700;
+    }
+    .toggle button.active{
+      background:var(--panel-3);
+      color:var(--text);
+      box-shadow:inset 0 0 0 1px var(--line-2);
+    }
+    .feed{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      max-height:320px;
+      overflow:auto;
+      padding-right:3px;
+    }
+    .feed-item{
+      border:1px solid var(--line);
+      background:var(--panel-2);
+      border-radius:10px;
+      padding:10px 11px;
+    }
+    .feed-item .tag{
+      display:inline-block;
+      margin-bottom:5px;
+      padding:3px 6px;
+      border-radius:999px;
+      font-size:10px;
+      font-weight:800;
+      letter-spacing:.5px;
+      text-transform:uppercase;
+      border:1px solid var(--line-2);
+      color:var(--text-dim);
+      background:var(--panel-3);
+    }
+    .feed-item p{
+      margin:0;
+      color:var(--text);
+      font-size:12.5px;
+    }
+    .feed-item .muted{
+      color:var(--text-dim);
+      font-size:11.5px;
+      margin-top:4px;
+    }
+    details.about{
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:var(--panel-2);
+      overflow:hidden;
+    }
+    details.about summary{
+      list-style:none;
+      cursor:pointer;
+      padding:12px 14px;
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.8px;
+      text-transform:uppercase;
+      color:var(--text-dim);
+      border-bottom:1px solid transparent;
+    }
+    details.about[open] summary{
+      border-bottom-color:var(--line);
+    }
+    details.about .about-body{
+      padding:14px;
+      display:grid;
+      gap:12px;
+    }
+    .about-section h4{
+      margin:0 0 5px;
+      font-size:12px;
+      color:var(--text);
+    }
+    .about-section p,.about-section li{
+      margin:0;
+      color:var(--text-dim);
+      font-size:12.5px;
+    }
+    .about-section ul{
+      margin:0;
+      padding-left:18px;
+    }
+    .source-list{
+      display:grid;
+      gap:8px;
+    }
+    .source-row{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 11px;
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:var(--panel-2);
+    }
+    .source-row .left b{
+      display:block;
+      margin-bottom:2px;
+    }
+    .source-row .left span{
+      color:var(--text-dim);
+      font-size:12px;
+    }
+    .source-status{
+      white-space:nowrap;
+      padding:4px 8px;
+      border-radius:999px;
+      font-size:10px;
+      font-weight:800;
+      letter-spacing:.5px;
+      text-transform:uppercase;
+      border:1px solid transparent;
+    }
+    .source-status.live{
+      color:var(--ok);
+      background:var(--ok-bg);
+      border-color:rgba(57,196,122,.24);
+    }
+    .source-status.warn{
+      color:var(--warn);
+      background:var(--warn-bg);
+      border-color:rgba(243,182,77,.24);
+    }
+    .source-status.off{
+      color:var(--text-mute);
+      background:var(--panel-3);
+      border-color:var(--line-2);
+    }
+    .range-wrap{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:220px;
+    }
+    .range-wrap output{
+      min-width:54px;
+      text-align:right;
+      color:var(--text);
+      font-weight:800;
+    }
+    .regime-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:8px;
+    }
+    .regime-btn{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:10px 12px;
+      background:var(--panel-2);
+      color:var(--text);
+      text-align:left;
+      min-height:64px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap:4px;
+    }
+    .regime-btn small{
+      color:var(--text-mute);
+      font-size:11px;
+    }
+    .regime-btn.active{
+      border-color:rgba(155,124,255,.44);
+      background:linear-gradient(180deg, rgba(155,124,255,.16), rgba(155,124,255,.05));
+      box-shadow:inset 0 0 0 1px rgba(155,124,255,.24);
+    }
+    .regime-btn:disabled{
+      opacity:1;
+      cursor:not-allowed;
+    }
+    .api-lock{
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      background:var(--panel-2);
+      color:var(--text-dim);
+      font-size:12px;
+    }
+    .api-lock b{color:var(--accent-2)}
+    .drawer{
+      display:grid;
+      gap:12px;
+    }
+    .drawer-sec{
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:var(--panel-2);
+      overflow:hidden;
+    }
+    .drawer-sec h4{
+      margin:0;
+      padding:10px 12px;
+      font-size:11px;
+      letter-spacing:.7px;
+      color:var(--text-dim);
+      text-transform:uppercase;
+      border-bottom:1px solid var(--line);
+    }
+    .drawer-sec .inner{
+      padding:12px;
+    }
+    .kv{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:8px;
+      align-items:start;
+      padding:6px 0;
+      color:var(--text-dim);
+      font-size:12.5px;
+      border-bottom:1px dashed rgba(255,255,255,.06);
+    }
+    .kv:last-child{border-bottom:0}
+    .kv b{color:var(--text)}
+    .muted{color:var(--text-mute)}
+    .mono{font-family:var(--mono)}
+    .analyst-toggle{
+      width:100%;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:12px 14px;
+      border:0;
+      background:transparent;
+      color:var(--text-dim);
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.8px;
+      text-transform:uppercase;
+    }
+    .analyst-body{
+      display:none;
+      border-top:1px solid var(--line);
+      padding:14px;
+    }
+    .analyst-body.open{display:block}
+    .footnote{
+      color:var(--text-mute);
+      font-size:11.5px;
+      line-height:1.5;
+    }
+    .summary-cost{
+      margin-top:8px;
+      color:var(--text-dim);
+      font-size:12.5px;
+    }
+    .rec-value{
+      font-size:36px;
+      font-weight:800;
+      line-height:1;
+      margin:8px 0 6px;
+    }
+    .rec-sub{
+      color:var(--text-dim);
+      font-size:12.5px;
+    }
+    @media (max-width:1200px){
+      .shell,.grid{
+        grid-template-columns:280px minmax(0,1fr) 320px;
+      }
+    }
+    @media (max-width:1020px){
+      body{overflow:auto}
+      .shell{
+        display:block;
+        height:auto;
+      }
+      .grid{
+        grid-template-columns:1fr;
+      }
+      .col{
+        overflow:visible;
+      }
+    }
   </style>
 </head>
 <body>
-
-<div class="shell">
-
-  <!-- ── TOPBAR ─────────────────────────────────────────────────────────── -->
-  <header class="topbar">
-    <div class="tl">
-      <!-- SVG Logo -->
-      <svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-label="SAID logo" style="flex-shrink:0">
-        <rect width="28" height="28" rx="6" fill="var(--primary)"/>
-        <rect x="5" y="16" width="6" height="7" rx="1" fill="white" opacity=".9"/>
-        <rect x="5" y="12" width="6" height="3.5" rx=".5" fill="white" opacity=".5"/>
-        <rect x="12.5" y="14" width="5" height="9" rx="1" fill="white" opacity=".9"/>
-        <rect x="12.5" y="10" width="5" height="3.5" rx=".5" fill="white" opacity=".5"/>
-        <path d="M5 9.5L8.5 7l3.5 1.5L16 5l4 1.5L23 5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>
-        <circle cx="23" cy="5" r="1.5" fill="white" opacity=".85"/>
-      </svg>
-      <div>
-        <div class="tl-title">Live Risk Intelligence · Savannah → Atlanta Replenishment Lane</div>
-        <div style="font-size:11px;color:#1E4FA3;font-weight:800;margin-top:4px;line-height:1.3;white-space:normal;">Built by Neil Sharma</div>
-        
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <h1>Stress-Conditioned Inventory Risk Dashboard</h1>
+        <p>Live decision support for the Savannah → Atlanta replenishment route</p>
       </div>
-    </div>
-    <div class="ta">
-      <div class="live-badge" id="topBadge" data-status="loading">
-        <div class="live-dot"></div>
-        <span id="topBadgeTxt">CONNECTING</span>
-      </div>
-      <span class="proto-badge">
-        <svg width="6" height="6" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="3"/></svg>
-        LIVE SIGNAL MODEL
-      </span>
-    </div>
-  </header>
-
-  <!-- ── SIDEBAR ────────────────────────────────────────────────────────── -->
-  <aside class="sidebar">
-
-    <!-- MODE TOGGLE -->
-    <div class="sb-sect" style="margin-bottom:10px">
-      <div class="mode-toggle-wrap">
-        <div class="mode-toggle-lbl" data-tip="Live Signal uses real API data to set stress. What-if lets you test a hypothetical scenario.">Mode</div>
-        <div class="mode-toggle">
-          <button class="mode-btn live-mode active" id="btnLiveMode" onclick="setMode('live')">Live Signal</button>
-          <button class="mode-btn wi-mode" id="btnWiMode" onclick="setMode('whatif')">What-if Test</button>
+      <div class="topbar-right">
+        <div class="refresh-pill" id="refreshPill">Refreshing every 60s</div>
+        <div class="status-badge live" id="modeStatusBadge" aria-live="polite">
+          <div class="title" id="modeStatusTitle">LIVE</div>
+          <div class="sub" id="modeStatusSub">Current signal-controlled view</div>
         </div>
       </div>
-    </div>
+    </header>
 
-    <div class="sb-divider"></div>
+    <div class="controls">
+      <div class="seg" id="modeSwitch">
+        <button class="active" data-mode="live" id="liveModeBtn">Live Signal</button>
+        <button data-mode="whatif" id="whatIfModeBtn">What-if Test</button>
+      </div>
 
-    <div class="sb-sect">
-      <div class="sb-label">Policy Inputs</div>
-      <div class="ctrl-group">
-        <label class="ctrl-label" for="docsSlider" data-tip="How many days of inventory you currently hold. Moving this slider calls the live API with the updated value.">Current Days of Cover</label>
-        <div class="sl-row">
-          <input type="range" id="docsSlider" min="2" max="6" step="1" value="3" data-testid="slider-doc" />
-          <span class="sl-val" id="docsVal">3d</span>
+      <div class="ctrl">
+        <label for="daysRange">Current Days of Cover</label>
+        <div class="range-wrap">
+          <input id="daysRange" type="range" min="2" max="6" step="1" value="3" aria-label="Current days of cover" />
+          <output id="daysOutput">3 days</output>
         </div>
       </div>
-      <div class="ctrl-group">
-        <label class="ctrl-label" for="targetSel" data-tip="Maximum acceptable chance that demand exceeds inventory during replenishment.">Target running-out probability</label>
-        <select id="targetSel" class="ctrl-sel" data-testid="select-target">
-          <option value="1">≤ 1%</option>
-          <option value="2" selected>≤ 2%</option>
-          <option value="5">≤ 5%</option>
-          <option value="10">≤ 10%</option>
+
+      <div class="ctrl">
+        <label for="scenarioSel">Scenario</label>
+        <select id="scenarioSel">
+          <option value="baseline">Baseline</option>
+          <option value="safety">Safety stock</option>
+          <option value="tail">Tail mitigation</option>
         </select>
-        <div class="ctrl-note">The target is the maximum running-out risk you are willing to accept.</div>
-        <div class="ctrl-note">A 2% target means the plan should fail no more than about 2 times out of 100 model runs.</div>
       </div>
-      <div class="ctrl-group">
-        <label class="ctrl-label" data-tip="Baseline = standard assumptions. Safety stock = adds buffer. Tail mitigation = targets worst-case tail risk.">Scenario</label>
-        <div class="seg c3" id="scenarioGroup">
-          <button class="seg-btn sc-bl active" data-scenario="baseline" data-testid="btn-baseline">Baseline</button>
-          <button class="seg-btn sc-ss" data-scenario="safety" data-testid="btn-safety">Saf. Stock</button>
-          <button class="seg-btn sc-tm" data-scenario="tail" data-testid="btn-tail">Tail Mit.</button>
-        </div>
-        <div class="ctrl-note">Baseline: Normal plan with no extra protection.</div>
-        <div class="ctrl-note">Safety Stock: Adds extra inventory buffer.</div>
-        <div class="ctrl-note">Tail Mitigation: Tests reducing rare worst-case delay risk.</div>
-      </div>
+
+      <div class="spacer"></div>
+      <button class="btn ghost" id="refreshBtn">Refresh now</button>
+      <button class="btn primary" id="backToLiveBtn" style="display:none;">Back to Live</button>
     </div>
 
-    <div class="sb-divider"></div>
-
-    <details class="sb-sect" id="analystDrawer" style="padding-top:4px">
-      <summary style="list-style:none;cursor:pointer;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
-        <span>Analyst Controls <span style="font-weight:500;letter-spacing:0;text-transform:none;color:var(--text-muted)">— advanced assumptions, scenarios, and model inputs</span></span>
-        <span aria-hidden="true" style="font-size:12px;color:var(--text-muted);transition:transform var(--tr);">▾</span>
-      </summary>
-
-      <div class="sb-label">Disruption level</div>
-      <div class="regime-ctrl-label">
-        <label class="ctrl-label" data-tip="The stress level applied to the stockout model. In Live mode this is set by the API.">Active regime</label>
-        <span class="regime-mode-tag api" id="regimeModeTag">API controlled</span>
-      </div>
-      <div class="regime-ctrl-wrap" style="margin-bottom:8px">
-        <div class="regime-lock-overlay visible" id="regimeLockOverlay">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:5px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          API controlled
-        </div>
-        <div class="seg c2" id="regimeGroup">
-          <button disabled aria-disabled="true" class="seg-btn r-low" data-regime="low" data-testid="btn-low">Low</button>
-          <button disabled aria-disabled="true" class="seg-btn r-norm active" data-regime="normal" data-testid="btn-normal">Normal</button>
-          <button disabled aria-disabled="true" class="seg-btn r-hi" data-regime="high" data-testid="btn-high">High</button>
-          <button disabled aria-disabled="true" class="seg-btn r-ex" data-regime="extreme" data-testid="btn-extreme">Extreme</button>
-        </div>
-      </div>
-
-      <div class="ctrl-group" id="stressDecompSection">
-        <div class="ctrl-label" style="margin-bottom:8px">
-          Signal Components
-          <span style="font-size:9px;padding:1px 5px;border:1px solid var(--border);border-radius:2px;background:var(--surface-2);color:var(--text-muted);letter-spacing:.04em;margin-left:4px">signal-mapped</span>
-        </div>
-        <div class="stress-bar-row">
-          <div class="stress-bar-label" data-tip="Congestion or throughput constraints at the Savannah port.">Port / flow</div>
-          <div class="stress-bar-track"><div class="stress-bar-fill" id="sb-throughput"></div></div>
-          <div class="stress-bar-val" id="sv-throughput"></div>
-        </div>
-        <div class="stress-bar-row">
-          <div class="stress-bar-label" data-tip="Variability in transit times — higher means less predictable delivery windows.">Delay var.</div>
-          <div class="stress-bar-track"><div class="stress-bar-fill" id="sb-leadtime"></div></div>
-          <div class="stress-bar-val" id="sv-leadtime"></div>
-        </div>
-        <div class="stress-bar-row">
-          <div class="stress-bar-label" data-tip="Disruptions from weather events, alerts, or operational incidents.">Operational disruption</div>
-          <div class="stress-bar-track"><div class="stress-bar-fill" id="sb-ops"></div></div>
-          <div class="stress-bar-val" id="sv-ops"></div>
-        </div>
-        <div class="stress-bar-row">
-          <div class="stress-bar-label" data-tip="0 = quiet; 1 = severe combined disruption pressure from all signals.">Overall signal</div>
-          <div class="stress-bar-track"><div class="stress-bar-fill" id="sb-composite"></div></div>
-          <div class="stress-bar-val" id="sv-composite" style="font-weight:600"></div>
-        </div>
-      </div>
-
-      <div class="sb-divider"></div>
-
-      <div class="sb-sect" style="padding:0;margin-bottom:12px">
-        <div class="sb-label">Local Cost Frame</div>
-        <div class="cost-row">
-          <div class="cost-input-wrap">
-            <label for="holdingCost">Holding ($/unit-day)</label>
-            <input type="number" id="holdingCost" class="cost-input" value="0.80" min="0.1" max="50" step="0.1" data-testid="input-holding" />
-          </div>
-          <div class="cost-input-wrap">
-            <label for="shortageCost">Shortage ($/unit)</label>
-            <input type="number" id="shortageCost" class="cost-input" value="18" min="1" max="500" step="1" data-testid="input-shortage" />
-          </div>
-        </div>
-        <div class="ctrl-note">Cost inputs affect local comparison estimates. Live API policy cost index is model-based.</div>
-      </div>
-
-      <div class="sb-divider"></div>
-
-      <div class="sb-sect" style="padding:0;margin-bottom:0">
-        <div class="sb-label" style="color:var(--text-muted)">Advanced — Phase 1</div>
-        <div style="font-size:11px;color:var(--text-muted);line-height:1.5">
-          Live stress index feed, demand distribution fitting, multi-SKU scope, lead-time distribution source, and Monte Carlo run configuration will be available when the simulation engine is connected.
-        </div>
-      </div>
-    </details>
-
-  </aside>
-
-  <!-- ── MAIN SCROLL AREA ───────────────────────────────────────────────── -->
-  <div class="main">
-
-    <!-- What-if mode banner (only shown in what-if mode) -->
-    <div class="mode-banner" id="modeBanner">
-      <span class="mode-banner-icon">◈</span>
-      <span class="mode-banner-txt">
-        <strong style="color:var(--wi-accent)">WHAT-IF STRESS TEST</strong> — Manual input regime active. Live signals continue refreshing in the background but do not override your selection.
-      </span>
-      <button class="mode-banner-back" onclick="setMode('live')">← Back to Live</button>
-    </div>
-
-    
-
-    <div id="operatorStatusBanner" style="background:#1a2e1a;border-bottom:1px solid #243824;padding:10px 18px;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;">
-      <div id="operatorStatusPill" style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.08);color:#fff;">Status</div>
-      <div style="display:flex;flex-direction:column;gap:2px;min-width:260px;flex:1;">
-        <div id="operatorActionTitle" style="font-size:1.1rem;font-weight:700;color:var(--text);letter-spacing:-.02em;">Loading recommendation…</div>
-        <div id="operatorActionSub" style="font-size:13px;color:#23344A;line-height:1.55;font-weight:700;">Connecting to live risk estimate and latest source signals...</div><div id="operatorModeExplain" style="font-size:11px;color:#304761;line-height:1.5;font-weight:700;">Live mode uses current data sources to set the disruption level.</div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:10px;min-width:320px;flex:1;">
-        <div style="padding:8px 10px;background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(244,247,252,.88));border:1px solid rgba(215,224,240,.95);border-radius:12px;box-shadow:0 6px 18px rgba(58,134,255,.05);">
-          <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);">Chance of running out</div><div style="font-size:10px;color:var(--text-muted);line-height:1.4;margin-top:4px;">Estimated chance that demand exceeds available stock before replenishment arrives.</div>
-          <div id="operatorRiskCompare" style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);margin-top:3px;">—</div>
-        </div>
-        <div style="padding:8px 10px;background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(244,247,252,.88));border:1px solid rgba(215,224,240,.95);border-radius:12px;box-shadow:0 6px 18px rgba(58,134,255,.05);">
-          <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);">Days of stock you need</div><div style="font-size:10px;color:var(--text-muted);line-height:1.4;margin-top:4px;">The minimum coverage level the model recommends to stay under the risk target.</div>
-          <div id="operatorCoverageCompare" style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);margin-top:3px;">—</div>
-        </div>
-        <div style="padding:8px 10px;background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(244,247,252,.88));border:1px solid rgba(215,224,240,.95);border-radius:12px;box-shadow:0 6px 18px rgba(58,134,255,.05);">
-          <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);">Can I trust this estimate?</div><div style="font-size:10px;color:var(--text-muted);line-height:1.4;margin-top:4px;">How complete the live data picture is right now.</div>
-          <div id="operatorTrustCompare" style="font-size:13px;font-weight:700;color:var(--text);margin-top:3px;">—</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- HERO -->
-    <div class="hero">
-      <!-- Mode label -->
-      <div class="hero-mode-label live-lbl" id="heroModeLabel">LIVE SIGNAL MODE</div>
-
-      <!-- Score -->
-      <div class="score-block">
-        <div class="score-eyebrow" data-tip="0 = quiet conditions; 1 = severe disruption pressure.">Disruption pressure</div>
-        <div class="score-num" id="heroScore">—</div>
-        <div class="score-label" id="heroRegimeLabel">—</div>
-        <div class="gauge-track">
-          <div class="gauge-thumb" id="gaugeThumb" style="left:0%;color:var(--ch-low)"></div>
-        </div>
-      </div>
-
-      <!-- KPI pills -->
-      <div class="hero-kpis">
-        <div class="hkpi">
-          <div class="hkpi-lbl" data-tip="Estimated chance demand exceeds available inventory during replenishment.">Chance of running out</div>
-          <div class="hkpi-val" id="hkpiStockout">—</div>
-          <div class="hkpi-sub" id="hkpiStockoutCI">Best/worst case range: —</div>
-        </div>
-        <div class="hkpi">
-          <div class="hkpi-lbl" data-tip="Minimum days of cover needed to stay under the target risk level.">Days of stock you need</div>
-          <div class="hkpi-val cyan" id="hkpiRecDays">—</div>
-          <div class="hkpi-sub" id="hkpiRecSub">days of cover</div>
-        </div>
-        <div class="hkpi">
-          <div class="hkpi-lbl" data-tip="Policy assumption being tested: baseline, safety stock, or tail mitigation.">Scenario</div>
-          <div class="hkpi-val" id="hkpiScenario">—</div>
-          <div class="hkpi-sub">active</div>
-        </div>
-        <div class="hkpi">
-          <div class="hkpi-lbl">Last Updated</div>
-          <div class="hkpi-val" id="hkpiLastTs" style="font-size:.75rem">—</div>
-          <div class="hkpi-sub" id="hkpiNextRefresh">next refresh —</div>
-        </div>
-      </div>
-
-      <!-- Status -->
-      <div class="hero-status">
-        <div class="hero-status-row">
-          <div class="hero-status-dot loading" id="heroStatusDot"></div>
-          <span class="hero-status-lbl" id="heroStatusLbl">Connecting</span>
-        </div>
-        <div class="hero-status-ts" id="heroStatusTs">feed status</div>
-      </div>
-    </div>
-
-        <div style="display:grid;grid-template-columns:1.15fr .95fr;gap:12px;padding:12px 16px 0;">
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">What this app does</div></div>
-        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">
-          <div style="margin-bottom:8px;color:var(--text-muted)">The Savannah to Atlanta delivery route represents a replenishment route from port and distribution activity near Savannah toward grocery demand centers around Atlanta.</div>
-          <div style="display:flex;flex-direction:column;gap:6px;">
-            <div>• It checks live disruption signals such as weather alerts.</div>
-            <div>• It estimates the chance a selected inventory plan runs out before the next replenishment.</div>
-            <div>• It recommends how many days of stock are needed to stay below the risk target.</div>
-          </div>
-        </div>
-      </div>
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">How to use this</div></div>
-        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;display:flex;flex-direction:column;gap:6px;">
-          <div>1. Choose how many days of stock you currently plan to hold.</div>
-          <div>2. Pick a scenario, such as baseline, safety stock, or tail mitigation.</div>
-          <div>3. Check whether the app says the plan meets the target or needs more coverage.</div>
-          <div style="margin-top:4px;color:var(--text-muted)">For example, if the current plan has 3 days of stock but the app recommends 5, the plan is 2 days short.</div>
-        </div>
-      </div>
-    </div>
-
-    <div style="padding:10px 16px 0;">
-      <div class="method-note" style="margin:0;">This app does not directly track store shelves or real grocery inventory. It estimates risk using disruption signals and a model.</div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:10px 16px 0;">
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">How the model works</div></div>
-        <div class="card-body" style="font-size:11px;color:var(--text-muted);line-height:1.6;">Live weather, traffic, and port-related signals are mapped into a disruption estimate. The app then uses that estimate to calculate the chance of running out of stock before replenishment arrives and recommends a safer number of stock days.</div>
-      </div>
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">Why this matters</div></div>
-        <div class="card-body" style="font-size:11px;color:var(--text-muted);line-height:1.6;">Small disruptions in a grocery delivery route can change whether a plan is likely to run out before the next shipment. This app turns those signals into a practical inventory decision.</div>
-      </div>
-    </div>
-
-    <!-- LOWER FOLD: Chart + Decision Summary -->
-      <div class="lower-fold">
-
-        <div class="chart-card">
-          <div class="chart-hdr">
-            <div>
-              <div class="chart-ttl">How much stock keeps risk below 2%?</div>
-              <div class="chart-sub">Live source curves by stress regime · target line · selection point</div>
-            </div>
-            <span class="sim-note" id="chartModeBadge">LIVE SIGNAL</span>
-          </div>
-          <div id="chartCallout" style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;">Recommended: —</div>
-          <div class="legend">
-            <div class="leg-item"><div class="leg-dot" style="background:var(--ch-low)"></div>Low</div>
-            <div class="leg-item"><div class="leg-dot" style="background:var(--ch-norm)"></div>Normal</div>
-            <div class="leg-item"><div class="leg-dot" style="background:var(--ch-hi)"></div>High</div>
-            <div class="leg-item"><div class="leg-dot" style="background:var(--ch-ex)"></div>Extreme</div>
-            <div class="leg-item"><div class="leg-dash" style="border-color:#7a3bbb"></div>Target</div>
-            <div class="leg-item"><div class="leg-band" style="background:var(--primary)"></div>Best/worst case range</div>
-            <div class="leg-item"><div class="leg-dot" style="background:var(--primary)"></div>Selection</div>
-            <div class="leg-item"><div class="leg-dot" style="background:var(--ok);border-radius:2px"></div>Min Required</div>
-          </div>
-          <div class="chart-wrap">
-            <canvas id="riskChart"></canvas>
-          </div>
-          <div class="assumptions-wrap">
-            <button class="assumptions-toggle" id="assumpToggle" aria-expanded="false">
-              <svg width="8" height="8" viewBox="0 0 8 8"><path d="M2 1l4 3-4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
-              Analyst Details
-            </button>
-            <div class="assumptions-body" id="assumpBody">
-              <div class="assump-row"><span class="assump-key">Lead time distribution</span><span class="assump-val">Log-normal (μ=3d)</span></div>
-              <div class="assump-row"><span class="assump-key">Demand variability</span><span class="assump-val">CV = 0.22 (normal regime)</span></div>
-              <div class="assump-row"><span class="assump-key">Stress amplifier (high)</span><span class="assump-val">×1.45 on lead-time σ</span></div>
-              <div class="assump-row"><span class="assump-key">Stress amplifier (extreme)</span><span class="assump-val">×2.1 on lead-time σ</span></div>
-              <div class="assump-row"><span class="assump-key">Safety stock scenario</span><span class="assump-val">Non-proportional compression</span></div>
-              <div class="assump-row"><span class="assump-key">Tail mitigation scenario</span><span class="assump-val">Tail truncation, 5–6d benefit</span></div>
-              <div class="assump-row"><span class="assump-key">Service constraint</span><span class="assump-val">P(stockout) ≤ selected target</span></div>
-              <div class="assump-row"><span class="assump-key">SKU scope</span><span class="assump-val">Aggregate lane-level estimate</span></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Decision Summary -->
-        <div class="dec-card">
-          <div class="dec-eyebrow">Decision Summary</div>
-          <ul class="dec-bullets">
-            <li class="dec-item"><div class="dec-dot"></div><span id="db1">—</span></li>
-            <li class="dec-item"><div class="dec-dot"></div><span id="db2">—</span></li>
-            <li class="dec-item"><div class="dec-dot"></div><span id="db3">—</span></li>
-            <li class="dec-item"><div class="dec-dot"></div><span id="db4">—</span></li>
-          </ul>
-          <div class="dec-divider"></div>
-          <div class="dec-action">
-            <div class="dec-action-lbl">Operational takeaway</div>
-            <div class="dec-action-txt" id="decAction">—</div>
-          </div>
-        </div>
-
-      </div><!-- /.lower-fold -->
-
-      <div class="bottom-spacer"></div>
-    </div><!-- /.content -->
-  </div><!-- /.main -->
-</div><!-- /.shell -->
-
-<script>
-/* ══════════════════════════════════════════════════════════════════════════
-   STRESS-AWARE INVENTORY DECISION DASHBOARD
-   Phase 0 — Live Signal Model · plain HTML/CSS/JS
-   Do not migrate to React/Next/Vite. Do not change api/latest.js.
-   Probabilities from API are DECIMAL (0–1). Always multiply ×100 for display.
-══════════════════════════════════════════════════════════════════════════ */
-
-// ── MODEL DATA ────────────────────────────────────────────────────────────
-const DAYS = [2, 3, 4, 5, 6];
-
-const CHART_COLORS = {
-  low:     '#3fa8b8',
-  normal:  '#5aaa38',
-  high:    '#e08030',
-  extreme: '#cf4e4e'
-};
-
-// Per-(regime, scenario) stockout curves: [p, lo, hi] at each day in DAYS
-const MODEL = {
-  low: {
-    baseline: [[8.2,6.8,9.6],[3.1,2.3,4.0],[1.2,0.8,1.6],[0.5,0.3,0.7],[0.2,0.1,0.3]],
-    safety:   [[6.1,4.9,7.3],[2.1,1.5,2.8],[0.8,0.5,1.1],[0.3,0.1,0.5],[0.1,0.05,0.2]],
-    tail:     [[7.4,6.0,8.8],[2.6,1.9,3.4],[0.9,0.6,1.2],[0.35,0.2,0.5],[0.12,0.06,0.18]]
-  },
-  normal: {
-    baseline: [[14.5,12.1,16.9],[7.2,5.8,8.6],[3.8,2.9,4.7],[1.9,1.3,2.5],[0.9,0.6,1.2]],
-    safety:   [[10.8,8.9,12.7],[4.9,3.8,6.0],[2.3,1.6,3.0],[1.1,0.7,1.5],[0.5,0.3,0.7]],
-    tail:     [[13.0,10.8,15.2],[6.1,4.8,7.4],[3.0,2.2,3.8],[1.4,0.9,1.9],[0.6,0.4,0.8]]
-  },
-  high: {
-    baseline: [[26.3,22.4,30.2],[15.8,13.2,18.4],[9.4,7.6,11.2],[5.6,4.3,6.9],[3.4,2.5,4.3]],
-    safety:   [[19.7,16.5,22.9],[10.9,8.8,13.0],[5.8,4.4,7.2],[3.1,2.2,4.0],[1.7,1.1,2.3]],
-    tail:     [[23.5,19.8,27.2],[13.4,11.0,15.8],[7.4,5.8,9.0],[4.1,3.0,5.2],[2.3,1.6,3.0]]
-  },
-  extreme: {
-    baseline: [[42.1,36.8,47.4],[29.6,25.5,33.7],[19.8,16.7,22.9],[13.2,10.8,15.6],[8.7,7.0,10.4]],
-    safety:   [[31.5,27.0,36.0],[20.4,17.2,23.6],[12.5,10.2,14.8],[7.8,6.2,9.4],[4.9,3.8,6.0]],
-    tail:     [[37.8,32.8,42.8],[25.9,22.0,29.8],[16.3,13.5,19.1],[10.1,8.2,12.0],[6.2,4.9,7.5]]
-  }
-};
-
-// Per-(regime, scenario) expected shortage data [sh, lo, hi]
-const SHORTAGE_DATA = {
-  low: {
-    baseline: [[2.1,1.4,2.8],[0.7,0.4,1.0],[0.22,0.10,0.34],[0.06,0.02,0.10],[0.01,0.0,0.03]],
-    safety:   [[1.5,0.9,2.1],[0.4,0.2,0.6],[0.12,0.05,0.19],[0.03,0.01,0.05],[0.005,0.0,0.01]],
-    tail:     [[1.8,1.1,2.5],[0.55,0.3,0.8],[0.16,0.07,0.25],[0.04,0.01,0.07],[0.008,0.0,0.016]]
-  },
-  normal: {
-    baseline: [[4.8,3.6,6.0],[2.1,1.4,2.8],[0.9,0.5,1.3],[0.35,0.15,0.55],[0.10,0.03,0.17]],
-    safety:   [[3.2,2.3,4.1],[1.3,0.8,1.8],[0.5,0.25,0.75],[0.17,0.07,0.27],[0.045,0.01,0.08]],
-    tail:     [[4.1,3.0,5.2],[1.7,1.1,2.3],[0.68,0.35,1.01],[0.25,0.10,0.40],[0.07,0.02,0.12]]
-  },
-  high: {
-    baseline: [[11.2,8.9,13.5],[6.4,4.9,7.9],[3.5,2.5,4.5],[1.8,1.2,2.4],[0.85,0.5,1.2]],
-    safety:   [[7.5,5.8,9.2],[3.9,2.9,4.9],[1.9,1.2,2.6],[0.85,0.5,1.2],[0.36,0.18,0.54]],
-    tail:     [[9.8,7.6,12.0],[5.2,3.9,6.5],[2.7,1.8,3.6],[1.3,0.8,1.8],[0.58,0.33,0.83]]
-  },
-  extreme: {
-    baseline: [[22.5,18.8,26.2],[15.2,12.4,18.0],[9.4,7.5,11.3],[5.6,4.3,6.9],[3.1,2.3,3.9]],
-    safety:   [[15.3,12.4,18.2],[9.4,7.4,11.4],[5.2,3.9,6.5],[2.8,2.0,3.6],[1.4,0.9,1.9]],
-    tail:     [[19.2,15.7,22.7],[12.2,9.8,14.6],[7.1,5.5,8.7],[3.9,2.9,4.9],[2.0,1.4,2.6]]
-  }
-};
-
-// Per-regime stress decomposition
-const STRESS_DATA = {
-  low:     { score:0.023, label:'Low Stress',     components:{ throughput_z:0.04, leadtime_var_z:0.02, ops_disruption:0.01 } },
-  normal:  { score:0.18,  label:'Normal Stress',  components:{ throughput_z:0.22, leadtime_var_z:0.16, ops_disruption:0.12 } },
-  high:    { score:0.54,  label:'High Stress',    components:{ throughput_z:0.61, leadtime_var_z:0.54, ops_disruption:0.47 } },
-  extreme: { score:0.87,  label:'Extreme Stress', components:{ throughput_z:0.92, leadtime_var_z:0.88, ops_disruption:0.81 } }
-};
-
-function getCurve(regime, scenario)   { return MODEL[regime]?.[scenario]         || MODEL.normal.baseline }
-function getShortage(regime, scenario){ return SHORTAGE_DATA[regime]?.[scenario] || SHORTAGE_DATA.normal.baseline }
-
-function getMinFeasible(regime, scenario, target) {
-  const c = getCurve(regime, scenario);
-  for (let i = 0; i < DAYS.length; i++) { if (c[i][0] <= target) return DAYS[i]; }
-  return null;
-}
-function estimateCost(days, scenario, regime, hc, sc) {
-  const di = DAYS.indexOf(days); if (di < 0) return null;
-  const sh = getShortage(regime, scenario)[di][0];
-  return { total: days * hc + sh * sc, holding: days * hc, shortageExp: sh * sc };
-}
-function getOptimalFeasible(regime, scenario, target, hc, sc) {
-  const c = getCurve(regime, scenario);
-  let best = null, bestCost = Infinity;
-  for (let i = 0; i < DAYS.length; i++) {
-    if (c[i][0] <= target) {
-      const cost = estimateCost(DAYS[i], scenario, regime, hc, sc);
-      if (cost && cost.total < bestCost) { bestCost = cost.total; best = DAYS[i]; }
-    }
-  }
-  return { days: best, cost: bestCost === Infinity ? null : bestCost };
-}
-
-function buildNarrative(o) {
-  const { regime, scenario, daysOfCover, targetProb, meetsTarget,
-          selectedProb, selectedProbLo, selectedProbHi, minDays, optDays, coverageMargin, shortage } = o;
-  const sp = selectedProb.toFixed(2), t = targetProb;
-  const sw = { low:'low', normal:'moderate', high:'elevated', extreme:'extreme' }[regime];
-  const scw = { baseline:'baseline', safety:'with safety stock adjustment', tail:'with tail mitigation' }[scenario];
-  if (!meetsTarget) {
-    const gap = (selectedProb - targetProb).toFixed(2);
-    return `At ${daysOfCover} days under ${sw} stress (${scw}), estimated stockout risk is ${sp}% [CI: ${selectedProbLo.toFixed(2)}–${selectedProbHi.toFixed(2)}%] — ${gap} pp above the ${t}% target. ` +
-      (minDays
-        ? `Increasing to ${minDays}d is the minimum required policy.` + (optDays && optDays !== minDays ? ` Lowest-cost option: ${optDays}d.` : '')
-        : `No policy in the 2–6d range meets the ${t}% target.`);
-  }
-  const m = coverageMargin, mTxt = m > 0 ? `, ${m}d buffer above minimum` : ', exactly at minimum';
-  return `At ${daysOfCover} days under ${sw} stress (${scw}), estimated stockout risk is ${sp}% [CI: ${selectedProbLo.toFixed(2)}–${selectedProbHi.toFixed(2)}%] — within the ${t}% target${mTxt}. ` +
-    (optDays ? `Lowest-cost feasible: ${optDays}d.` : '') +
-    (shortage < 0.01 ? ' Expected shortage is negligible.' : '');
-}
-
-function buildBullets(o) {
-  const { regime, scenario, daysOfCover, targetProb, meetsTarget,
-          selectedProb, selectedProbLo, selectedProbHi, minDays, optDays, coverageMargin,
-          optCost, holdingCost, shortageCost } = o;
-  const sp = selectedProb.toFixed(2);
-  const sw = { low:'low', normal:'moderate', high:'elevated', extreme:'extreme' }[regime];
-  const sce = {
-    baseline: 'Baseline scenario — no structural mitigation applied.',
-    safety:   'Safety stock active: non-proportional compression, greatest at low coverage.',
-    tail:     'Tail mitigation active: most effective at 5–6d coverage levels.'
-  }[scenario];
-  const b1 = meetsTarget
-    ? `Selected policy (${daysOfCover}d) keeps estimated stockout at ${sp}% — ${(targetProb - selectedProb).toFixed(2)} pp below the ${targetProb}% target.`
-    : `Selected policy (${daysOfCover}d) yields ${sp}% [CI: ${selectedProbLo.toFixed(2)}–${selectedProbHi.toFixed(2)}%] — ${(selectedProb - targetProb).toFixed(2)} pp above the ${targetProb}% target.`;
-  const b2 = minDays
-    ? `Minimum required policy is ${minDays}d under current ${sw} stress conditions.`
-    : `No policy in the 2–6d range meets the ${targetProb}% target.`;
-  const b3 = optDays && optCost
-    ? `Lowest-cost option is ${optDays}d (estimated Includes shortage-cost reduction. ${optCost.toFixed(2)}).`
-    : `Cost optimization requires at least one feasible policy in current range.`;
-  const action = meetsTarget
-    ? (coverageMargin > 1
-        ? `The current ${daysOfCover}-day policy has ${coverageMargin}d of buffer above the minimum. Evaluate whether the additional inventory cost is justified given a $${shortageCost}/unit shortage cost.`
-        : `The current ${daysOfCover}-day policy is at the minimum required level. Any reduction will breach the ${targetProb}% service target.`)
-    : (minDays
-        ? `The current ${daysOfCover}-day policy is below the model's recommended ${minDays}-day coverage level. Increasing coverage would reduce estimated stockout risk under current conditions.`
-        : `No feasible policy exists in the 2–6d range. Escalate: activate emergency mitigation or revise the service target.`);
-  return { b1, b2, b3, b4: sce, action };
-}
-
-function buildExecSummary(regime, scenario, daysOfCover, selectedProb, minDays, isWhatIf) {
-  const rl = { low:'Low', normal:'Normal', high:'High', extreme:'Extreme' }[regime] || regime;
-  const sc = { baseline:'baseline', safety:'safety stock', tail:'tail mitigation' }[scenario] || scenario;
-  const sp = typeof selectedProb === 'number' ? selectedProb.toFixed(1) + '%' : '—';
-  const md = minDays !== null ? minDays + ' days' : 'more than 6 days (out of modeled range)';
-  const prefix = isWhatIf
-    ? `<strong>What-if scenario:</strong> Under hypothetical <strong>${rl} stress</strong>`
-    : `Current live signals indicate <strong>${rl} stress</strong>`;
-  return `${prefix}. At <strong>${daysOfCover} days</strong> of cover under the <strong>${sc}</strong> scenario, estimated stockout risk is <strong>${sp}</strong>. The model recommends <strong>${md}</strong> of cover to meet the 2% service target.`;
-}
-
-function buildPolicyIdeas(regime, scenario, minDays, daysOfCover, meetsTarget, coverageMargin, stressScore) {
-  const ideas = [], sw = { low:'low', normal:'moderate', high:'elevated', extreme:'extreme' }[regime];
-  if (!meetsTarget && minDays)
-    ideas.push(`Increase days of cover to ${minDays}d — current ${daysOfCover}d policy fails the service constraint under ${sw} stress.`);
-  else if (coverageMargin !== null && coverageMargin > 2)
-    ideas.push(`${daysOfCover}d coverage is ${coverageMargin}d above minimum under ${sw} stress — evaluate cost reduction opportunity.`);
-  if (scenario === 'baseline' && (regime === 'high' || regime === 'extreme'))
-    ideas.push(`High stress detected — consider switching to Safety Stock scenario to reduce tail exposure on the Savannah–Atlanta lane.`);
-  if (scenario === 'safety')
-    ideas.push(`Safety stock active. Non-proportional compression: largest benefit at lowest coverage levels.`);
-  if (scenario === 'tail')
-    ideas.push(`Tail mitigation active. Most effective at 5–6d coverage; limited benefit at 2–3d under high stress.`);
-  if (regime === 'low' || regime === 'normal')
-    ideas.push(`Low corridor disruption from NWS — standard coverage tiers appear adequate. Continue monitoring.`);
-  if (regime === 'high' || regime === 'extreme')
-    ideas.push(`Elevated stress: proactively communicate with DC operators and verify inbound ETAs for the Savannah → Atlanta lane.`);
-  ideas.push(`Georgia 511 traffic feed not connected — traffic-side disruptions are not reflected in current risk estimates.`);
-  if (ideas.length < 4)
-    ideas.push(`Monitor NWS alerts for active corridor weather events — current signal: ${stressScore < 0.2 ? 'no active alerts' : 'disruption signals present'}.`);
-  return ideas.slice(0, 5);
-}
-
-// ── STATE ─────────────────────────────────────────────────────────────────
-let state = {
-  regime: 'normal', scenario: 'baseline', daysOfCover: 3, targetProb: 2,
-  holdingCost: .80, shortageCost: 18
-};
-let _mode = 'live';           // 'live' | 'whatif'
-let _liveRegime = 'normal';   // last regime received from API
-let _currentStatus = 'loading';
-let _applyingPayload = false;
-let _sliderFetchTimer = null;
-
-// ── MODE MANAGEMENT ───────────────────────────────────────────────────────
-function setMode(mode) {
-  _mode = mode;
-  const isWhatIf = mode === 'whatif';
-
-  document.getElementById('btnLiveMode').classList.toggle('active', !isWhatIf);
-  document.getElementById('btnWiMode').classList.toggle('active', isWhatIf);
-  document.getElementById('modeBanner').classList.toggle('visible', isWhatIf);
-  document.getElementById('regimeLockOverlay').classList.toggle('visible', !isWhatIf);
-  document.querySelectorAll('#regimeGroup [data-regime]').forEach(btn => {
-    btn.disabled = !isWhatIf;
-    btn.setAttribute('aria-disabled', String(!isWhatIf));
-  });
-
-  const modeTag = document.getElementById('regimeModeTag');
-  if (modeTag) {
-    modeTag.textContent = isWhatIf ? 'Manual input scenario test' : 'API controlled';
-    modeTag.className = 'regime-mode-tag ' + (isWhatIf ? 'manual' : 'api');
-  }
-
-  const heroLbl = document.getElementById('heroModeLabel');
-  if (heroLbl) {
-    heroLbl.textContent = isWhatIf ? 'WHAT-IF STRESS TEST' : 'LIVE SIGNAL MODE';
-    heroLbl.className = 'hero-mode-label ' + (isWhatIf ? 'wi-lbl' : 'live-lbl');
-  }
-
-  const chartBadge = document.getElementById('chartModeBadge');
-  if (chartBadge) chartBadge.textContent = isWhatIf ? 'WHAT-IF' : 'LIVE SIGNAL';
-
-  document.body.classList.toggle('what-if-mode', isWhatIf);
-
-  if (isWhatIf) {
-    addTick('MODE', `Mode set to <strong>What-if Stress Test</strong> — manual regime active`);
-  } else {
-    // Switching back to live: reapply API regime and fetch
-    state.regime = _liveRegime;
-    updateDashboard();
-    addTick('MODE', `Switched back to <strong>Live Signal Mode</strong> — applying API regime: ${_liveRegime}`);
-    LiveData.fetchLatest();
-  }
-}
-
-// ── TICKER ────────────────────────────────────────────────────────────────
-const MAX_TICKS = 14;
-const tickerEntries = [];
-let _tickerView = 'exec'; // 'exec' | 'tech'
-const EXEC_TAGS = new Set(['POLICY','RISK','MODE','WARN']);
-
-function setTickerView(view) {
-  _tickerView = view;
-  const execBtn = document.getElementById('tickerViewExec');
-  const techBtn = document.getElementById('tickerViewTech');
-  if (execBtn) execBtn.classList.toggle('active', view === 'exec');
-  if (techBtn) techBtn.classList.toggle('active', view === 'tech');
-  renderTicker();
-}
-
-function nowHHMM() {
-  const d = new Date(), h = d.getHours(), m = d.getMinutes();
-  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-}
-function addTick(tag, msg) {
-  tickerEntries.unshift({ ts: nowHHMM(), tag, msg });
-  if (tickerEntries.length > MAX_TICKS) tickerEntries.pop();
-  renderTicker();
-}
-function addTickBatch(entries) {
-  const ts = nowHHMM();
-  for (let i = entries.length - 1; i >= 0; i--) tickerEntries.unshift({ ts, tag: entries[i].tag, msg: entries[i].msg });
-  while (tickerEntries.length > MAX_TICKS) tickerEntries.pop();
-  renderTicker();
-}
-function renderTicker() {
-  const feed = document.getElementById('tickerFeed');
-  const countEl = document.getElementById('tickerCount');
-  if (!feed) return;
-  const visible = _tickerView === 'exec'
-    ? tickerEntries.filter(e => EXEC_TAGS.has(e.tag))
-    : tickerEntries;
-  feed.innerHTML = visible.length
-    ? visible.map(e => `
-    <div class="tick">
-      <span class="tick-ts">${e.ts}</span>
-      <span class="tick-tag ${e.tag}">${e.tag}</span>
-      <span class="tick-msg">${e.msg}</span>
-    </div>`).join('')
-    : `<div class="tick"><span class="tick-ts">—</span><span class="tick-tag SOURCE">SOURCE</span><span class="tick-msg">Waiting for first live fetch…</span></div>`;
-  if (countEl) countEl.textContent = visible.length + ' of ' + tickerEntries.length + ' entries';
-}
-function buildTicksFromPayload(d) {
-  const ss = d.source_summary || {};
-  const nwsAlerts = typeof ss.weather_alert_count === 'number' ? ss.weather_alert_count : '?';
-  const wScore = typeof ss.weather_score === 'number' ? ss.weather_score.toFixed(3) : '?';
-  const pScore = typeof ss.baseline_port_score === 'number' ? ss.baseline_port_score.toFixed(3) : '?';
-  const sScore = typeof d.stress_score === 'number' ? d.stress_score.toFixed(3) : '?';
-  const rl = { low:'Low Stress', normal:'Normal Stress', high:'High Stress', extreme:'Extreme Stress' }[d.regime] || d.regime;
-  const tEnabled = ss.traffic_source_enabled;
-  return [
-    { tag:'MODE',   msg:`Live regime set by API stress score — <strong>${rl}</strong>` },
-    { tag:'SOURCE', msg:`NWS checked: <strong>${nwsAlerts}</strong> active corridor alert${nwsAlerts !== 1 ? 's' : ''}` },
-    { tag:'SOURCE', msg:`Traffic feed: <strong>${tEnabled === false ? 'n/a, GA511 key not configured' : (ss.traffic_event_count ?? 'unknown') + ' events'}</strong>` },
-    { tag:'DATA',   msg:`Weather score <strong>${wScore}</strong>, port baseline <strong>${pScore}</strong>` },
-    { tag:'RISK',   msg:`Composite stress <strong>${sScore}</strong> → <strong>${rl}</strong>` },
-    { tag:'POLICY', msg:`Scenario ${d.scenario || state.scenario}, ${typeof d.recommended_days === 'number' ? d.recommended_days : '?'}d recommended` },
-    { tag:'DATA',   msg:`Next refresh in <strong>60 seconds</strong>` }
-  ];
-}
-
-// ── HERO PANEL ────────────────────────────────────────────────────────────
-function updateHero(score, regime, recDays, stockPct, stockLo, stockHi, scenario, ts, status) {
-  const scoreEl   = document.getElementById('heroScore');
-  const regimeLbl = document.getElementById('heroRegimeLabel');
-  const thumb     = document.getElementById('gaugeThumb');
-  const regimeCls  = { low:'regime-low', normal:'regime-normal', high:'regime-high', extreme:'regime-extreme' };
-  const regimeLbls = { low:'Low Stress', normal:'Normal Stress', high:'High Stress', extreme:'Extreme Stress' };
-  const regimeVars = { low:'var(--ch-low)', normal:'var(--ch-norm)', high:'var(--ch-hi)', extreme:'var(--ch-ex)' };
-
-  if (scoreEl) {
-    scoreEl.textContent = typeof score === 'number' ? score.toFixed(3) : '—';
-    scoreEl.className = 'score-num ' + (regimeCls[regime] || '');
-  }
-  if (regimeLbl) regimeLbl.textContent = regimeLbls[regime] || regime || '—';
-  if (thumb && typeof score === 'number') {
-    const pct = Math.min(Math.max(score * 100, 3), 97);
-    thumb.style.left = pct + '%';
-    thumb.style.color = regimeVars[regime] || 'var(--text)';
-  }
-
-  const sEl = document.getElementById('hkpiStockout');
-  if (sEl) {
-    sEl.textContent = stockPct !== null ? stockPct.toFixed(2) + '%' : '—';
-    sEl.className = 'hkpi-val' + (stockPct > 10 ? ' err' : stockPct > 4 ? ' warn' : stockPct !== null ? ' ok' : '');
-  }
-  const ciEl = document.getElementById('hkpiStockoutCI');
-  if (ciEl && stockLo !== null && stockHi !== null)
-    ciEl.textContent = `Best/worst case range: ${stockLo.toFixed(2)}–${stockHi.toFixed(2)}%`;
-
-  const rdEl = document.getElementById('hkpiRecDays');
-  if (rdEl) rdEl.textContent = recDays !== null ? recDays + 'd' : '6d+';
-
-  const scEl = document.getElementById('hkpiScenario');
-  if (scEl) scEl.textContent = { baseline:'Baseline', safety:'Safety Stock', tail:'Tail Mit.' }[scenario] || scenario || '—';
-
-  const tsEl = document.getElementById('hkpiLastTs');
-  if (tsEl && ts) tsEl.textContent = new Date(ts).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-
-  // Status dot + label
-  const dot = document.getElementById('heroStatusDot');
-  const lbl = document.getElementById('heroStatusLbl');
-  const tsS = document.getElementById('heroStatusTs');
-  if (dot) dot.className = 'hero-status-dot ' + (status || 'loading');
-  if (lbl) lbl.textContent = { live:'Live', stale:'Stale', error:'Failed', loading:'Connecting' }[status] || '—';
-  if (tsS) tsS.textContent = status === 'live' ? 'feed active' : status === 'stale' ? 'last known data' : status === 'error' ? 'using fallback' : 'connecting…';
-
-  // Top badge
-  const badge = document.getElementById('topBadge');
-  const bTxt  = document.getElementById('topBadgeTxt');
-  if (badge) badge.dataset.status = status || 'loading';
-  if (bTxt)  bTxt.textContent = { live:'LIVE', stale:'STALE', error:'OFFLINE', loading:'CONNECTING' }[status] || 'CONNECTING';
-}
-
-// Countdown timer
-let _countdownTimer = null, _nextRefreshAt = null;
-function startCountdown(secs) {
-  _nextRefreshAt = Date.now() + secs * 1000;
-  if (_countdownTimer) clearInterval(_countdownTimer);
-  _countdownTimer = setInterval(() => {
-    const el = document.getElementById('hkpiNextRefresh');
-    if (!el) return;
-    const rem = Math.max(0, Math.round((_nextRefreshAt - Date.now()) / 1000));
-    el.textContent = `next refresh in ${rem}s`;
-  }, 1000);
-}
-
-// ── RISK DRIVERS ──────────────────────────────────────────────────────────
-function updateDrivers(ss, regime) {
-  const nwsCount = typeof ss.weather_alert_count === 'number' ? ss.weather_alert_count : null;
-  const nwsPct   = nwsCount !== null ? Math.min(nwsCount * 25, 100) : 0;
-  const nf = document.getElementById('df-nws'), nv = document.getElementById('dv-nws');
-  if (nf) { nf.style.width = nwsPct + '%'; nf.style.background = nwsCount > 0 ? 'var(--warn)' : 'var(--ok)'; }
-  if (nv)   nv.textContent = nwsCount !== null ? nwsCount + ' alert' + (nwsCount !== 1 ? 's' : '') : '—';
-
-  const wScore = typeof ss.weather_score === 'number' ? ss.weather_score : null;
-  const wf = document.getElementById('df-weather'), wv = document.getElementById('dv-weather');
-  if (wf && wScore !== null) { wf.style.width = (wScore * 100) + '%'; wf.style.background = wScore > .5 ? 'var(--err)' : wScore > .2 ? 'var(--warn)' : 'var(--primary)'; }
-  if (wv) wv.textContent = wScore !== null ? wScore.toFixed(3) : '—';
-
-  const te  = ss.traffic_source_enabled;
-  const tf  = document.getElementById('df-traffic'), tv = document.getElementById('dv-traffic');
-  const tsf = document.getElementById('df-tscore'),  tsv = document.getElementById('dv-tscore');
-  if (te === false) {
-    if (tf)  { tf.style.width = '0%'; }
-    if (tv)  { tv.textContent = 'n/a'; tv.className = 'driver-val driver-na'; }
-    if (tsf) { tsf.style.width = '0%'; }
-    if (tsv) { tsv.textContent = 'n/a'; tsv.className = 'driver-val driver-na'; }
-  } else {
-    const tev = typeof ss.traffic_event_count === 'number' ? ss.traffic_event_count : null;
-    if (tf && tev !== null) { tf.style.width = Math.min(tev * 10, 100) + '%'; tf.style.background = tev > 5 ? 'var(--err)' : 'var(--warn)'; }
-    if (tv) { tv.textContent = tev !== null ? tev : '—'; tv.className = 'driver-val'; }
-    const tsc = typeof ss.traffic_score === 'number' ? ss.traffic_score : null;
-    if (tsf && tsc !== null) { tsf.style.width = (tsc * 100) + '%'; tsf.style.background = tsc > .5 ? 'var(--err)' : 'var(--warn)'; }
-    if (tsv) { tsv.textContent = tsc !== null ? tsc.toFixed(3) : '—'; tsv.className = 'driver-val'; }
-  }
-
-  const pScore = typeof ss.baseline_port_score === 'number' ? ss.baseline_port_score : null;
-  const pf = document.getElementById('df-port'), pv = document.getElementById('dv-port');
-  if (pf && pScore !== null) { pf.style.width = (pScore * 100) + '%'; pf.style.background = pScore > .2 ? 'var(--warn)' : 'var(--ok)'; }
-  if (pv) pv.textContent = pScore !== null ? pScore.toFixed(3) : '—';
-
-  const srcEl  = document.getElementById('dv-sources');
-  const failEl = document.getElementById('dv-failures');
-  if (srcEl) {
-    const src = Array.isArray(ss.sources_used) ? ss.sources_used : (typeof ss.sources_used === 'string' ? [ss.sources_used] : []);
-    srcEl.textContent = src.length ? src.join(', ') : '—';
-  }
-  if (failEl) {
-    const fails = Array.isArray(ss.source_failures) ? ss.source_failures : [];
-    failEl.textContent = fails.length ? fails.join(', ') : 'none';
-    failEl.style.color = fails.length ? 'var(--warn)' : 'var(--text-faint)';
-  }
-  const badge = document.getElementById('driverSourceBadge');
-  if (badge) {
-    const n = Array.isArray(ss.sources_used) ? ss.sources_used.length : 0;
-    badge.textContent = n + ' source' + (n !== 1 ? 's' : '') + ' active';
-  }
-}
-
-// ── POLICY IDEAS ──────────────────────────────────────────────────────────
-function renderPolicyIdeas(ideas, scenario) {
-  const list  = document.getElementById('policyList');
-  const badge = document.getElementById('policyScenarioBadge');
-  if (list)  list.innerHTML = ideas.map(i => `<div class="policy-item"><div class="policy-dot"></div><span>${i}</span></div>`).join('');
-  if (badge) badge.textContent = { baseline:'Baseline', safety:'Safety stock', tail:'Tail mit.' }[scenario] || scenario;
-}
-
-// ── CHART ─────────────────────────────────────────────────────────────────
-function cssVar(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim() }
-const ctx = document.getElementById('riskChart').getContext('2d');
-
-function buildCIDataset(regime, scenario) {
-  const c = getCurve(regime, scenario);
-  return { lo: c.map(x => x[1]), hi: c.map(x => x[2]) };
-}
-
-let chart;
-function initChart() {
-  const { regime, scenario, daysOfCover, targetProb } = state;
-  const ac = getCurve(regime, scenario);
-  const surface = cssVar('--surface'), border = cssVar('--border'), textMuted = cssVar('--text-muted');
-  const ds = [];
-
-  ['low','normal','high','extreme'].forEach(r => {
-    const c = getCurve(r, scenario), ia = r === regime;
-    ds.push({ label:r, data:c.map(p=>p[0]), borderColor:CHART_COLORS[r], backgroundColor:'transparent',
-      borderWidth:ia?2.5:1.1, pointRadius:0, tension:0.35, fill:false,
-      borderDash:ia?[]:[4,3], order:ia?2:3, _role:'curve' });
-  });
-
-  const ci = buildCIDataset(regime, scenario);
-  ds.push({ label:'CI_hi', data:ci.hi, borderColor:'transparent', backgroundColor:cssVar('--ch-ci'),
-    borderWidth:0, pointRadius:0, tension:0.35, fill:'+1', order:4, _role:'ci' });
-  ds.push({ label:'CI_lo', data:ci.lo, borderColor:cssVar('--ch-ci-line'), backgroundColor:'transparent',
-    borderWidth:0.8, borderDash:[2,2], pointRadius:0, tension:0.35, fill:false, order:5, _role:'ci' });
-  ds.push({ label:'Target', data:DAYS.map(()=>targetProb), borderColor:'rgba(122,57,187,.7)',
-    borderWidth:1.5, borderDash:[6,4], pointRadius:0, fill:false, order:1, _role:'target' });
-
-  const si = DAYS.indexOf(daysOfCover), sp = ac[si][0];
-  ds.push({ label:'Selection', data:DAYS.map((_,i)=>i===si?sp:null), borderColor:cssVar('--primary'),
-    backgroundColor:cssVar('--primary'), pointRadius:DAYS.map((_,i)=>i===si?8:0),
-    pointHoverRadius:10, showLine:false, fill:false, order:-1, _role:'sel' });
-
-  const md = getMinFeasible(regime, scenario, targetProb), mi = md ? DAYS.indexOf(md) : -1;
-  const mp = mi >= 0 ? ac[mi][0] : null;
-  ds.push({ label:'MinFeasible', data:DAYS.map((_,i)=>(i===mi&&mi!==si)?mp:null),
-    borderColor:cssVar('--ok'), backgroundColor:cssVar('--ok'),
-    pointRadius:DAYS.map((_,i)=>(i===mi&&i!==si)?8:0),
-    pointStyle:DAYS.map((_,i)=>(i===mi&&i!==si)?'rect':'circle'),
-    pointHoverRadius:10, showLine:false, fill:false, order:-2, _role:'min' });
-
-  chart = new Chart(ctx, {
-    type:'line', data:{ labels:DAYS.map(d=>d+'d'), datasets:ds },
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      animation:{ duration:320, easing:'easeInOutQuart' },
-      interaction:{ mode:'index', intersect:false },
-      plugins:{
-        legend:{ display:false },
-        tooltip:{
-          backgroundColor:surface, titleColor:cssVar('--text'), bodyColor:textMuted,
-          borderColor:border, borderWidth:1, padding:10,
-          titleFont:{ family:"'General Sans',sans-serif", weight:'600', size:11 },
-          bodyFont: { family:"'General Sans',sans-serif", size:11 },
-          callbacks:{
-            title:  items => items[0].label + ' of cover',
-            label:  item  => {
-              const r = item.dataset._role;
-              if (r === 'ci')     return null;
-              if (r === 'target') return ` Target: ≤ ${targetProb}%`;
-              if (r === 'sel')    return ` Selection: ${item.parsed.y?.toFixed(2)}%`;
-              if (r === 'min')    return ` Min required: ${item.parsed.y?.toFixed(2)}%`;
-              if (r === 'curve')  return ` ${item.dataset.label}: ${item.parsed.y?.toFixed(2)}%`;
-              return null;
-            },
-            filter: item => item.parsed.y !== null && item.dataset._role !== 'ci'
-          }
-        }
-      },
-      scales:{
-        x:{ grid:{ color:border, drawTicks:false }, border:{ display:false },
-            ticks:{ color:textMuted, font:{ family:"'General Sans',sans-serif", size:10 }, padding:6 } },
-        y:{ min:0, max:55, grid:{ color:border }, border:{ display:false },
-            ticks:{ color:textMuted, font:{ family:"'General Sans',sans-serif", size:10 }, padding:6, callback:v=>v+'%' } }
-      }
-    }
-  });
-}
-
-function updateChart() {
-  const { regime, scenario, daysOfCover, targetProb } = state;
-  const ac = getCurve(regime, scenario), ci = buildCIDataset(regime, scenario);
-  const si = DAYS.indexOf(daysOfCover), sp = ac[si][0];
-  const md = getMinFeasible(regime, scenario, targetProb), mi = md ? DAYS.indexOf(md) : -1;
-  const mp = mi >= 0 ? ac[mi][0] : null;
-  const surface = cssVar('--surface');
-
-  ['low','normal','high','extreme'].forEach((r, i) => {
-    const c = getCurve(r, scenario), ia = r === regime;
-    chart.data.datasets[i].data       = c.map(p => p[0]);
-    chart.data.datasets[i].borderWidth = ia ? 2.5 : 1.1;
-    chart.data.datasets[i].borderDash  = ia ? [] : [4,3];
-    chart.data.datasets[i].order       = ia ? 2 : 3;
-  });
-  chart.data.datasets[4].data  = ci.hi; chart.data.datasets[4].backgroundColor = cssVar('--ch-ci');
-  chart.data.datasets[5].data  = ci.lo; chart.data.datasets[5].borderColor = cssVar('--ch-ci-line');
-  chart.data.datasets[6].data  = DAYS.map(() => targetProb);
-  chart.data.datasets[7].data  = DAYS.map((_,i) => i===si ? sp : null);
-  chart.data.datasets[7].pointRadius   = DAYS.map((_,i) => i===si ? 8 : 0);
-  chart.data.datasets[7].borderColor   = chart.data.datasets[7].backgroundColor = cssVar('--primary');
-  chart.data.datasets[8].data  = DAYS.map((_,i) => (i===mi && i!==si) ? mp : null);
-  chart.data.datasets[8].pointRadius   = DAYS.map((_,i) => (i===mi && i!==si) ? 8 : 0);
-  chart.data.datasets[8].borderColor   = chart.data.datasets[8].backgroundColor = cssVar('--ok');
-
-  const allV = ['low','normal','high','extreme'].flatMap(r => getCurve(r, scenario).map(p => p[2]));
-  chart.options.scales.y.max = Math.min(Math.ceil(Math.max(...allV, 10) / 10) * 10 + 5, 55);
-  chart.options.plugins.tooltip.backgroundColor = surface;
-  chart.options.plugins.tooltip.titleColor      = cssVar('--text');
-  chart.options.plugins.tooltip.bodyColor       = cssVar('--text-muted');
-  chart.options.plugins.tooltip.borderColor     = cssVar('--border');
-  chart.update();
-}
-
-// ── PASS/FAIL LOGIC ───────────────────────────────────────────────────────
-// Source of truth: stockout_probability <= targetProb means Meets Target.
-// Applied consistently to badge, rec card accent, hero KPI color, decision summary.
-function applyPassFail(meetsTarget, regime) {
-  const accents = { low:'--low-c', normal:'--primary', high:'--hi-c', extreme:'--ex-c' };
-  const recPanel = document.getElementById('recPanel');
-  if (recPanel) {
-    const accent = meetsTarget ? `var(${accents[regime] || '--primary'})` : 'var(--err)';
-    recPanel.style.setProperty('--rec-accent', accent);
-  }
-
-  const badge  = document.getElementById('statusBadge');
-  const stTxt  = document.getElementById('statusTxt');
-  if (badge && stTxt) {
-    if (meetsTarget) {
-      badge.className = 'status-badge pass';
-      badge.querySelector('svg').innerHTML = '<polyline points="20 6 9 17 4 12"/>';
-      badge.querySelector('svg').setAttribute('stroke-width','2.5');
-      stTxt.textContent = 'Meets Target';
-    } else {
-      badge.className = 'status-badge fail';
-      badge.querySelector('svg').innerHTML = '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>';
-      badge.querySelector('svg').setAttribute('stroke-width','2');
-      stTxt.textContent = 'Fails Target';
-    }
-  }
-}
-
-
-function fmtTargetPct(n){ return Number.isInteger(n) ? `${n}%` : `${Number(n).toFixed(2)}%`; }
-function updateOperatorBanner(meetsTarget, selectedProb, targetProb, minDays, daysOfCover, stressScore, sourceSummary, scenario, isWhatIf){
-  const riskLimited = sourceSummary && sourceSummary.traffic_source_enabled === false;
-  const bar = document.getElementById('operatorStatusBanner');
-  const pill = document.getElementById('operatorStatusPill');
-  const title = document.getElementById('operatorActionTitle');
-  const sub = document.getElementById('operatorActionSub');
-  const risk = document.getElementById('operatorRiskCompare');
-  const cov = document.getElementById('operatorCoverageCompare');
-  const trust = document.getElementById('operatorTrustCompare');
-  const req = minDays != null ? `${minDays} days needed, ${daysOfCover} days selected` : `6d+ needed, ${daysOfCover} days selected`;
-  const regimeLabel = stressScore < 0.2 ? 'Low' : stressScore < 0.45 ? 'Normal' : stressScore < 0.7 ? 'High' : 'Extreme';
-
-  let level = 'green', pillText = 'ON TRACK', titleText = 'PLAN MEETS TARGET';
-  if (!meetsTarget) { level = 'red'; pillText = 'ATTENTION NEEDED'; titleText = 'INCREASE COVERAGE'; }
-  else if (riskLimited) { level = 'yellow'; pillText = 'MONITOR'; titleText = 'PLAN MEETS TARGET'; }
-
-  if (bar) {
-    bar.style.background = level === 'green' ? '#E9FBF2' : level === 'yellow' ? '#FCEEF2' : '#FFF0F1';
-    bar.style.borderBottomColor = level === 'green' ? '#BEEFD2' : level === 'yellow' ? '#E9B8C7' : '#F3B9BC';
-  }
-  if (pill) { pill.textContent = pillText; pill.style.background = level === 'green' ? '#0F9D7A' : level === 'yellow' ? '#7C3AED' : '#BE123C'; pill.style.borderColor = level === 'green' ? '#0B7A5F' : level === 'yellow' ? '#5B21B6' : '#881337'; pill.style.color = '#FFFFFF'; pill.style.boxShadow = level === 'green' ? '0 10px 24px rgba(15,157,122,.24)' : level === 'yellow' ? '0 10px 24px rgba(124,58,237,.24)' : '0 10px 24px rgba(190,18,60,.30)'; }
-  if (title) title.textContent = titleText;
-  if (sub) sub.textContent = meetsTarget
-    ? `Current ${daysOfCover}-day policy meets the ${fmtTargetPct(targetProb)} target ${isWhatIf ? 'in this hypothetical test' : 'under current live conditions'}.`
-    : `Increase coverage from ${daysOfCover} to ${minDays != null ? minDays : '6d+'} days. Current plan fails the ${fmtTargetPct(targetProb)} target.`;
-  if (risk) risk.textContent = `${selectedProb.toFixed(2)}% vs ${fmtTargetPct(targetProb)} target`;
-  if (cov) cov.textContent = req;
-  if (trust) trust.innerHTML = `Confidence: Medium<br><span style="font-weight:500;color:var(--warn)">Weather feed active; traffic feed not connected.</span>`;
-  const callout = document.getElementById('chartCallout');
-  if (callout) callout.textContent = `Recommended: ${minDays != null ? minDays + ' days' : '6d+'}`;
-
-  const execFeed = document.getElementById('tickerFeed');
-  if (execFeed && window.__tickerView === 'exec') {
-    const ts = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-    const items = [
-      `Current ${daysOfCover}-day plan ${meetsTarget ? 'meets' : 'fails'} the ${fmtTargetPct(targetProb)} target.`,
-      `Model recommends ${minDays != null ? minDays : '6d+'} days${minDays != null && daysOfCover > minDays ? `; selected plan has ${daysOfCover - minDays} day${daysOfCover - minDays === 1 ? '' : 's'} of buffer.` : ''}`,
-      `Weather feed active; Georgia 511 traffic feed not connected.`,
-      `Current disruption level is ${regimeLabel}.`
-    ];
-    execFeed.innerHTML = items.map(msg => `<div class="tick"><span class="tick-ts">${ts}</span><span class="tick-msg">${msg}</span></div>`).join('');
-    const badge = document.getElementById('tickerCount'); if (badge) badge.textContent = `${items.length} entries`;
-  }
-}
-
-function updateDashboard() {
-  const { regime, scenario, daysOfCover, targetProb, holdingCost, shortageCost } = state;
-  const curve    = getCurve(regime, scenario);
-  const shortage = getShortage(regime, scenario);
-  const si = DAYS.indexOf(daysOfCover);
-  const [sp, spLo, spHi] = curve[si];
-  const [sh]             = shortage[si];
-  const meetsTarget = sp <= targetProb;
-  const minDays  = getMinFeasible(regime, scenario, targetProb);
-  const { days:optDays, cost:optCost } = getOptimalFeasible(regime, scenario, targetProb, holdingCost, shortageCost);
-  const coverageMargin = minDays != null ? daysOfCover - minDays : null;
-  const selectedCost   = estimateCost(daysOfCover, scenario, regime, holdingCost, shortageCost);
-  const sd = STRESS_DATA[regime];
-
-  const outputs = { regime, scenario, daysOfCover, targetProb, meetsTarget,
-    selectedProb:sp, selectedProbLo:spLo, selectedProbHi:spHi,
-    minDays, optDays, coverageMargin, shortage:sh,
-    selectedCost, optCost, holdingCost, shortageCost };
-
-  document.querySelectorAll('.kpi-val,.rec-num,.rmi-val,.kpi-ci,.rmi-ci,.hkpi-val').forEach(e => e.classList.add('fading'));
-
-  setTimeout(() => {
-    // Rec panel
-    document.getElementById('recNum').textContent = minDays !== null ? minDays : '6d+';
-    document.getElementById('recCI').textContent  = minDays ? `(${regime} stress, ${scenario})` : '(above 6d range — strengthen mitigation)';
-
-    // Pass/fail (authoritative: sp vs targetProb)
-    applyPassFail(meetsTarget, regime);
-
-    document.getElementById('rmSel').textContent      = daysOfCover + ' days';
-    document.getElementById('rmSelStkout').textContent = `P(stockout) = ${sp.toFixed(2)}% [${spLo.toFixed(2)}–${spHi.toFixed(2)}%]`;
-    document.getElementById('rmMin').textContent       = minDays !== null ? minDays + ' days' : '> 6 days';
-    document.getElementById('rmMinCI').textContent     = minDays ? `≤ ${targetProb}% constraint` : 'exceeds modeled range';
-    document.getElementById('rmOpt').textContent       = optDays ? optDays + ' days' : 'N/A';
-    document.getElementById('rmOptCI').textContent     = optCost ? `Includes shortage-cost reduction. ${optCost.toFixed(2)}` : '—';
-    document.getElementById('rmMargin').textContent    = coverageMargin !== null ? (coverageMargin >= 0 ? '+' : '') + coverageMargin + ' days' : 'n/a';
-    document.getElementById('rmMarginTxt').textContent = coverageMargin === null ? 'no policy in 2–6d range meets target'
-      : coverageMargin < 0 ? 'below minimum — fails'
-      : coverageMargin === 0 ? 'at minimum threshold'
-      : coverageMargin + 'd buffer';
-    document.getElementById('recNarrative').textContent = buildNarrative(outputs);
-
-    // Regime buttons highlight (what-if only — in live mode buttons are locked)
-    document.querySelectorAll('[data-regime]').forEach(b => b.classList.remove('active'));
-    const rb = document.querySelector(`[data-regime="${regime}"]`);
-    if (rb) rb.classList.add('active');
-
-    // Signal bars
-    const comp = sd.components;
-    function setBar(id, val) {
-      const fill = document.getElementById('sb-' + id), valEl = document.getElementById('sv-' + id);
-      if (fill) { fill.style.width = (val * 100) + '%'; fill.style.background = val > .7 ? 'var(--err)' : val > .45 ? 'var(--warn)' : 'var(--primary)'; }
-      if (valEl) valEl.textContent = val.toFixed(2);
-    }
-    setBar('throughput', comp.throughput_z); setBar('leadtime', comp.leadtime_var_z);
-    setBar('ops', comp.ops_disruption);
-    const compFill = document.getElementById('sb-composite');
-    if (compFill) compFill.style.background = sd.score > .7 ? 'var(--err)' : sd.score > .45 ? 'var(--warn)' : 'var(--primary)';
-    setBar('composite', sd.score);
-
-    // Decision summary
-    const bullets = buildBullets(outputs);
-    const db1 = document.getElementById('db1'), db2 = document.getElementById('db2'),
-          db3 = document.getElementById('db3'), db4 = document.getElementById('db4'),
-          da  = document.getElementById('decAction');
-    if (db1) db1.textContent = bullets.b1;
-    if (db2) db2.textContent = bullets.b2;
-    if (db3) db3.textContent = bullets.b3;
-    if (db4) db4.textContent = bullets.b4;
-    if (da)  da.textContent  = bullets.action;
-
-    // Executive summary
-    const exec = document.getElementById('execSummary');
-    if (exec) exec.innerHTML = buildExecSummary(regime, scenario, daysOfCover, sp, minDays, _mode === 'whatif');
-
-    // Hero (model-based values — overwritten by applyPayload when API responds)
-    updateHero(sd.score, regime, minDays, sp, spLo, spHi, scenario, null, _currentStatus);
-
-    // Policy ideas
-    const ideas = buildPolicyIdeas(regime, scenario, minDays, daysOfCover, meetsTarget, coverageMargin, sd.score);
-    renderPolicyIdeas(ideas, scenario);
-    updateOperatorBanner(meetsTarget, sp, targetProb, minDays, daysOfCover, sd.score, window.__lastSourceSummary || null, scenario, _mode === 'whatif');
-
-    document.querySelectorAll('.kpi-val,.rec-num,.rmi-val,.kpi-ci,.rmi-ci,.hkpi-val').forEach(e => e.classList.remove('fading'));
-    updateChart();
-  }, 100);
-}
-
-// ── EVENT HANDLERS ────────────────────────────────────────────────────────
-document.getElementById('regimeGroup').addEventListener('click', e => {
-  const btn = e.target.closest('[data-regime]'); if (!btn) return;
-  // Only act if in what-if mode
-  if (_mode !== 'whatif') return;
-  state.regime = btn.dataset.regime;
-  updateDashboard();
-  const rl = { low:'Low Stress', normal:'Normal Stress', high:'High Stress', extreme:'Extreme Stress' }[state.regime];
-  addTick('MODE', `User selected what-if regime: <strong>${rl}</strong>`);
-  addTick('WARN', `What-if output shown; live source layer remains <strong>${{ low:'Low Stress', normal:'Normal Stress', high:'High Stress', extreme:'Extreme Stress' }[_liveRegime] || _liveRegime}</strong>`);
-});
-
-document.getElementById('scenarioGroup').addEventListener('click', e => {
-  const btn = e.target.closest('[data-scenario]'); if (!btn) return;
-  document.querySelectorAll('[data-scenario]').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  state.scenario = btn.dataset.scenario;
-  updateDashboard();
-  if (_mode === 'live') {
-    addTick('DATA', `Scenario changed to <strong>${btn.dataset.scenario}</strong> — fetching live data`);
-    LiveData.fetchLatest();
-  } else {
-    addTick('DATA', `What-if scenario changed to <strong>${btn.dataset.scenario}</strong>`);
-  }
-});
-
-document.getElementById('docsSlider').addEventListener('input', e => {
-  state.daysOfCover = +e.target.value;
-  const dv = document.getElementById('docsVal');
-  if (dv) dv.textContent = state.daysOfCover + 'd';
-  updateDashboard();
-  if (_mode === 'live' && !_applyingPayload) {
-    clearTimeout(_sliderFetchTimer);
-    _sliderFetchTimer = setTimeout(() => {
-      addTick('DATA', `Days of cover set to <strong>${state.daysOfCover}d</strong> — fetching live data`);
-      LiveData.fetchLatest();
-    }, 400);
-  }
-});
-
-document.getElementById('targetSel').addEventListener('change', e => { state.targetProb = +e.target.value; updateDashboard(); });
-document.getElementById('holdingCost').addEventListener('change', e => { state.holdingCost = +e.target.value; updateDashboard(); });
-document.getElementById('shortageCost').addEventListener('change', e => { state.shortageCost = +e.target.value; updateDashboard(); });
-document.getElementById('assumpToggle').addEventListener('click', () => {
-  const open = document.getElementById('assumpBody').classList.toggle('open');
-  document.getElementById('assumpToggle').classList.toggle('open', open);
-  document.getElementById('assumpToggle').setAttribute('aria-expanded', open);
-});
-document.documentElement.setAttribute('data-theme', 'dark');
-
-/* ══════════════════════════════════════════════════════════════════════════
-   LIVE DATA MODULE
-   Polls /api/latest every 60 seconds. Graceful fallback on failure.
-   stockout_probability / ci_low / ci_high arrive as DECIMAL (0–1).
-══════════════════════════════════════════════════════════════════════════ */
-const LiveData = (() => {
-  const POLL_INTERVAL = 60_000;
-  function buildEndpoint() {
-    return '/api/latest?' + new URLSearchParams({ days: state.daysOfCover, scenario: state.scenario });
-  }
-  let lastSuccessTime = null, lastPayload = null, pollTimer = null;
-
-  function setStatus(status, _msg, isoTs, ss) {
-    _currentStatus = status;
-    const recDays = lastPayload
-      ? (typeof lastPayload.recommended_days === 'number' ? lastPayload.recommended_days
-         : typeof lastPayload.minimum_feasible_days === 'number' ? lastPayload.minimum_feasible_days : null)
-      : null;
-    const sp = lastPayload && typeof lastPayload.stockout_probability === 'number' ? lastPayload.stockout_probability * 100 : null;
-    const sl = lastPayload && typeof lastPayload.stockout_ci_low  === 'number' ? lastPayload.stockout_ci_low  * 100 : null;
-    const sh = lastPayload && typeof lastPayload.stockout_ci_high === 'number' ? lastPayload.stockout_ci_high * 100 : null;
-    const sc = lastPayload && typeof lastPayload.stress_score === 'number' ? lastPayload.stress_score : STRESS_DATA[state.regime].score;
-    updateHero(sc, state.regime, recDays, sp, sl, sh, state.scenario, isoTs, status);
-  }
-
-  function applyPayload(d) {
-    if (!d) return;
-
-    // Always update the live regime tracker
-    if (d.regime) _liveRegime = d.regime;
-
-    // Only update displayed regime if in live mode
-    if (_mode === 'live') {
-      if (d.regime && d.regime !== state.regime) state.regime = d.regime;
-      if (d.scenario) {
-        const btn = document.querySelector('[data-scenario="' + d.scenario + '"]');
-        if (btn) { document.querySelectorAll('[data-scenario]').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
-        state.scenario = d.scenario;
-      }
-      if (typeof d.selected_days_of_cover === 'number' && DAYS.includes(d.selected_days_of_cover)) {
-        state.daysOfCover = d.selected_days_of_cover;
-        const sl = document.getElementById('docsSlider'); if (sl) sl.value = d.selected_days_of_cover;
-        const sv = document.getElementById('docsVal');    if (sv) sv.textContent = d.selected_days_of_cover + 'd';
-      }
-      _applyingPayload = true; updateDashboard(); _applyingPayload = false;
-    }
-    // In what-if mode: do NOT update regime/dashboard — just update drivers and ticker
-
-    setTimeout(() => {
-      if (_mode === 'live') {
-        // Full overlay in live mode
-        if (typeof d.stockout_probability === 'number') {
-          const pct = d.stockout_probability * 100;
-          if (typeof d.stockout_ci_low === 'number' && typeof d.stockout_ci_high === 'number') {
-            const rmSS = document.getElementById('rmSelStkout');
-            if (rmSS) rmSS.textContent = 'P(stockout) = ' + pct.toFixed(2) + '% [' + (d.stockout_ci_low*100).toFixed(2) + '\u2013' + (d.stockout_ci_high*100).toFixed(2) + '%]';
-          }
-          // Re-evaluate pass/fail from API stockout probability
-          const apiMeetsTarget = (d.stockout_probability * 100) <= state.targetProb;
-          applyPassFail(apiMeetsTarget, d.regime || state.regime);
-        }
-        if (typeof d.coverage_margin === 'number') {
-          const m = d.coverage_margin;
-          const rmM  = document.getElementById('rmMargin');    if (rmM)  rmM.textContent  = (m >= 0 ? '+' : '') + m + ' days';
-          const rmMT = document.getElementById('rmMarginTxt'); if (rmMT) rmMT.textContent = m < 0 ? 'below minimum — fails' : m === 0 ? 'at minimum threshold' : m + 'd buffer';
-        }
-        { const rn = document.getElementById('recNum');
-          if (rn) rn.textContent = d.recommended_days !== null && d.recommended_days !== undefined ? d.recommended_days
-            : d.minimum_feasible_days !== null && d.minimum_feasible_days !== undefined ? d.minimum_feasible_days : '6d+'; }
-        { const rm = document.getElementById('rmMin');
-          if (rm) rm.textContent = (d.minimum_feasible_days !== null && d.minimum_feasible_days !== undefined) ? d.minimum_feasible_days + ' days' : '> 6 days'; }
-        // Hero full overlay — decision summary + takeaway handled below with unified API values
-        const sp2 = typeof d.stockout_probability === 'number' ? d.stockout_probability * 100 : null;
-        const sl2 = typeof d.stockout_ci_low  === 'number' ? d.stockout_ci_low  * 100 : null;
-        const sh2 = typeof d.stockout_ci_high === 'number' ? d.stockout_ci_high * 100 : null;
-        const liveRegime   = d.regime || state.regime;
-        const liveScenario = d.scenario || state.scenario;
-        const liveScore    = typeof d.stress_score === 'number' ? d.stress_score : STRESS_DATA[liveRegime].score;
-        const minD2 = (d.minimum_feasible_days !== null && d.minimum_feasible_days !== undefined)
-          ? d.minimum_feasible_days
-          : getMinFeasible(liveRegime, liveScenario, state.targetProb);
-        const recD2 = (d.recommended_days !== null && d.recommended_days !== undefined) ? d.recommended_days : minD2;
-        const sp2pct = sp2 !== null ? sp2 : getCurve(liveRegime, liveScenario)[DAYS.indexOf(state.daysOfCover)][0];
-        const sl2pct = sl2 !== null ? sl2 : sp2pct;
-        const sh2pct = sh2 !== null ? sh2 : sp2pct;
-        const covM2  = minD2 !== null ? state.daysOfCover - minD2 : null;
-        const metT2  = sp2pct <= state.targetProb;
-
-        updateHero(liveScore, liveRegime, recD2, sp2, sl2, sh2, liveScenario, d.timestamp, 'live');
-
-        // Exec summary — use API values as source of truth
-        const exec = document.getElementById('execSummary');
-        if (exec) exec.innerHTML = buildExecSummary(liveRegime, liveScenario, state.daysOfCover, sp2pct, minD2, false);
-
-        // Decision summary — rebuild bullets from API values so they match hero
-        const apiOutputs = {
-          regime: liveRegime, scenario: liveScenario, daysOfCover: state.daysOfCover,
-          targetProb: state.targetProb, meetsTarget: metT2,
-          selectedProb: sp2pct, selectedProbLo: sl2pct, selectedProbHi: sh2pct,
-          minDays: minD2, optDays: minD2, coverageMargin: covM2,
-          shortage: typeof d.expected_shortage === 'number' ? d.expected_shortage : 0,
-          optCost: typeof d.policy_cost_index === 'number' ? d.policy_cost_index : null,
-          holdingCost: state.holdingCost, shortageCost: state.shortageCost
-        };
-        const apiBullets = buildBullets(apiOutputs);
-        const db1e = document.getElementById('db1'), db2e = document.getElementById('db2'),
-              db3e = document.getElementById('db3'), db4e = document.getElementById('db4'),
-              dae  = document.getElementById('decAction');
-        if (db1e) db1e.textContent = apiBullets.b1;
-        if (db2e) db2e.textContent = apiBullets.b2;
-        if (db3e) db3e.textContent = apiBullets.b3;
-        if (db4e) db4e.textContent = apiBullets.b4;
-        // Prefer operational_takeaway from API; fall back to built bullets
-        const takeaway = (typeof d.operational_takeaway === 'string' && d.operational_takeaway)
-          ? d.operational_takeaway : apiBullets.action;
-        if (dae) dae.textContent = takeaway;
-        // Also patch narrative to match API values
-        const recNarEl = document.getElementById('recNarrative');
-        if (recNarEl) recNarEl.textContent = buildNarrative(apiOutputs);
-        // Pass/fail with API values
-        applyPassFail(metT2, liveRegime);
-
-        // Policy ideas — use API values
-        const ideas = buildPolicyIdeas(liveRegime, liveScenario, minD2, state.daysOfCover, metT2, covM2, liveScore);
-        renderPolicyIdeas(ideas, liveScenario);
-      }
-
-      // Always update drivers (live source layer — shown in both modes)
-      if (d.source_summary) updateDrivers(d.source_summary, d.regime || state.regime);
-    }, 150);
-  }
-
-  async function fetchLiveData() {
-    try {
-      const res = await fetch(buildEndpoint(), { cache:'no-store' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const d = await res.json();
-      if (!d || typeof d.timestamp !== 'string' || typeof d.regime !== 'string') throw new Error('Bad shape');
-      lastPayload = d; lastSuccessTime = Date.now();
-      setStatus('live', 'Live', d.timestamp, d.source_summary);
-      applyPayload(d);
-      const ticks = buildTicksFromPayload(d);
-      if (_mode === 'whatif') {
-        // In what-if, note that live API refreshed but what-if is active
-        const rl = { low:'Low Stress', normal:'Normal Stress', high:'High Stress', extreme:'Extreme Stress' }[d.regime] || d.regime;
-        ticks[0] = { tag:'MODE', msg:`Live fetch completed — API regime: <strong>${rl}</strong>. What-if override active.` };
-      }
-      addTickBatch(ticks);
-      startCountdown(60);
-    } catch (err) {
-      const first = lastSuccessTime === null;
-      const stale = !first && (Date.now() - lastSuccessTime) > POLL_INTERVAL * 2;
-      if (first)       { setStatus('error','Fallback',null);                                    addTick('WARN','Live fetch failed — using embedded fallback model data'); }
-      else if (stale)  { setStatus('stale','Stale',lastPayload?.timestamp ?? null);             addTick('WARN','Live data stale — showing last known values'); }
-      else             { setStatus('live','Retrying',lastPayload?.timestamp ?? null);           addTick('WARN','Transient fetch failure — retrying on next cycle'); }
-    }
-  }
-
-  function startPolling() {
-    addTick('MODE', 'Mode set to <strong>Live Signal</strong> — regime follows API stress score');
-    fetchLiveData();
-    pollTimer = setInterval(fetchLiveData, POLL_INTERVAL);
-  }
-  return { startPolling, fetchLatest: fetchLiveData };
-})();
-
-// ── INIT ──────────────────────────────────────────────────────────────────
-initChart();
-updateDashboard();
-LiveData.startPolling();
-</script>
-</body>
-</html>
-    <div style="padding:10px 16px 0;">
-      <details class="card" style="min-height:auto;overflow:hidden;">
-        <summary style="cursor:pointer;list-style:none;padding:12px 14px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text);display:flex;justify-content:space-between;align-items:center;">
-          Limitations & assumptions
-          <span aria-hidden="true" style="color:var(--text-muted);">▾</span>
-        </summary>
-        <div class="card-body" style="padding-top:0;font-size:11px;color:var(--text-muted);line-height:1.65;display:flex;flex-direction:column;gap:8px;">
-          <div>This app does not directly observe store shelves, exact inventory levels, truck GPS feeds, or realized grocery demand. It estimates risk from proxy disruption signals and a model.</div>
-          <div>Current recommendations are most useful as decision support, not as a guarantee of actual stock availability.</div>
-          <div>Historical backtesting against real lane-level replenishment outcomes and demand calibration would improve confidence in future versions.</div>
-        </div>
-      </details>
-    </div>
-
-    <div style="padding:10px 16px 0;">
-      <details class="card" style="min-height:auto;overflow:hidden;">
-        <summary style="cursor:pointer;list-style:none;padding:12px 14px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text);display:flex;justify-content:space-between;align-items:center;">
-          Math methodology
-          <span aria-hidden="true" style="color:var(--text-muted);">▾</span>
-        </summary>
-        <div class="card-body" style="padding-top:0;font-size:11px;color:var(--text-muted);line-height:1.7;display:flex;flex-direction:column;gap:8px;">
-          <div><strong style="color:var(--text)">1. Signal aggregation.</strong> Live weather, traffic, and port-related inputs are normalized to a 0–1 scale and combined into a disruption score. This score is mapped into a qualitative disruption level such as Low, Normal, High, or Extreme.</div>
-          <div><strong style="color:var(--text)">2. Risk curve mapping.</strong> For each disruption level, the app uses an estimated relationship between days of stock coverage and the probability of running out before replenishment arrives. Higher disruption shifts the curve upward, meaning more coverage is needed to achieve the same risk limit.</div>
-          <div><strong style="color:var(--text)">3. Policy selection rule.</strong> Let p(d) denote the estimated probability of running out at d days of stock, and let tau denote the selected risk limit. The recommended policy is the smallest d in the allowed range such that p(d) is less than or equal to tau. If no policy from 2 to 6 days satisfies the rule, the app reports 6d+.</div>
-          <div><strong style="color:var(--text)">4. Comparative outputs.</strong> The interface reports the selected plan, the minimum recommended coverage, the gap between them, and a scenario comparison so users can see how the decision changes as disruption increases.</div>
-          <div><strong style="color:var(--text)">5. Practical interpretation.</strong> This is a decision-support approximation, not a direct measurement of shelf inventory. The math helps translate proxy disruption signals into an operational recommendation under uncertainty.</div>
-        </div>
-      </details>
-    </div>
-
-    <div style="padding:10px 16px 0;">
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">Creator note</div></div>
-        <div class="card-body" style="font-size:11px;color:var(--text-muted);line-height:1.6;">Built by <strong style="color:var(--text)">Neil Sharma</strong> as a decision-support prototype exploring how public disruption signals can be translated into clearer operational inventory decisions.</div>
-      </div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:10px 16px 0;">
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">Why this matters</div></div>
-        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">Small delays in weather, traffic, or port flow can change whether a grocery inventory plan is likely to run out before the next delivery. This tool turns those signals into a practical stocking recommendation.</div>
-      </div>
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">How it works</div></div>
-        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">Live disruption signals feed a risk model, the model estimates the chance of running out of stock, and the app recommends how many days of coverage are needed to stay below the selected risk limit.</div>
-      </div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:12px 16px 0;">
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">Why this matters</div></div>
-        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">This app turns live delivery-route disruption signals into a practical grocery inventory decision.</div>
-      </div>
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">What makes it useful</div></div>
-        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">It compares the current plan with the recommended plan instead of only showing a risk score.</div>
-      </div>
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">Why trust it carefully</div></div>
-        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">It shows what live sources are active and clearly separates current conditions from hypothetical tests.</div>
-      </div>
-    </div>
-
-<!-- CURRENT READOUT (executive summary) -->
-    <div class="readout-bar">
-      <div class="readout-title">Current Readout</div>
-      <span id="execSummary">Connecting to live data feed…</span>
-    </div>
-
-    <!-- HOW TO READ THIS -->
-      <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:none;color:var(--text);padding:7px 18px 0;">How to read this</div>
-    <div class="how-to-bar">
-      <div class="how-to-item">
-        <div class="how-to-dot"></div>
-        <span><strong>Disruption pressure</strong> shows current disruption pressure from live signals.</span>
-      </div>
-      <div class="how-to-item">
-        <div class="how-to-dot"></div>
-        <span><strong>Chance of running out</strong> estimates the chance the selected coverage policy fails.</span>
-      </div>
-      <div class="how-to-item">
-        <div class="how-to-dot"></div>
-        <span><strong>Days of stock you need</strong> shows the minimum days of inventory needed to meet the service target.</span>
-      </div>
-    </div>
-
-    <!-- SCROLLABLE CONTENT -->
-    <div class="content">
-
-      <!-- Methodology note -->
-      <div class="method-note">
-        <strong>Note:</strong> Live data sources do not directly measure grocery stockouts. They measure disruption signals such as weather and port conditions. The model uses those signals to estimate inventory risk on the Savannah to Atlanta replenishment lane.
-      </div>
-
-      <!-- ABOVE FOLD: Ticker (left, wide) + Drivers/Policy (right, stacked) -->
-      <div class="above-fold">
-
-        <!-- Ticker -->
-        <div class="ticker-panel">
-          <div class="panel-hdr">
-            <div class="panel-title">What changed?</div>
-            <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
-              <button id="tickerViewExec" class="ticker-view-btn active" onclick="setTickerView('exec')" title="Show policy, risk, and mode events only">Executive</button>
-              
-              <button id="tickerViewTech" class="ticker-view-btn"         onclick="setTickerView('tech')" title="Show all diagnostic entries">Technical Log</button>
-            </div>
-            <div class="panel-badge" id="tickerCount">0 entries</div>
-          </div>
-          <div class="ticker-feed" id="tickerFeed">
-            <div class="tick">
-              <span class="tick-ts">—</span>
-              <span class="tick-tag SOURCE">SOURCE</span>
-              <span class="tick-msg">Waiting for first live fetch…</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right column: Drivers + Policy Ideas -->
-        <div class="right-col">
-
-          <!-- Risk Drivers -->
-          <div class="card">
-            <div class="panel-hdr">
-              <div class="panel-title">Risk Drivers</div>
-              <div class="panel-badge" id="driverSourceBadge">—</div>
-            </div>
-            <div class="card-body">
-              <div class="driver-row">
-                <div class="driver-label">National Weather Service alerts</div>
-                <div class="driver-track"><div class="driver-fill" id="df-nws" style="width:0%;background:var(--ok)"></div></div>
-                <div class="driver-val" id="dv-nws">—</div>
-              </div>
-              <div class="driver-row">
-                <div class="driver-label">Weather Score</div>
-                <div class="driver-track"><div class="driver-fill" id="df-weather" style="width:0%;background:var(--primary)"></div></div>
-                <div class="driver-val" id="dv-weather">—</div>
-              </div>
-              <div class="driver-row">
-                <div class="driver-label">Traffic Events</div>
-                <div class="driver-track"><div class="driver-fill" id="df-traffic" style="width:0%"></div></div>
-                <div class="driver-val driver-na" id="dv-traffic">n/a</div>
-              </div>
-              <div class="driver-row">
-                <div class="driver-label">Traffic Score</div>
-                <div class="driver-track"><div class="driver-fill" id="df-tscore" style="width:0%"></div></div>
-                <div class="driver-val driver-na" id="dv-tscore">n/a</div>
-              </div>
-              <div class="driver-row">
-                <div class="driver-label">Port Baseline</div>
-                <div class="driver-track"><div class="driver-fill" id="df-port" style="width:0%;background:var(--warn)"></div></div>
-                <div class="driver-val" id="dv-port">—</div>
-              </div>
-              <div class="driver-meta">
-                <div class="driver-meta-item">Sources: <span id="dv-sources">—</span></div>
-                <div class="driver-meta-item" id="dv-failures-wrap">Failures: <span id="dv-failures" style="color:var(--text-muted)">none</span></div>
-              </div>
-              <!-- Note shown only in what-if mode -->
-              <div class="source-layer-note">
-                Live source layer — these are the actual API signals. The what-if regime above is a hypothetical test; this data reflects current real conditions.
-              </div>
-            </div>
-          </div>
-
-          <!-- Policy Ideas -->
-          <div class="card">
-            <div class="panel-hdr">
-              <div class="panel-title">Policy Ideas</div>
-              <div class="panel-badge" id="policyScenarioBadge">baseline</div>
-            </div>
-            <div class="card-body">
-              <div class="policy-list" id="policyList">
-                <div class="policy-item"><div class="policy-dot"></div><span>Awaiting live data…</span></div>
-              </div>
-            </div>
-          </div>
-
-        </div><!-- /.right-col -->
-      </div><!-- /.above-fold -->
-
-      <!-- MID FOLD: Can I trust this estimate? + Recommendation -->
-      <div class="mid-fold">
-
-        <!-- Can I trust this estimate? -->
+    <main class="grid">
+      <section class="col">
         <div class="card">
-          <div class="panel-hdr">
-            <div class="panel-title">Can I trust this estimate?</div>
-            <div class="panel-badge">Confidence</div>
-          </div>
-          <div class="card-body">
-            <div class="coverage-list">
-              <div class="cov-item">
-                <div class="cov-dot active"></div>
-                <div class="cov-status active">Live source</div>
-                <div class="cov-name">National Weather Service weather feed</div>
+          <h3>Operator View <span class="pill" id="readoutPill">Current Readout</span></h3>
+          <div class="body">
+            <div class="hero-banner" id="heroBanner">
+              <div class="eyebrow" id="heroEyebrow">Current action</div>
+              <div class="headline" id="heroHeadline">Loading live risk...</div>
+              <div class="subtext" id="heroSubtext">Connecting to the live signal layer.</div>
+              <div class="hero-actions">
+                <span class="chip warn" id="heroChip">Loading</span>
+                <span class="chip" id="regimeChip">—</span>
               </div>
-              <div class="cov-item">
-                <div class="cov-dot off"></div>
-                <div class="cov-status off">Not included</div>
-                <div class="cov-name">Georgia 511 traffic feed</div>
+              <div class="mode-banner" id="whatIfBanner">
+                What-if mode is active. These outputs are hypothetical and do not represent the current live route risk.
               </div>
-              <div class="cov-item">
-                <div class="cov-dot warn"></div>
-                <div class="cov-status warn">Manual input</div>
-                <div class="cov-name">Port baseline (static estimate)</div>
+              <div class="whatif-regimes" id="whatIfRegimesInline">
+                <button class="mini-regime" data-regime="low">Low Stress</button>
+                <button class="mini-regime" data-regime="normal">Normal Stress</button>
+                <button class="mini-regime" data-regime="high">High Stress</button>
+                <button class="mini-regime" data-regime="extreme">Extreme Stress</button>
               </div>
-              <div class="cov-item">
-                <div class="cov-dot off"></div>
-                <div class="cov-status off">Not included</div>
-                <div class="cov-name">Real inventory levels</div>
+            </div>
+
+            <div class="kpis" style="margin-top:12px;">
+              <div class="kpi">
+                <div class="label">Chance of running out</div>
+                <div class="value" id="stockoutPct">—</div>
+                <div class="help">Estimated stockout probability for the selected plan</div>
               </div>
-              <div class="cov-item">
-                <div class="cov-dot off"></div>
-                <div class="cov-status off">Not included</div>
-                <div class="cov-name">Truck GPS / estimated arrival time feed</div>
+              <div class="kpi">
+                <div class="label">Days of stock you need</div>
+                <div class="value" id="recommendedDaysBig">—</div>
+                <div class="help" id="recommendedHelp">Model recommendation under current conditions</div>
               </div>
-              <div class="cov-item">
-                <div class="cov-dot future"></div>
-                <div class="cov-status future">Not included</div>
-                <div class="cov-name">Historical disruption log</div>
+              <div class="kpi">
+                <div class="label">Stress score</div>
+                <div class="value" id="stressScoreBig">—</div>
+                <div class="help">Composite route stress from live signals and baseline</div>
               </div>
-              <div class="cov-item">
-                <div class="cov-dot future"></div>
-                <div class="cov-status future">Not included</div>
-                <div class="cov-name">Demand distribution fitting</div>
+              <div class="kpi">
+                <div class="label">Current regime</div>
+                <div class="value" id="regimeBig">—</div>
+                <div class="help">Live mode is API-controlled; What-if lets you test manual stress levels</div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Policy Recommendation -->
-        <div class="rec-card" id="recPanel">
-          <div class="rec-card-body">
-            <div class="rec-top">
+        <div class="card">
+          <h3>Decision Summary</h3>
+          <div class="body">
+            <ol class="decision-list" id="decisionSummaryList"></ol>
+            <div class="summary-cost" id="decisionSummaryCost"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>What Changed? <span class="pill" id="feedPill">Executive</span></h3>
+          <div class="body">
+            <div class="feed-head">
+              <div class="muted">Executive-readable narrative by default</div>
+              <div class="toggle" id="tickerToggle">
+                <button class="active" data-view="exec">Executive</button>
+                <button data-view="tech">Technical Log</button>
+              </div>
+            </div>
+            <div class="feed" id="whatChangedFeed"></div>
+          </div>
+        </div>
+
+        <details class="about">
+          <summary>About this dashboard</summary>
+          <div class="about-body">
+            <div class="about-section">
+              <h4>What this app does</h4>
+              <p>This dashboard converts live disruption signals into a policy recommendation for days of cover on the Savannah to Atlanta replenishment lane.</p>
+            </div>
+            <div class="about-section">
+              <h4>How to use this</h4>
+              <ul>
+                <li>Use <b>Live Signal</b> to see the current API-driven readout.</li>
+                <li>Use <b>What-if Test</b> to test hypothetical stress conditions without changing live risk.</li>
+                <li>Compare your selected plan against the 2% target and the recommended days of cover.</li>
+              </ul>
+            </div>
+            <div class="about-section">
+              <h4>Why this matters</h4>
+              <p>Small policy changes can sharply reduce stockout risk during disruption. The dashboard is designed to support quick operator decisions without requiring model fluency.</p>
+            </div>
+            <div class="about-section">
+              <h4>Assumptions and limits</h4>
+              <p>This is a model-based estimate, not observed real stockout data. It does not directly ingest real inventory position, truck GPS/ETA feeds, or historical stockout logs.</p>
+            </div>
+            <div class="about-section">
+              <h4>Model logic</h4>
+              <p>The endpoint combines National Weather Service alerts, Georgia 511 traffic events when active, and a baseline port factor into a stress score. The frontend maps that stress regime to policy curves and target checks.</p>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <section class="col">
+        <div class="card">
+          <h3>Policy Curve <span class="pill" id="chartModePill">Live</span></h3>
+          <div class="body">
+            <div class="chart-header">
               <div>
-                <div class="rec-eyebrow">Policy Recommendation</div>
-                <div class="rec-main">
-                  <span class="rec-num" id="recNum">—</span>
-                  <span class="rec-unit">days of cover</span>
-                  <span class="rec-ci" id="recCI"></span>
+                <div style="font-size:16px;font-weight:800;">How much coverage is enough?</div>
+                <div class="muted" style="margin-top:4px;">Selected point, recommendation, and 2% target shown together.</div>
+              </div>
+              <div class="meta">
+                <div id="chartCurrentLabel">Current: 3 days selected</div>
+                <div id="chartRecommendedLabel">Recommended: —</div>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="riskChart"></canvas>
+            </div>
+            <div class="chart-note" id="chartCallout">Loading chart...</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Current Readout</h3>
+          <div class="body mini-grid">
+            <div class="subcard">
+              <div class="title">
+                <b>Selected plan</b>
+                <span class="chip warn" id="selectedPlanChip">Loading</span>
+              </div>
+              <div class="big" id="selectedDaysBig">3d</div>
+              <p id="selectedPlanText">Loading current plan assessment.</p>
+            </div>
+            <div class="subcard">
+              <div class="title">
+                <b>Recommendation</b>
+                <span class="chip" id="recommendationChip">Model output</span>
+              </div>
+              <div class="big" id="recommendationValue">—</div>
+              <p id="recommendationText">Loading recommendation.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Policy Recommendation</h3>
+          <div class="body">
+            <div class="title" style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+              <div>
+                <div class="muted" style="font-size:12px;text-transform:uppercase;letter-spacing:.7px;">Recommended minimum</div>
+                <div class="rec-value" id="policyRecDays">—</div>
+              </div>
+              <span class="chip warn" id="policyRecStatusChip">Loading</span>
+            </div>
+            <div class="rec-sub" id="policyRecSubtext">Loading recommendation details.</div>
+            <div class="callout" style="margin-top:12px;">
+              <div style="font-weight:800;color:var(--text);margin-bottom:4px;">Lowest Estimated Total Cost</div>
+              <div id="lowestCostDays" style="font-size:20px;font-weight:800;">—</div>
+              <div class="muted" id="lowestCostSubtext">Includes shortage-cost reduction.</div>
+              <div style="margin-top:6px;color:var(--text-dim);" id="lowestCostValue">Est. total local cost: —</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="col">
+        <div class="card">
+          <h3>Sidebar</h3>
+          <div class="body">
+            <div class="drawer-sec">
+              <h4>Mode</h4>
+              <div class="inner">
+                <div class="kv"><span>Current mode</span><b id="sidebarMode">Live Signal</b></div>
+              </div>
+            </div>
+
+            <div class="drawer-sec" style="margin-top:10px;">
+              <h4>Current Days of Cover</h4>
+              <div class="inner">
+                <div class="kv"><span>Selected plan</span><b id="sidebarDays">3 days</b></div>
+              </div>
+            </div>
+
+            <div class="drawer-sec" style="margin-top:10px;">
+              <h4>Target Stockout Probability</h4>
+              <div class="inner">
+                <div class="kv"><span>Service target</span><b>2%</b></div>
+              </div>
+            </div>
+
+            <div class="drawer-sec" style="margin-top:10px;">
+              <h4>Scenario</h4>
+              <div class="inner">
+                <div class="kv"><span>Current scenario</span><b id="sidebarScenario">Baseline</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="analystDrawerCard">
+          <button class="analyst-toggle" id="analystDrawerToggle" aria-expanded="false" aria-controls="analystDrawer">
+            <span>Analyst Controls</span>
+            <span id="analystChevron">+</span>
+          </button>
+          <div class="analyst-body" id="analystDrawer">
+            <div class="drawer">
+              <div class="drawer-sec">
+                <h4>Stress Regime</h4>
+                <div class="inner">
+                  <div id="apiLockBox" class="api-lock">
+                    <b>API:</b> <span id="apiLockText">Normal Stress</span>
+                  </div>
+                  <div class="regime-grid" id="regimeGrid" style="margin-top:10px;">
+                    <button class="regime-btn" data-regime="low" disabled>
+                      <strong>Low Stress</strong>
+                      <small>Minor disruption pressure</small>
+                    </button>
+                    <button class="regime-btn" data-regime="normal" disabled>
+                      <strong>Normal Stress</strong>
+                      <small>Moderate current pressure</small>
+                    </button>
+                    <button class="regime-btn" data-regime="high" disabled>
+                      <strong>High Stress</strong>
+                      <small>Elevated route instability</small>
+                    </button>
+                    <button class="regime-btn" data-regime="extreme" disabled>
+                      <strong>Extreme Stress</strong>
+                      <small>Severe disruption state</small>
+                    </button>
+                  </div>
                 </div>
               </div>
-              <div id="statusBadge" class="status-badge pass" data-testid="badge-status">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span id="statusTxt">Meets Target</span>
+
+              <div class="drawer-sec">
+                <h4>Signal Components</h4>
+                <div class="inner">
+                  <div class="kv"><span>Weather alerts</span><b id="weatherCount">—</b></div>
+                  <div class="kv"><span>Weather score</span><b id="weatherScore">—</b></div>
+                  <div class="kv"><span>Traffic events</span><b id="trafficCount">—</b></div>
+                  <div class="kv"><span>Traffic score</span><b id="trafficScore">—</b></div>
+                  <div class="kv"><span>Port baseline</span><b id="portScore">—</b></div>
+                </div>
+              </div>
+
+              <div class="drawer-sec">
+                <h4>Local Cost Frame</h4>
+                <div class="inner">
+                  <div class="kv"><span>Holding cost/day</span><b id="holdingCostLabel">$0.80</b></div>
+                  <div class="kv"><span>Shortage multiplier</span><b id="shortageCostLabel">18×</b></div>
+                </div>
+              </div>
+
+              <div class="drawer-sec">
+                <h4>Advanced Phase 1</h4>
+                <div class="inner footnote">
+                  Live mode reads <span class="mono">/api/latest?days={days}&scenario={scenario}</span>. What-if mode preserves the same policy logic while overriding the regime locally for scenario testing.
+                </div>
               </div>
             </div>
-
-            <div class="rec-meta">
-              <div>
-                <div class="rmi-label">Selected policy</div>
-                <div class="rmi-val" id="rmSel">— days</div>
-                <div class="rmi-ci" id="rmSelStkout">P(stockout) = —</div>
-              </div>
-              <div>
-                <div class="rmi-label">Minimum Required</div>
-                <div class="rmi-val" id="rmMin">— days</div>
-                <div class="rmi-ci" id="rmMinCI">≤ 2% target</div>
-              </div>
-              <div>
-                <div class="rmi-label">Lowest Estimated Total Cost</div>
-                <div class="rmi-val" id="rmOpt">— days</div>
-                <div class="rmi-ci" id="rmOptCI">Includes shortage-cost reduction. —</div>
-              </div>
-              <div>
-                <div class="rmi-label">Stock gap</div>
-                <div class="rmi-val" id="rmMargin">— days</div>
-                <div class="rmi-ci" id="rmMarginTxt">—</div>
-              </div>
-            </div>
-
-            <div class="rec-narrative" id="recNarrative" data-testid="text-narrative">Loading…</div><div style="margin-top:8px;font-size:10px;color:var(--text-muted);line-height:1.5;">If the plan fails target, the selected number of stock days is not enough to keep estimated running-out risk below the chosen limit. If the plan meets target, the selected number of stock days is enough under the current model estimate.</div>
           </div>
         </div>
 
-      </div><!-- /.mid-fold -->
+        <div class="card">
+          <h3>Can I trust this estimate?</h3>
+          <div class="body">
+            <div class="callout" id="trustCard">
+              <div style="font-weight:800;color:var(--text);margin-bottom:4px;" id="trustConfidence">Confidence: —</div>
+              <div id="trustReason">Checking source status.</div>
+            </div>
+            <div class="source-list" style="margin-top:10px;">
+              <div class="source-row">
+                <div class="left">
+                  <b>National Weather Service</b>
+                  <span id="weatherSourceText">Checking active weather feed.</span>
+                </div>
+                <div class="source-status live" id="weatherSourceStatus">LIVE SOURCE</div>
+              </div>
+              <div class="source-row">
+                <div class="left">
+                  <b>Georgia 511 traffic feed</b>
+                  <span id="trafficSourceText">Checking traffic source status.</span>
+                </div>
+                <div class="source-status off" id="trafficSourceStatus">CHECKING</div>
+              </div>
+              <div class="source-row">
+                <div class="left">
+                  <b>Baseline port factor</b>
+                  <span>Manual baseline remains included in the composite stress score.</span>
+                </div>
+                <div class="source-status warn">MANUAL</div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-  
+        <div class="card">
+          <h3>Policy Ideas</h3>
+          <div class="body">
+            <ul class="bullet-list" id="policyIdeas"></ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Source Summary</h3>
+          <div class="body">
+            <div class="kv"><span>Sources used</span><b id="sourcesUsed">—</b></div>
+            <div class="kv"><span>Source failures</span><b id="sourceFailures">None</b></div>
+            <div class="footnote" style="margin-top:10px;">
+              This dashboard is model-based. It does not directly measure real stockouts, inventory positions, or truck ETA performance.
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script>
+    'use strict';
+
+    const MODEL = {
+      low: {
+        baseline: [[0.082,0.068,0.096],[0.031,0.023,0.040],[0.012,0.008,0.016],[0.005,0.003,0.007],[0.002,0.001,0.003]],
+        safety:   [[0.061,0.049,0.073],[0.021,0.015,0.028],[0.008,0.005,0.011],[0.003,0.001,0.005],[0.001,0.0005,0.002]],
+        tail:     [[0.074,0.060,0.088],[0.026,0.019,0.034],[0.009,0.006,0.012],[0.0035,0.002,0.005],[0.0012,0.0006,0.0018]]
+      },
+      normal: {
+        baseline: [[0.145,0.121,0.169],[0.072,0.058,0.086],[0.038,0.029,0.047],[0.019,0.013,0.025],[0.009,0.006,0.012]],
+        safety:   [[0.108,0.089,0.127],[0.049,0.038,0.060],[0.023,0.016,0.030],[0.011,0.007,0.015],[0.005,0.003,0.007]],
+        tail:     [[0.130,0.108,0.152],[0.061,0.048,0.074],[0.030,0.022,0.038],[0.014,0.009,0.019],[0.006,0.004,0.008]]
+      },
+      high: {
+        baseline: [[0.263,0.224,0.302],[0.158,0.132,0.184],[0.094,0.076,0.112],[0.056,0.043,0.069],[0.034,0.025,0.043]],
+        safety:   [[0.197,0.165,0.229],[0.109,0.088,0.130],[0.058,0.044,0.072],[0.031,0.022,0.040],[0.017,0.011,0.023]],
+        tail:     [[0.235,0.198,0.272],[0.134,0.110,0.158],[0.074,0.058,0.090],[0.041,0.030,0.052],[0.023,0.016,0.030]]
+      },
+      extreme: {
+        baseline: [[0.421,0.368,0.474],[0.296,0.255,0.337],[0.198,0.167,0.229],[0.132,0.108,0.156],[0.087,0.070,0.104]],
+        safety:   [[0.315,0.270,0.360],[0.204,0.172,0.236],[0.125,0.102,0.148],[0.078,0.062,0.094],[0.049,0.038,0.060]],
+        tail:     [[0.378,0.328,0.428],[0.259,0.220,0.298],[0.163,0.135,0.191],[0.101,0.082,0.120],[0.062,0.049,0.075]]
+      }
+    };
+
+    const DAYS = [2,3,4,5,6];
+    const SERVICE_TARGET = 0.02;
+
+    const state = {
+      mode: 'live',
+      tickerView: 'exec',
+      selectedDays: 3,
+      scenario: 'baseline',
+      livePayload: null,
+      liveRegime: 'normal',
+      whatIfRegime: 'normal',
+      lastFetchAt: null,
+      refreshTimer: null,
+      chart: null
+    };
+
+    function $(id){ return document.getElementById(id); }
+    function pct(v){ return `${(v * 100).toFixed(1)}%`; }
+    function fmtScore(v){ return Number(v || 0).toFixed(3); }
+    function titleCase(s){ return String(s || '').replace(/\b\w/g, c => c.toUpperCase()); }
+    function regimeLabel(r){
+      return ({
+        low:'Low Stress',
+        normal:'Normal Stress',
+        high:'High Stress',
+        extreme:'Extreme Stress'
+      })[r] || 'Normal Stress';
+    }
+    function scenarioLabel(s){
+      return ({
+        baseline:'Baseline',
+        safety:'Safety stock',
+        tail:'Tail mitigation'
+      })[s] || 'Baseline';
+    }
+    function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+
+    function getCurve(regime, scenario){
+      return MODEL[regime]?.[scenario] || MODEL.normal.baseline;
+    }
+
+    function getPoint(regime, scenario, days){
+      const idx = DAYS.indexOf(days);
+      const curve = getCurve(regime, scenario);
+      return curve[idx] || curve[1];
+    }
+
+    function getMinFeasible(regime, scenario){
+      const curve = getCurve(regime, scenario);
+      for(let i=0;i<DAYS.length;i++){
+        if(curve[i][0] <= SERVICE_TARGET) return DAYS[i];
+      }
+      return null;
+    }
+
+    function getOptimalFeasible(regime, scenario){
+      const curve = getCurve(regime, scenario);
+      const results = DAYS.map((day, i) => {
+        const stockout = curve[i][0];
+        const expectedShortage = stockout * 8.0;
+        const totalCost = (day * 0.80) + (expectedShortage * 18);
+        return {
+          day,
+          stockout,
+          totalCost: Number(totalCost.toFixed(2)),
+          feasible: stockout <= SERVICE_TARGET
+        };
+      });
+      const feasible = results.filter(r => r.feasible);
+      if(feasible.length){
+        return feasible.reduce((best, cur) => cur.totalCost < best.totalCost ? cur : best, feasible[0]);
+      }
+      return results.reduce((best, cur) => cur.totalCost < best.totalCost ? cur : best, results[0]);
+    }
+
+    function getDerivedView(){
+      const payload = state.livePayload;
+      const sourceSummary = payload?.source_summary || {};
+      const regime = state.mode === 'live' ? (payload?.regime || 'normal') : state.whatIfRegime;
+      const selectedDays = state.selectedDays;
+      const scenario = state.scenario;
+      const point = state.mode === 'live' && payload
+        ? [payload.stockout_probability, payload.stockout_ci_low, payload.stockout_ci_high]
+        : getPoint(regime, scenario, selectedDays);
+
+      const stockout_probability = Number(point[0] ?? 0);
+      const stockout_ci_low = Number(point[1] ?? stockout_probability);
+      const stockout_ci_high = Number(point[2] ?? stockout_probability);
+      const minimum_feasible_days = state.mode === 'live' && payload
+        ? payload.minimum_feasible_days
+        : getMinFeasible(regime, scenario);
+      const recommended_days = state.mode === 'live' && payload
+        ? payload.recommended_days
+        : minimum_feasible_days;
+      const expected_shortage = Number((stockout_probability * 8.0).toFixed(3));
+      const policy_cost_index = Number(((selectedDays * 0.80) + (expected_shortage * 18)).toFixed(2));
+      const coverage_margin = minimum_feasible_days !== null ? selectedDays - minimum_feasible_days : null;
+      const meetsTarget = stockout_probability <= SERVICE_TARGET;
+      const optimalFeasible = getOptimalFeasible(regime, scenario);
+
+      let stress_score = 0;
+      if(state.mode === 'live' && payload){
+        stress_score = Number(payload.stress_score || 0);
+      } else {
+        stress_score = ({
+          low:0.12,
+          normal:0.45,
+          high:0.70,
+          extreme:0.88
+        })[regime] || 0.45;
+      }
+
+      const operational_takeaway = state.mode === 'live' && payload
+        ? payload.operational_takeaway
+        : buildTakeaway(regime, scenario, selectedDays, minimum_feasible_days, meetsTarget, coverage_margin);
+
+      return {
+        regime,
+        selectedDays,
+        scenario,
+        stockout_probability,
+        stockout_ci_low,
+        stockout_ci_high,
+        expected_shortage,
+        policy_cost_index,
+        minimum_feasible_days,
+        recommended_days,
+        coverage_margin,
+        meetsTarget,
+        stress_score,
+        operational_takeaway,
+        sourceSummary,
+        optimalFeasible
+      };
+    }
+
+    function buildTakeaway(regime, scenario, selectedDays, minFeasible, meetsTarget, coverageMargin) {
+      const sw = { low:'low', normal:'normal', high:'high', extreme:'extreme' }[regime];
+      const sc = { baseline:'baseline', safety:'safety stock', tail:'tail mitigation' }[scenario];
+      if (minFeasible === null) {
+        return `No policy within the 2 to 6 day range meets the 2% target under ${sw} stress and the ${sc} scenario. More than 6 days or stronger mitigation is required.`;
+      }
+      if (!meetsTarget) {
+        return `The current ${selectedDays}-day plan is below the recommended ${minFeasible}-day coverage level under ${sw} stress (${sc}). Increasing coverage would reduce stockout risk.`;
+      }
+      if (coverageMargin > 1) {
+        return `The current ${selectedDays}-day plan meets the 2% target with ${coverageMargin} day(s) of buffer under ${sw} stress (${sc}).`;
+      }
+      return `The current ${selectedDays}-day plan is at the minimum required level under ${sw} stress (${sc}). Any reduction will breach the 2% target.`;
+    }
+
+    async function fetchLatest(){
+      const qs = new URLSearchParams({
+        days: String(state.selectedDays),
+        scenario: state.scenario
+      });
+      const res = await fetch(`/api/latest?${qs.toString()}`, { cache:'no-store' });
+      if(!res.ok) throw new Error(`API ${res.status}`);
+      const data = await res.json();
+      state.livePayload = data;
+      state.liveRegime = data.regime || 'normal';
+      state.lastFetchAt = new Date();
+      if(state.mode === 'live'){
+        state.whatIfRegime = state.liveRegime;
+      }
+      renderAll();
+    }
+
+    function scheduleRefresh(){
+      clearInterval(state.refreshTimer);
+      state.refreshTimer = setInterval(() => {
+        fetchLatest().catch(err => {
+          console.error(err);
+          renderFeedFallback(`WARN Live refresh failed: ${err.message}`);
+        });
+      }, 60000);
+    }
+
+    function setMode(mode){
+      state.mode = mode;
+      document.querySelectorAll('#modeSwitch button').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+      });
+
+      if(mode === 'whatif'){
+        $('backToLiveBtn').style.display = '';
+        $('whatIfBanner').classList.add('show');
+        $('whatIfRegimesInline').classList.add('show');
+        setBadgeMode('whatif');
+        openAnalystDrawer(true);
+      } else {
+        $('backToLiveBtn').style.display = 'none';
+        $('whatIfBanner').classList.remove('show');
+        $('whatIfRegimesInline').classList.remove('show');
+        setBadgeMode('live');
+      }
+
+      updateRegimeControls();
+      if(mode === 'live'){
+        fetchLatest().catch(err => console.error(err));
+      } else {
+        renderAll();
+      }
+    }
+
+    function setBadgeMode(mode){
+      const badge = $('modeStatusBadge');
+      badge.classList.remove('live','whatif');
+      badge.classList.add(mode === 'live' ? 'live' : 'whatif');
+      $('modeStatusTitle').textContent = mode === 'live' ? 'LIVE' : 'WHAT-IF';
+      $('modeStatusSub').textContent = mode === 'live'
+        ? 'Current signal-controlled view'
+        : 'Hypothetical scenario';
+      $('chartModePill').textContent = mode === 'live' ? 'Live' : 'What-if';
+      $('readoutPill').textContent = mode === 'live' ? 'Current Readout' : 'What-if Readout';
+      $('sidebarMode').textContent = mode === 'live' ? 'Live Signal' : 'What-if Test';
+    }
+
+    function updateRegimeControls(){
+      const live = state.mode === 'live';
+      $('apiLockBox').style.display = live ? '' : 'none';
+      $('apiLockText').textContent = regimeLabel(state.liveRegime);
+
+      document.querySelectorAll('.regime-btn').forEach(btn => {
+        btn.disabled = live;
+        btn.classList.toggle('active', btn.dataset.regime === state.whatIfRegime);
+      });
+
+      document.querySelectorAll('.mini-regime').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.regime === state.whatIfRegime);
+      });
+    }
+
+    function openAnalystDrawer(open){
+      $('analystDrawer').classList.toggle('open', open);
+      $('analystDrawerToggle').setAttribute('aria-expanded', open ? 'true' : 'false');
+      $('analystChevron').textContent = open ? '–' : '+';
+    }
+
+    function trafficStateSummary(sourceSummary){
+      const trafficActive =
+        sourceSummary?.traffic_source_enabled === true &&
+        Array.isArray(sourceSummary?.sources_used) &&
+        sourceSummary.sources_used.includes("ga511_traffic") &&
+        !((sourceSummary.source_failures || []).some(f => String(f).includes("ga511")));
+
+      const trafficEnabled = sourceSummary?.traffic_source_enabled === true;
+      const trafficFailed = trafficEnabled && ((sourceSummary.source_failures || []).some(f => String(f).includes("ga511")));
+      return { trafficActive, trafficEnabled, trafficFailed };
+    }
+
+    function renderTrust(sourceSummary){
+      const { trafficActive, trafficEnabled, trafficFailed } = trafficStateSummary(sourceSummary);
+
+      $('weatherSourceText').textContent = 'Active weather alerts checked through the National Weather Service.';
+      $('weatherSourceStatus').textContent = 'LIVE SOURCE';
+      $('weatherSourceStatus').className = 'source-status live';
+
+      if(trafficActive){
+        $('trustConfidence').textContent = 'Confidence: High';
+        $('trustReason').textContent = 'Reason: Weather and Georgia 511 traffic feeds active.';
+        $('trafficSourceText').textContent = 'Georgia 511 traffic feed active; traffic-side disruptions are included in the live signal layer.';
+        $('trafficSourceStatus').textContent = 'LIVE SOURCE';
+        $('trafficSourceStatus').className = 'source-status live';
+      } else if(!trafficEnabled){
+        $('trustConfidence').textContent = 'Confidence: Medium';
+        $('trustReason').textContent = 'Reason: Weather feed active; Georgia 511 traffic feed not connected.';
+        $('trafficSourceText').textContent = 'Georgia 511 traffic feed is not connected in the current source configuration.';
+        $('trafficSourceStatus').textContent = 'NOT CONNECTED';
+        $('trafficSourceStatus').className = 'source-status off';
+      } else if(trafficFailed){
+        $('trustConfidence').textContent = 'Confidence: Medium';
+        $('trustReason').textContent = 'Reason: Weather feed active; Georgia 511 traffic feed temporarily unavailable.';
+        $('trafficSourceText').textContent = 'Georgia 511 traffic feed is enabled but temporarily unavailable.';
+        $('trafficSourceStatus').textContent = 'TEMPORARY ISSUE';
+        $('trafficSourceStatus').className = 'source-status warn';
+      } else {
+        $('trustConfidence').textContent = 'Confidence: Medium';
+        $('trustReason').textContent = 'Reason: Source state is still being resolved.';
+        $('trafficSourceText').textContent = 'Checking traffic source state.';
+        $('trafficSourceStatus').textContent = 'CHECKING';
+        $('trafficSourceStatus').className = 'source-status off';
+      }
+    }
+
+    function renderPolicyIdeas(view){
+      const s = view.sourceSummary || {};
+      const { trafficActive, trafficEnabled, trafficFailed } = trafficStateSummary(s);
+      const ideas = [];
+
+      if(view.minimum_feasible_days === null){
+        ideas.push('More than 6 days or stronger mitigation is required to meet the 2% target under this stress condition.');
+      } else if(!view.meetsTarget){
+        ideas.push(`Increase the selected plan from ${view.selectedDays} days toward ${view.recommended_days} days of cover.`);
+      } else {
+        ideas.push(`The selected plan meets the 2% target under the current ${scenarioLabel(view.scenario).toLowerCase()} case.`);
+      }
+
+      if(trafficActive){
+        ideas.push('Georgia 511 traffic feed active; traffic-side disruptions are included in the live signal layer.');
+      } else if(!trafficEnabled){
+        ideas.push('Georgia 511 traffic feed is not connected, so traffic-side disruptions are not included in the live signal layer.');
+      } else if(trafficFailed){
+        ideas.push('Georgia 511 traffic feed is temporarily unavailable; traffic-side disruptions may be underrepresented until the source recovers.');
+      }
+
+      ideas.push('Use What-if Test to see how the recommendation changes under low, normal, high, or extreme stress.');
+      $('policyIdeas').innerHTML = ideas.map(x => `<li>${x}</li>`).join('');
+    }
+
+    function renderSummary(view){
+      const selectedPlanFails = !view.meetsTarget;
+      const recDaysText = view.recommended_days === null ? '6d+' : `${view.recommended_days}d`;
+      const selectedDaysText = `${view.selectedDays}d`;
+      const marginText = view.coverage_margin === null
+        ? 'No feasible policy within 2–6 days.'
+        : view.coverage_margin < 0
+          ? `Selected plan is ${Math.abs(view.coverage_margin)} day(s) short.`
+          : view.coverage_margin > 0
+            ? `Selected plan has ${view.coverage_margin} day(s) of buffer.`
+            : 'Selected plan is exactly at the minimum feasible level.';
+
+      $('stockoutPct').textContent = pct(view.stockout_probability);
+      $('recommendedDaysBig').textContent = recDaysText;
+      $('stressScoreBig').textContent = fmtScore(view.stress_score);
+      $('regimeBig').textContent = regimeLabel(view.regime);
+      $('selectedDaysBig').textContent = selectedDaysText;
+
+      $('selectedPlanChip').className = `chip ${selectedPlanFails ? 'fail' : 'pass'}`;
+      $('selectedPlanChip').textContent = selectedPlanFails ? 'Selected plan fails' : 'Selected plan meets target';
+      $('selectedPlanText').textContent = selectedPlanFails
+        ? `Current ${selectedDaysText} plan is above the 2% target.`
+        : `Current ${selectedDaysText} plan stays at or below the 2% target.`;
+
+      $('recommendationValue').textContent = recDaysText;
+      $('recommendationText').textContent = view.minimum_feasible_days === null
+        ? 'No 2–6 day policy meets the target in this condition.'
+        : `Model recommends ${recDaysText} as the minimum plan that meets the 2% target.`;
+
+      $('policyRecDays').textContent = recDaysText;
+      $('policyRecStatusChip').className = `chip ${selectedPlanFails ? 'fail' : 'pass'}`;
+      $('policyRecStatusChip').textContent = selectedPlanFails ? 'Selected plan fails' : 'Selected plan meets target';
+      $('policyRecSubtext').textContent = view.minimum_feasible_days === null
+        ? 'No policy in the 2–6 day range meets the target. More than 6 days or stronger mitigation is required.'
+        : `Recommendation is based on the current regime and the selected ${scenarioLabel(view.scenario).toLowerCase()} scenario.`;
+
+      $('lowestCostDays').textContent = `${view.optimalFeasible.day} days under the local cost frame`;
+      $('lowestCostSubtext').textContent = 'Includes shortage-cost reduction.';
+      $('lowestCostValue').textContent = `Est. total local cost: $${view.optimalFeasible.totalCost.toFixed(2)} per unit-window`;
+
+      $('recommendedHelp').textContent = view.minimum_feasible_days === null
+        ? 'No feasible 2–6 day policy under this condition'
+        : `Minimum feasible policy under ${regimeLabel(view.regime).toLowerCase()}`;
+
+      const summary = [];
+      summary.push(`<li>Current ${selectedDaysText} plan ${view.meetsTarget ? 'meets' : 'fails'} the 2% target.</li>`);
+      summary.push(`<li>Model recommends ${recDaysText} of stock.</li>`);
+      summary.push(`<li>${marginText}</li>`);
+      summary.push(`<li>Lowest estimated total cost is ${view.optimalFeasible.day} days under the local cost frame.</li>`);
+      $('decisionSummaryList').innerHTML = summary.join('');
+      $('decisionSummaryCost').textContent = `Est. total local cost: $${view.optimalFeasible.totalCost.toFixed(2)} per unit-window. Includes shortage-cost reduction.`;
+    }
+
+    function renderHero(view){
+      const banner = $('heroBanner');
+      const passState = view.meetsTarget ? 'pass' : (view.minimum_feasible_days === null ? 'fail' : 'warn');
+      banner.classList.remove('pass','warn','fail','whatif');
+      banner.classList.add(passState);
+      if(state.mode === 'whatif') banner.classList.add('whatif');
+
+      $('heroEyebrow').textContent = state.mode === 'live' ? 'Current action' : 'What-if action';
+      $('heroHeadline').textContent = view.minimum_feasible_days === null
+        ? 'More than 6 days or stronger mitigation is required.'
+        : view.meetsTarget
+          ? `Current ${view.selectedDays}-day plan is acceptable.`
+          : `Increase toward ${view.recommended_days} days of stock.`;
+
+      $('heroSubtext').textContent = view.operational_takeaway;
+
+      $('heroChip').className = `chip ${view.meetsTarget ? 'pass' : 'fail'}`;
+      $('heroChip').textContent = view.meetsTarget ? 'Plan meets target' : 'Plan needs revision';
+
+      $('regimeChip').className = 'chip warn';
+      $('regimeChip').textContent = regimeLabel(view.regime);
+    }
+
+    function renderSidebar(view){
+      $('sidebarDays').textContent = `${view.selectedDays} days`;
+      $('sidebarScenario').textContent = scenarioLabel(view.scenario);
+
+      const s = view.sourceSummary || {};
+      $('weatherCount').textContent = Number(s.weather_alert_count ?? 0);
+      $('weatherScore').textContent = fmtScore(s.weather_score ?? 0);
+      $('trafficCount').textContent = Number(s.traffic_event_count ?? 0);
+      $('trafficScore').textContent = fmtScore(s.traffic_score ?? 0);
+      $('portScore').textContent = fmtScore(s.baseline_port_score ?? 0);
+
+      $('sourcesUsed').textContent = Array.isArray(s.sources_used) && s.sources_used.length
+        ? s.sources_used.join(', ')
+        : 'None';
+      $('sourceFailures').textContent = Array.isArray(s.source_failures) && s.source_failures.length
+        ? s.source_failures.join(', ')
+        : 'None';
+    }
+
+    function buildExecFeed(view){
+      const s = view.sourceSummary || {};
+      const { trafficActive, trafficEnabled, trafficFailed } = trafficStateSummary(s);
+      const items = [];
+      items.push({
+        tag:'Policy',
+        text:`Current ${view.selectedDays}-day plan ${view.meetsTarget ? 'meets' : 'fails'} the 2% target.`,
+        muted:`Estimated stockout probability is ${pct(view.stockout_probability)}.`
+      });
+      items.push({
+        tag:'Policy',
+        text:`Model recommends ${view.recommended_days === null ? 'more than 6 days' : `${view.recommended_days} days`} of stock.`,
+        muted:view.minimum_feasible_days === null
+          ? 'No 2–6 day policy meets the target in this condition.'
+          : 'This is the minimum policy that meets the service target.'
+      });
+      if(view.coverage_margin !== null){
+        items.push({
+          tag:'Gap',
+          text:view.coverage_margin < 0
+            ? `Selected plan is ${Math.abs(view.coverage_margin)} day${Math.abs(view.coverage_margin) === 1 ? '' : 's'} short.`
+            : view.coverage_margin > 0
+              ? `Selected plan has ${view.coverage_margin} day${view.coverage_margin === 1 ? '' : 's'} of buffer.`
+              : 'Selected plan is exactly at the minimum feasible level.',
+          muted:`Current regime is ${regimeLabel(view.regime)}.`
+        });
+      }
+      items.push({
+        tag:'Source',
+        text:'Weather feed active: National Weather Service checked.',
+        muted:`Active weather alerts counted: ${Number(s.weather_alert_count ?? 0)}.`
+      });
+
+      if(trafficActive){
+        items.push({
+          tag:'Source',
+          text:`Traffic feed active: Georgia 511 checked ${Number(s.traffic_event_count ?? 0)} relevant corridor events.`,
+          muted:'Traffic-side disruptions are included in the live signal layer.'
+        });
+      } else if(!trafficEnabled){
+        items.push({
+          tag:'Source',
+          text:'Traffic feed inactive: Georgia 511 is not connected.',
+          muted:'Traffic-side disruptions are not included in the live signal layer.'
+        });
+      } else if(trafficFailed){
+        items.push({
+          tag:'Source',
+          text:'Traffic feed issue: Georgia 511 is temporarily unavailable.',
+          muted:'The API stayed online, but current traffic disruption detail may be incomplete.'
+        });
+      }
+
+      items.push({
+        tag:'Risk',
+        text:`Current disruption level is ${regimeLabel(view.regime)}.`,
+        muted:`Composite stress score is ${fmtScore(view.stress_score)}.`
+      });
+      return items;
+    }
+
+    function buildTechFeed(view){
+      const s = view.sourceSummary || {};
+      const items = [
+        { tag:'DATA', text:`/api/latest?days=${view.selectedDays}&scenario=${view.scenario}`, muted:'Live contract preserved.' },
+        { tag:'RISK', text:`Composite stress ${fmtScore(view.stress_score)} → ${regimeLabel(view.regime)}`, muted:'Mode-controlled regime.' },
+        { tag:'POLICY', text:`Selected ${view.selectedDays}d | Recommended ${view.recommended_days === null ? '6d+' : `${view.recommended_days}d`}`, muted:`P(stockout)=${view.stockout_probability.toFixed(4)}` },
+        { tag:'SOURCE', text:`NWS alerts=${Number(s.weather_alert_count ?? 0)} | weather=${fmtScore(s.weather_score ?? 0)}`, muted:'National Weather Service active.' },
+        { tag:'SOURCE', text:`Traffic events=${Number(s.traffic_event_count ?? 0)} | traffic=${fmtScore(s.traffic_score ?? 0)}`, muted:`Georgia 511 enabled=${String(!!s.traffic_source_enabled)}` },
+        { tag:'MODE', text: state.mode === 'live' ? 'Live mode; API controls regime.' : `What-if mode; manual regime=${regimeLabel(view.regime)}`, muted:'Live source layer remains visible.' }
+      ];
+      if(Array.isArray(s.source_failures) && s.source_failures.length){
+        s.source_failures.forEach(f => items.push({
+          tag:'WARN',
+          text:`Source failure: ${String(f)}`,
+          muted:'Reported by source_summary.source_failures.'
+        }));
+      }
+      return items;
+    }
+
+    function renderFeedFallback(msg){
+      const el = $('whatChangedFeed');
+      el.innerHTML = `<div class="feed-item"><span class="tag">WARN</span><p>${msg}</p></div>`;
+    }
+
+    function renderFeed(view){
+      const _tickerView = state.tickerView;
+      const items = _tickerView === 'exec' ? buildExecFeed(view) : buildTechFeed(view);
+      $('feedPill').textContent = _tickerView === 'exec' ? 'Executive' : 'Technical Log';
+      $('whatChangedFeed').innerHTML = items.map(item => `
+        <div class="feed-item">
+          <span class="tag">${item.tag}</span>
+          <p>${item.text}</p>
+          ${item.muted ? `<div class="muted">${item.muted}</div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    const targetLinePlugin = {
+      id:'targetLinePlugin',
+      afterDraw(chart){
+        const yScale = chart.scales.y;
+        const xScale = chart.scales.x;
+        if(!yScale || !xScale) return;
+        const y = yScale.getPixelForValue(0.02);
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(155,124,255,.9)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([6,5]);
+        ctx.beginPath();
+        ctx.moveTo(xScale.left, y);
+        ctx.lineTo(xScale

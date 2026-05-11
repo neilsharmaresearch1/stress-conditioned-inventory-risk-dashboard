@@ -30,7 +30,7 @@
       --ok:          #0F9D7A;
       --ok-bg:       #ECFBF6;
       --warn:        #8B5CF6;
-      --warn-bg:     #FCEEF2;
+      --warn-bg:     #F3EEFE;
       --err:         #C81E5B;
       --err-bg:      #FDEEF3;
       --low-c:       #3fa8b8;
@@ -43,7 +43,6 @@
       --ch-tgt:      #7B61FF;
       --ch-ci:       rgba(58,134,255,.12);
       --ch-ci-line:  rgba(58,134,255,.25);
-      /* What-if mode accent */
       --wi-accent:   #7C3AED;
       --wi-bg:       rgba(123,97,255,.10);
       --wi-border:   rgba(123,97,255,.24);
@@ -57,7 +56,6 @@
       --tr:    160ms cubic-bezier(.16,1,.3,1);
     }
 
-    /* ─── BASE ───────────────────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
     html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility }
     body { font-family: var(--font); font-size: var(--sm); color: var(--text);
@@ -82,8 +80,8 @@
     /* ─── PAGE SHELL ─────────────────────────────────────────────────────── */
     .shell {
       display: grid;
-      grid-template-columns: 218px 1fr;
-      grid-template-rows: 44px 1fr;
+      grid-template-columns: 240px 1fr;
+      grid-template-rows: 48px 1fr;
       height: 100dvh;
       overflow: hidden;
     }
@@ -91,48 +89,48 @@
     /* ─── TOPBAR ─────────────────────────────────────────────────────────── */
     .topbar {
       grid-column: 1 / -1;
-      display: flex; align-items: center; gap: 10px; padding: 0 16px;
+      display: flex; align-items: center; gap: 12px; padding: 0 18px;
       background: var(--surface); border-bottom: 1px solid var(--border); z-index: 30;
     }
-    .tl { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0 }
-    .tl-title { font-size: 12px; font-weight: 700; color: var(--text); letter-spacing: -.01em; white-space: nowrap }
-    .tl-sub   { font-size: 10px; color: var(--text-faint); white-space: nowrap }
+    .tl { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0 }
+    .tl-title { font-size: 13px; font-weight: 700; color: var(--text); letter-spacing: -.01em; white-space: nowrap }
+    .tl-sub   { font-size: 11px; color: var(--text-faint); font-weight: 600; margin-top: 2px }
     .ta { display: flex; align-items: center; gap: 8px; flex-shrink: 0 }
 
     .live-badge {
-      display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px;
-      border-radius: var(--rm); font-size: 10px; font-weight: 700; letter-spacing: .05em;
+      display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+      border-radius: var(--rm); font-size: 10px; font-weight: 700; letter-spacing: .06em;
       border: 1px solid var(--border); background: rgba(245,248,255,.95); color: var(--text-faint);
       transition: all var(--tr);
     }
-    .live-badge[data-status="live"]  { background: rgba(47,128,237,.10); color: var(--primary); border-color: rgba(47,128,237,.22) }
-    .live-badge[data-status="stale"] { background: var(--warn-bg); color: var(--warn); border-color: #3a2408 }
-    .live-badge[data-status="error"] { background: var(--err-bg); color: var(--err); border-color: #3a1010 }
+    .live-badge[data-status="live"]  { background: var(--primary-bg); color: var(--primary); border-color: rgba(37,99,235,.22) }
+    .live-badge[data-status="stale"] { background: var(--warn-bg); color: var(--warn); border-color: rgba(139,92,246,.24) }
+    .live-badge[data-status="error"] { background: var(--err-bg); color: var(--err); border-color: rgba(200,30,91,.22) }
     .live-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0 }
     [data-status="live"] .live-dot { animation: blink 2.4s ease-in-out infinite }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
 
     .proto-badge {
-      display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px;
-      border-radius: 3px; background: #2a1a06; color: var(--warn); font-size: 9px;
-      font-weight: 700; letter-spacing: .07em; text-transform: uppercase; border: 1px solid #3a2408;
+      display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px;
+      border-radius: var(--rm); background: var(--surface-2); color: var(--text-muted); font-size: 9px;
+      font-weight: 700; letter-spacing: .08em; text-transform: uppercase; border: 1px solid var(--border);
     }
 
-    /* ─── MODE BANNER (shown in what-if) ────────────────────────────────── */
+    /* ─── MODE BANNER ───────────────────────────────────────────────────── */
     .mode-banner {
       display: none;
-      background: #1a1228; border-bottom: 1px solid var(--wi-border);
-      padding: 5px 18px; align-items: center; gap: 10px; flex-shrink: 0;
+      background: var(--wi-bg); border-bottom: 1px solid var(--wi-border);
+      padding: 7px 18px; align-items: center; gap: 10px; flex-shrink: 0;
     }
     .mode-banner.visible { display: flex }
-    .mode-banner-icon { font-size: 11px; color: var(--wi-accent) }
-    .mode-banner-txt  { font-size: 11px; color: #7C4DDF; flex: 1 }
+    .mode-banner-icon { font-size: 12px; color: var(--wi-accent) }
+    .mode-banner-txt  { font-size: 11px; color: var(--wi-accent); flex: 1 }
     .mode-banner-back {
       font-size: 10px; font-weight: 700; color: var(--wi-accent); cursor: pointer;
-      padding: 3px 9px; border: 1px solid var(--wi-border); border-radius: var(--rm);
-      background: var(--wi-bg); transition: all var(--tr); flex-shrink: 0;
+      padding: 4px 10px; border: 1px solid var(--wi-border); border-radius: var(--rm);
+      background: rgba(255,255,255,.6); transition: all var(--tr); flex-shrink: 0;
     }
-    .mode-banner-back:hover { background: rgba(155,111,212,.2) }
+    .mode-banner-back:hover { background: rgba(255,255,255,.9) }
 
     /* ─── SIDEBAR ────────────────────────────────────────────────────────── */
     .sidebar {
@@ -141,114 +139,113 @@
       border-right: 1px solid var(--border);
       overflow-y: auto;
       overscroll-behavior: contain;
-      padding: 12px 0;
+      padding: 14px 0;
     }
-    .sb-sect  { padding: 0 12px; margin-bottom: 14px }
+    .sb-sect  { padding: 0 14px; margin-bottom: 16px }
     .sb-label { font-size: 9px; font-weight: 700; letter-spacing: .10em; text-transform: uppercase;
-                color: var(--text-faint); margin-bottom: 8px }
-    .ctrl-group  { margin-bottom: 10px }
-    .ctrl-label  { display: block; font-size: 11px; font-weight: 500; color: var(--text-muted); margin-bottom: 4px }
-    .sb-divider  { height: 1px; background: var(--border); margin: 2px 12px 12px }
+                color: var(--text-faint); margin-bottom: 10px }
+    .ctrl-group  { margin-bottom: 12px }
+    .ctrl-label  { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 5px }
+    .sb-divider  { height: 1px; background: var(--border); margin: 2px 14px 14px }
     details > summary::-webkit-details-marker { display:none }
     details[open] > summary span[aria-hidden="true"] { transform: rotate(180deg); }
 
     /* Mode toggle */
     .mode-toggle-wrap {
-      display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px;
+      display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px;
     }
     .mode-toggle-lbl {
       font-size: 9px; font-weight: 700; letter-spacing: .10em; text-transform: uppercase;
       color: var(--text-faint);
     }
     .mode-toggle {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 2px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
     }
     .mode-btn {
-      padding: 6px 4px; border-radius: var(--r); border: 1px solid rgba(215,224,240,.95);
-      background: rgba(255,255,255,.55); color: var(--text-faint); font-size: 10px; font-weight: 700;
+      padding: 7px 4px; border-radius: var(--r); border: 1px solid var(--border);
+      background: rgba(255,255,255,.7); color: var(--text-faint); font-size: 10px; font-weight: 700;
       text-align: center; cursor: pointer; transition: all var(--tr); letter-spacing: .02em;
     }
-    .mode-btn:hover:not(.active) { background: rgba(245,248,255,.95); color: var(--text); border-color: #3a3a3a }
-    .mode-btn.live-mode.active  { background: rgba(47,128,237,.10); color: var(--primary); border-color: rgba(47,128,237,.22) }
-    .mode-btn.wi-mode.active    { background: #1a1228; color: var(--wi-accent); border-color: var(--wi-border) }
+    .mode-btn:hover:not(.active) { background: #fff; color: var(--text); }
+    .mode-btn.live-mode.active  { background: var(--primary-bg); color: var(--primary); border-color: rgba(37,99,235,.28) }
+    .mode-btn.wi-mode.active    { background: var(--wi-bg); color: var(--wi-accent); border-color: var(--wi-border) }
 
-    /* Regime control state — disabled in live mode */
+    /* Regime control */
     .regime-ctrl-wrap { position: relative }
     .regime-lock-overlay {
       display: none;
       position: absolute; inset: 0; z-index: 10; border-radius: var(--r);
-      background: rgba(17,17,17,.65); backdrop-filter: blur(1px);
+      background: rgba(247,248,252,.85); backdrop-filter: blur(2px);
       align-items: center; justify-content: center;
       font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
       color: var(--primary); pointer-events: all; cursor: default;
+      border: 1px dashed rgba(37,99,235,.3);
     }
     .regime-lock-overlay.visible { display: flex }
     .regime-ctrl-label { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 8px }
     .regime-ctrl-label .ctrl-label { margin-bottom: 0 }
     .regime-mode-tag {
       font-size: 8px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-      padding: 1px 5px; border-radius: 2px; flex-shrink: 0;
+      padding: 2px 6px; border-radius: 3px; flex-shrink: 0;
     }
-    .regime-mode-tag.api   { background: rgba(63,168,184,.12); color: var(--primary); border: 1px solid rgba(63,168,184,.2) }
+    .regime-mode-tag.api   { background: var(--primary-bg); color: var(--primary); border: 1px solid rgba(37,99,235,.22) }
     .regime-mode-tag.manual{ background: var(--wi-bg); color: var(--wi-accent); border: 1px solid var(--wi-border) }
 
     /* Segmented */
-    .seg { display: grid; gap: 2px }
+    .seg { display: grid; gap: 3px }
     .seg.c2 { grid-template-columns: 1fr 1fr }
     .seg.c3 { grid-template-columns: 1fr 1fr 1fr }
     .seg-btn {
-      padding: 5px 4px; border-radius: var(--r); border: 1px solid rgba(215,224,240,.95);
-      background: rgba(255,255,255,.55); color: var(--text-muted); font-size: 11px; font-weight: 600;
+      padding: 6px 4px; border-radius: var(--r); border: 1px solid var(--border);
+      background: rgba(255,255,255,.7); color: var(--text-muted); font-size: 10px; font-weight: 600;
       text-align: center; cursor: pointer; transition: all var(--tr); white-space: nowrap;
     }
-    .seg-btn:hover:not(.active) { background: rgba(245,248,255,.95); color: var(--text); border-color: #3a3a3a }
-    .seg-btn.active { color: #fff; border-color: transparent; box-shadow: 0 8px 18px rgba(58,134,255,.14); }
-    .seg-btn.r-low.active   { background: #1e4d3a; color: #4cbe8a; border-color: #1e4d3a }
-    .seg-btn.r-norm.active  { background: #1a3540; color: var(--primary); border-color: #1a3540 }
-    .seg-btn.r-hi.active    { background: #FCEEF2; color: var(--warn); border-color: #3a2208 }
-    .seg-btn.r-ex.active    { background: #3a1010; color: #cf4e4e; border-color: #3a1010 }
-    .seg-btn.sc-bl.active   { background: #1a3540; color: var(--primary); border-color: #1a3540 }
-    .seg-btn.sc-ss.active   { background: #1a2e1a; color: #4caf50; border-color: #1a2e1a }
-    .seg-btn.sc-tm.active   { background: #281a40; color: #9b6fd4; border-color: #281a40 }
+    .seg-btn:hover:not(.active):not(:disabled) { background: #fff; color: var(--text); }
+    .seg-btn.active { background: var(--primary-bg); color: var(--primary); border-color: rgba(37,99,235,.28); font-weight: 700 }
+    .seg-btn:disabled { opacity: .55; cursor: not-allowed }
 
     /* Select */
     .ctrl-sel {
-      width: 100%; padding: 5px 26px 5px 8px; border-radius: var(--r);
+      width: 100%; padding: 6px 26px 6px 9px; border-radius: var(--r);
       border: 1px solid var(--border);
-      background: rgba(245,248,255,.95) url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23666' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 8px center;
+      background: rgba(255,255,255,.9) url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%233F5A78' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 9px center;
       color: var(--text); font-size: 11px; font-weight: 500; appearance: none; cursor: pointer;
     }
-    .ctrl-sel:focus { outline: 1px solid var(--primary); outline-offset: 1px }
+    .ctrl-sel:focus { outline: 2px solid var(--primary); outline-offset: 0 }
 
     /* Slider */
-    .sl-row { display: flex; align-items: center; gap: 8px }
-    .sl-val { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--primary); min-width: 28px; text-align: right }
-    input[type=range] { -webkit-appearance: none; flex: 1; height: 3px; border-radius: 2px; background: #2a2a2a; cursor: pointer; outline: none }
+    .sl-row { display: flex; align-items: center; gap: 10px }
+    .sl-val { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--primary); min-width: 32px; text-align: right }
+    input[type=range] {
+      -webkit-appearance: none; flex: 1; height: 3px; border-radius: 2px;
+      background: var(--border); cursor: pointer; outline: none;
+    }
     input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 13px; height: 13px; border-radius: 50%;
-      background: var(--primary); border: 2px solid #111; box-shadow: 0 0 0 1px var(--primary); transition: box-shadow var(--tr);
+      -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+      background: var(--primary); border: 2px solid #fff;
+      box-shadow: 0 0 0 1px var(--primary), 0 2px 4px rgba(37,99,235,.3);
+      transition: box-shadow var(--tr);
     }
     input[type=range]::-webkit-slider-thumb:hover { box-shadow: 0 0 0 4px var(--primary-dim) }
 
     /* Signal bars */
     .stress-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px }
-    .stress-bar-label { font-size: 9px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--text-faint); width: 78px; flex-shrink: 0 }
-    .stress-bar-track { flex: 1; height: 3px; border-radius: 2px; background: rgba(232,238,248,.85); overflow: hidden }
+    .stress-bar-label { font-size: 9px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--text-faint); width: 90px; flex-shrink: 0 }
+    .stress-bar-track { flex: 1; height: 3px; border-radius: 2px; background: var(--border); overflow: hidden }
     .stress-bar-fill  { height: 100%; border-radius: 2px; transition: width .4s var(--tr), background .4s }
-    .stress-bar-val   { font-family: var(--mono); font-size: 9px; color: var(--text-muted); min-width: 28px; text-align: right }
+    .stress-bar-val   { font-family: var(--mono); font-size: 9px; color: var(--text-muted); min-width: 32px; text-align: right }
 
     /* Cost inputs */
     .cost-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px }
-    .cost-input-wrap { display: flex; flex-direction: column; gap: 3px }
-    .cost-input-wrap label { font-size: 9px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-faint) }
+    .cost-input-wrap { display: flex; flex-direction: column; gap: 4px }
+    .cost-input-wrap label { font-size: 9px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--text-faint) }
     .cost-input {
       width: 100%; padding: 5px 8px; border: 1px solid var(--border); border-radius: var(--r);
-      background: rgba(245,248,255,.95); color: var(--text); font-family: var(--mono); font-size: 11px; font-weight: 600;
+      background: #fff; color: var(--text); font-family: var(--mono); font-size: 11px; font-weight: 600;
     }
-    .cost-input:focus { outline: 1px solid var(--primary); outline-offset: 1px }
+    .cost-input:focus { outline: 2px solid var(--primary); outline-offset: 0 }
 
-    /* Helper note */
-    .ctrl-note { font-size: 9px; color: var(--text-faint); line-height: 1.5; margin-top: 4px }
+    .ctrl-note { font-size: 10px; color: var(--text-faint); line-height: 1.45; margin-top: 5px }
 
     /* ─── MAIN SCROLL AREA ───────────────────────────────────────────────── */
     .main {
@@ -260,41 +257,85 @@
       flex-direction: column;
     }
 
+    /* ─── OPERATOR DECISION BANNER ───────────────────────────────────────── */
+    .op-banner {
+      background: #ECFBF6;
+      border-bottom: 1px solid #BEEFD2;
+      padding: 14px 20px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 18px;
+      align-items: center;
+      transition: background .25s, border-color .25s;
+    }
+    .op-pill {
+      font-size: 10px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+      padding: 4px 11px; border-radius: 999px;
+      background: var(--ok); color: #fff;
+      box-shadow: 0 6px 16px rgba(15,157,122,.22);
+    }
+    .op-title-wrap { min-width: 0; }
+    .op-title {
+      font-size: 1.2rem; font-weight: 700; color: var(--text);
+      letter-spacing: -.02em; line-height: 1.2;
+    }
+    .op-sub {
+      font-size: 12px; color: var(--text-muted); margin-top: 4px;
+      line-height: 1.5; font-weight: 500;
+    }
+    .op-cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(150px, 1fr));
+      gap: 10px;
+      min-width: 480px;
+    }
+    .op-card {
+      padding: 9px 11px;
+      background: rgba(255,255,255,.92);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .op-card-lbl {
+      font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+      color: var(--text-faint);
+    }
+    .op-card-val {
+      font-family: var(--mono); font-size: 13px; font-weight: 700;
+      color: var(--text); margin-top: 4px; line-height: 1.25;
+    }
+
     /* ─── HERO BAR ───────────────────────────────────────────────────────── */
     .hero {
       background: #FFFFFF;
       border-bottom: 1px solid var(--border);
-      padding: 12px 18px;
+      padding: 14px 20px;
       display: flex;
       align-items: center;
       gap: 0;
       flex-shrink: 0;
       position: relative;
-      transition: border-color var(--tr);
     }
-    /* What-if hero accent */
     body.what-if-mode .hero { border-bottom-color: var(--wi-border) }
 
-    /* Mode label inside hero */
     .hero-mode-label {
-      position: absolute; top: 8px; right: 18px;
+      position: absolute; top: 8px; right: 20px;
       font-size: 9px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
       padding: 2px 8px; border-radius: 3px;
     }
-    .hero-mode-label.live-lbl { background: rgba(73,182,214,.14); color: var(--primary); border: 1px solid rgba(73,182,214,.28) }
-    .hero-mode-label.wi-lbl   { background: #1a1228; color: var(--wi-accent); border: 1px solid var(--wi-border) }
+    .hero-mode-label.live-lbl { background: var(--primary-bg); color: var(--primary); border: 1px solid rgba(37,99,235,.22) }
+    .hero-mode-label.wi-lbl   { background: var(--wi-bg); color: var(--wi-accent); border: 1px solid var(--wi-border) }
 
-    /* Score block */
     .score-block {
       display: flex; flex-direction: column; justify-content: center;
-      padding-right: 20px;
+      padding-right: 22px;
       border-right: 1px solid var(--border);
-      margin-right: 20px;
+      margin-right: 22px;
       flex-shrink: 0;
+      min-width: 140px;
     }
     .score-eyebrow {
       font-size: 9px; font-weight: 700; letter-spacing: .10em; text-transform: uppercase;
-      color: var(--text-faint); margin-bottom: 1px;
+      color: var(--text-faint); margin-bottom: 3px;
     }
     .score-num {
       font-family: var(--mono); font-size: 2.4rem; font-weight: 700;
@@ -305,22 +346,22 @@
     .score-num.regime-high    { color: var(--ch-hi) }
     .score-num.regime-extreme { color: var(--ch-ex) }
     .score-label {
-      font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-      color: var(--text-muted); margin-top: 3px;
+      font-size: 10px; font-weight: 700; letter-spacing: .04em;
+      color: var(--text-muted); margin-top: 4px;
     }
     .gauge-track {
-      width: 100%; height: 3px; border-radius: 2px; margin-top: 5px;
+      width: 100%; height: 4px; border-radius: 2px; margin-top: 7px;
       background: linear-gradient(to right, var(--ch-low) 0%, var(--ch-norm) 33%, var(--ch-hi) 66%, var(--ch-ex) 100%);
       position: relative;
     }
     .gauge-thumb {
       position: absolute; top: 50%; transform: translate(-50%, -50%);
-      width: 9px; height: 9px; border-radius: 50%;
-      background: #fff; border: 2px solid #111; box-shadow: 0 0 0 2px currentColor;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #fff; border: 2px solid var(--text);
+      box-shadow: 0 0 0 2px currentColor;
       transition: left .5s cubic-bezier(.16,1,.3,1), color .3s;
     }
 
-    /* Hero KPI pills */
     .hero-kpis {
       display: flex;
       gap: 0;
@@ -329,344 +370,327 @@
     }
     .hkpi {
       flex: 1;
-      padding: 2px 16px;
+      padding: 2px 18px;
       border-right: 1px solid var(--border);
       min-width: 0;
     }
     .hkpi:last-child { border-right: none }
     .hkpi-lbl {
-      font-size: 9px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
-      color: var(--text-faint); margin-bottom: 2px; white-space: nowrap;
+      font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--text-faint); margin-bottom: 3px; white-space: nowrap;
     }
     .hkpi-val {
-      font-family: var(--mono); font-size: 1.1rem; font-weight: 700;
-      color: var(--text); letter-spacing: -.02em; line-height: 1.1; white-space: nowrap;
+      font-family: var(--mono); font-size: 1.15rem; font-weight: 700;
+      color: var(--text); letter-spacing: -.02em; line-height: 1.15; white-space: nowrap;
     }
     .hkpi-val.ok   { color: var(--ok) }
     .hkpi-val.warn { color: var(--warn) }
     .hkpi-val.err  { color: var(--err) }
     .hkpi-val.cyan { color: var(--primary) }
-    .hkpi-sub { font-size: 9px; color: var(--text-faint); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+    .hkpi-sub { font-size: 10px; color: var(--text-faint); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
 
-    /* Feed status pill at end of hero */
     .hero-status {
       flex-shrink: 0;
-      padding-left: 16px;
+      padding-left: 18px;
       border-left: 1px solid var(--border);
-      display: flex; flex-direction: column; justify-content: center; gap: 3px;
+      display: flex; flex-direction: column; justify-content: center; gap: 4px;
     }
-    .hero-status-row { display: flex; align-items: center; gap: 5px }
-    .hero-status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0 }
-    .hero-status-dot.live    { background: var(--primary) }
+    .hero-status-row { display: flex; align-items: center; gap: 6px }
+    .hero-status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0 }
+    .hero-status-dot.live    { background: var(--primary); box-shadow: 0 0 0 3px var(--primary-dim) }
     .hero-status-dot.stale   { background: var(--warn) }
     .hero-status-dot.error   { background: var(--err) }
     .hero-status-dot.loading { background: var(--text-faint) }
-    .hero-status-lbl { font-size: 10px; font-weight: 700; letter-spacing: .04em; color: var(--text-muted) }
-    .hero-status-ts  { font-family: var(--mono); font-size: 9px; color: var(--text-faint) }
+    .hero-status-lbl { font-size: 11px; font-weight: 700; color: var(--text-muted) }
+    .hero-status-ts  { font-family: var(--mono); font-size: 10px; color: var(--text-faint) }
 
-    /* ─── CURRENT READOUT PANEL ──────────────────────────────────────────── */
+    /* ─── CURRENT READOUT ────────────────────────────────────────────────── */
     .readout-bar {
-      background: rgba(255,255,255,.72);
+      background: #fff;
       border-bottom: 1px solid var(--divider);
-      padding: 8px 18px;
-      font-size: 11px; color: var(--text-muted); line-height: 1.5;
+      padding: 10px 20px;
+      font-size: 12px; color: var(--text-muted); line-height: 1.55;
       flex-shrink: 0;
     }
     .readout-bar strong { color: var(--text); font-weight: 600 }
     .readout-bar .readout-title {
       font-size: 9px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
-      color: var(--text-faint); margin-bottom: 3px;
+      color: var(--text-faint); margin-bottom: 4px;
     }
-
-    /* ─── HOW-TO PANEL ───────────────────────────────────────────────────── */
-    .how-to-bar {
-      background: linear-gradient(90deg, rgba(58,134,255,.08), rgba(123,97,255,.06));
-      border-bottom: 1px solid #D7E6FB;
-      padding: 7px 18px;
-      display: flex; align-items: center; gap: 20px; flex-shrink: 0; flex-wrap: wrap;
-    }
-    .how-to-item { display: flex; align-items: flex-start; gap: 6px; font-size: 10px; color: var(--text-faint) }
-    .how-to-dot  { width: 5px; height: 5px; border-radius: 50%; background: var(--primary); flex-shrink: 0; margin-top: 4px }
-    .how-to-item strong { color: var(--text-muted); font-weight: 600 }
 
     /* ─── CONTENT GRID ───────────────────────────────────────────────────── */
     .content {
       flex: 1;
-      padding: 14px 16px;
+      padding: 16px 18px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
     }
 
-    /* Methodology note */
     .method-note {
-      font-size: 10px; color: var(--text-faint); line-height: 1.5;
-      padding: 7px 12px; background: rgba(255,255,255,.72); border: 1px solid var(--border);
+      font-size: 11px; color: var(--text-faint); line-height: 1.55;
+      padding: 9px 13px; background: #fff; border: 1px solid var(--border);
       border-radius: var(--rm); flex-shrink: 0;
     }
     .method-note strong { color: var(--text-muted) }
 
-    /* ─── ABOVE FOLD ──────────────────────────────────────────────────────── */
-    .above-fold {
+    /* ─── CORE TWO-COLUMN: chart + decision ──────────────────────────────── */
+    .core-fold {
       display: grid;
-      grid-template-columns: 1fr 340px;
-      gap: 12px;
-    }
-
-    /* ── TICKER PANEL ─────────────────────────────────────────────────────── */
-    .ticker-panel {
-      background: rgba(255,255,255,.92);
-      border: 1px solid rgba(215,224,240,.9);
-      border-radius: 14px;
-      display: flex;
-      flex-direction: column;
-      min-height: 300px;
-      box-shadow: var(--sh);
-      transition: border-color var(--tr);
-    }
-    body.what-if-mode .ticker-panel { border-color: var(--wi-border) }
-
-    .panel-hdr {
-      display: flex; align-items: center; gap: 8px;
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-    .panel-title {
-      font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-      color: var(--text-faint); flex: 1;
-    }
-    .panel-badge {
-      font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-      padding: 2px 7px; border-radius: 3px;
-      border: 1px solid var(--border); background: rgba(245,248,255,.95); color: var(--text-faint);
-    }
-
-    /* Ticker view toggle buttons */
-    .ticker-view-btn {
-      font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
-      padding: 2px 7px; border-radius: 3px; border: 1px solid rgba(215,224,240,.95);
-      background: rgba(255,255,255,.55); color: var(--text-faint); cursor: pointer;
-      transition: all var(--tr);
-    }
-    .ticker-view-btn:hover { background: rgba(245,248,255,.95); color: var(--text-muted) }
-    .ticker-view-btn.active { background: var(--primary-bg); color: var(--primary); border-color: rgba(63,168,184,.3) }
-
-    .ticker-feed {
-      flex: 1;
-      overflow-y: auto;
-      overscroll-behavior: contain;
-      padding: 6px 0;
-    }
-    .ticker-feed::-webkit-scrollbar { width: 3px }
-    .ticker-feed::-webkit-scrollbar-track { background: transparent }
-    .ticker-feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px }
-
-    .tick {
-      display: flex; align-items: flex-start; gap: 7px;
-      padding: 5px 14px;
-      border-bottom: 1px solid var(--divider);
-      font-size: 11px; line-height: 1.45;
-      animation: tick-in .2s ease;
-    }
-    .tick:last-child { border-bottom: none }
-    @keyframes tick-in { from { opacity:0; background: rgba(63,168,184,.07) } to { opacity:1; background:transparent } }
-    .tick-ts  { font-family: var(--mono); color: var(--text-faint); font-size: 9px; flex-shrink: 0; padding-top: 2px; min-width: 44px }
-    .tick-tag {
-      font-size: 8px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-      padding: 1px 5px; border-radius: 2px; flex-shrink: 0; margin-top: 2px;
-    }
-    .tick-tag.DATA   { background: rgba(63,168,184,.15); color: var(--primary) }
-    .tick-tag.RISK   { background: rgba(207,78,78,.15);  color: var(--err) }
-    .tick-tag.POLICY { background: rgba(90,170,56,.15);  color: var(--ch-norm) }
-    .tick-tag.SOURCE { background: rgba(80,80,80,.2);    color: var(--text-muted) }
-    .tick-tag.WARN   { background: rgba(224,128,48,.15); color: var(--warn) }
-    .tick-tag.MODE   { background: rgba(155,111,212,.15); color: var(--wi-accent) }
-    .tick-msg { color: var(--text-muted); flex: 1; min-width: 0 }
-    .tick-msg strong { color: var(--text); font-weight: 600 }
-
-    /* ── RIGHT COLUMN STACK ─────────────────────────────────────────────── */
-    .right-col {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      min-width: 0;
+      grid-template-columns: 1fr 380px;
+      gap: 14px;
     }
 
     /* Generic card */
     .card {
-      background: rgba(255,255,255,.92);
-      border: 1px solid rgba(215,224,240,.9);
-      border-radius: 14px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--rl);
       box-shadow: var(--sh);
     }
-    .card-body { padding: 10px 14px }
+    .card-body { padding: 12px 16px }
 
-    /* ── RISK DRIVERS ───────────────────────────────────────────────────── */
-    .driver-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--divider) }
-    .driver-row:last-child { border-bottom: none }
-    .driver-label { font-size: 10px; color: var(--text-muted); min-width: 100px; flex-shrink: 0 }
-    .driver-track { flex: 1; height: 3px; border-radius: 2px; background: #EEF3FB; overflow: hidden }
-    .driver-fill  { height: 100%; border-radius: 2px; transition: width .5s var(--tr), background .4s }
-    .driver-val   { font-family: var(--mono); font-size: 10px; color: var(--text-faint); min-width: 34px; text-align: right }
-    .driver-na    { font-size: 10px; color: var(--text-faint); font-style: italic }
-    .driver-meta  { display: flex; justify-content: space-between; padding-top: 6px; margin-top: 2px; border-top: 1px solid var(--divider) }
-    .driver-meta-item { font-size: 9px; color: var(--text-faint) }
-    .driver-meta-item span { color: var(--text-muted) }
-
-    /* Source layer note (visible in what-if) */
-    .source-layer-note {
-      display: none; margin-top: 6px; padding: 5px 8px; border-radius: var(--rm);
-      background: var(--wi-bg); border: 1px solid var(--wi-border);
-      font-size: 9px; color: #7C4DDF; line-height: 1.4;
+    .panel-hdr {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--divider);
+      flex-shrink: 0;
     }
-    body.what-if-mode .source-layer-note { display: block }
-
-    /* ── POLICY IDEAS ───────────────────────────────────────────────────── */
-    .policy-list { display: flex; flex-direction: column; gap: 6px }
-    .policy-item {
-      display: flex; align-items: flex-start; gap: 6px;
-      font-size: 11px; color: var(--text-muted); line-height: 1.5;
+    .panel-title {
+      font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+      color: var(--text-muted); flex: 1;
     }
-    .policy-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--primary); flex-shrink: 0; margin-top: 5px }
-
-    /* ─── MID FOLD ────────────────────────────────────────────────────────── */
-    .mid-fold {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    /* Coverage checklist */
-    .coverage-list { display: flex; flex-direction: column; gap: 0 }
-    .cov-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--divider) }
-    .cov-item:last-child { border-bottom: none }
-    .cov-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0 }
-    .cov-dot.active  { background: var(--ok) }
-    .cov-dot.warn    { background: var(--warn) }
-    .cov-dot.off     { background: var(--text-faint) }
-    .cov-dot.future  { background: #7a5fc0 }
-    .cov-status {
-      font-size: 8px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
-      min-width: 72px; flex-shrink: 0;
-    }
-    .cov-status.active { color: var(--ok) }
-    .cov-status.warn   { color: var(--warn) }
-    .cov-status.off    { color: var(--text-faint) }
-    .cov-status.future { color: #7a5fc0 }
-    .cov-name { font-size: 10px; color: var(--text-muted); flex: 1 }
-
-    /* ── RECOMMENDATION CARD ─────────────────────────────────────────────── */
-    .rec-card {
-      background: rgba(255,255,255,.92);
-      border: 1px solid rgba(215,224,240,.9);
-      border-radius: 14px;
-      box-shadow: var(--sh);
-      position: relative; overflow: hidden;
-    }
-    .rec-card::before {
-      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-      background: var(--rec-accent, var(--ok)); border-radius: 2px 0 0 2px; transition: background var(--tr);
-    }
-    .rec-card-body { padding: 12px 16px }
-
-    .rec-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px }
-    .rec-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: .10em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 3px }
-    .rec-main  { display: flex; align-items: baseline; gap: 8px }
-    .rec-num   { font-family: var(--mono); font-size: 2.4rem; font-weight: 700; color: var(--text); letter-spacing: -.04em; line-height: 1 }
-    .rec-unit  { font-size: var(--sm); font-weight: 500; color: var(--text-muted) }
-    .rec-ci    { font-size: 10px; color: var(--text-faint); font-family: var(--mono) }
-
-    .status-badge {
-      display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px;
-      border-radius: var(--rm); font-size: 11px; font-weight: 700; white-space: nowrap; flex-shrink: 0;
-    }
-    .status-badge.pass { background: #1f4d22; color: #5dd162; border: 1px solid #2a6630 }
-    .status-badge.fail { background: #4d1f1f; color: #e05555; border: 1px solid #662626 }
-
-    .rec-meta { display: grid; grid-template-columns: repeat(4,1fr); gap: 0; border-top: 1px solid var(--divider); margin-top: 8px; padding-top: 8px }
-    .rec-meta > div { padding-right: 10px }
-    .rmi-label { font-size: 9px; color: var(--text-faint); font-weight: 700; letter-spacing: .07em; text-transform: uppercase; margin-bottom: 2px }
-    .rmi-val   { font-size: var(--sm); font-weight: 700; color: var(--text); font-family: var(--mono); letter-spacing: -.02em }
-    .rmi-ci    { font-size: 9px; color: var(--text-faint); font-family: var(--mono); margin-top: 1px }
-
-    .rec-narrative {
-      margin-top: 10px; padding: 8px 12px;
-      background: rgba(255,255,255,.72); border: 1px solid var(--border); border-radius: var(--rm);
-      font-size: 11px; color: var(--text-muted); line-height: 1.6;
-    }
-
-    /* ─── LOWER FOLD ──────────────────────────────────────────────────────── */
-    .lower-fold {
-      display: grid;
-      grid-template-columns: 1fr 260px;
-      gap: 12px;
+    .panel-badge {
+      font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 3px;
+      border: 1px solid var(--border); background: var(--surface-2); color: var(--text-faint);
     }
 
     /* Chart card */
     .chart-card {
-      background: var(--surface); border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(58,134,255,.06), 0 2px 10px rgba(30,42,58,.05); backdrop-filter: blur(10px);
-      border-radius: 14px; padding: 14px 16px; box-shadow: var(--sh);
+      background: #fff; border: 1px solid var(--border);
+      border-radius: var(--rl); padding: 16px 18px; box-shadow: var(--sh);
       display: flex; flex-direction: column;
     }
-    .chart-hdr  { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px }
-    .chart-ttl  { font-size: 13px; font-weight: 700; color: var(--text) }
-    .chart-sub  { font-size: 10px; color: var(--text-muted); margin-top: 2px }
+    .chart-hdr  { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px }
+    .chart-ttl  { font-size: 14px; font-weight: 700; color: var(--text) }
+    .chart-sub  { font-size: 11px; color: var(--text-muted); margin-top: 3px }
     .sim-note   {
-      font-size: 9px; color: var(--text-faint); font-weight: 600;
-      background: rgba(245,248,255,.95); padding: 2px 8px; border-radius: 3px;
-      border: 1px solid var(--border); white-space: nowrap; align-self: flex-start; flex-shrink: 0;
+      font-size: 9px; color: var(--primary); font-weight: 700; letter-spacing: .07em;
+      background: var(--primary-bg); padding: 3px 9px; border-radius: 3px;
+      border: 1px solid rgba(37,99,235,.22); white-space: nowrap; align-self: flex-start; flex-shrink: 0;
     }
-    .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px }
-    .leg-item { display: flex; align-items: center; gap: 4px; font-size: 9px; color: var(--text-muted) }
-    .leg-dot  { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0 }
-    .leg-dash { width: 12px; height: 0; border-top: 2px dashed; flex-shrink: 0; opacity: .7 }
-    .leg-band { width: 12px; height: 7px; border-radius: 2px; flex-shrink: 0; opacity: .3 }
-    .chart-wrap { position: relative; height: 260px }
+    .legend { display: flex; flex-wrap: wrap; gap: 10px 12px; margin-bottom: 10px }
+    .leg-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--text-muted) }
+    .leg-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0 }
+    .leg-dash { width: 14px; height: 0; border-top: 2px dashed; flex-shrink: 0; opacity: .8 }
+    .leg-band { width: 14px; height: 8px; border-radius: 2px; flex-shrink: 0; opacity: .35 }
+    .chart-wrap { position: relative; height: 280px }
 
-    /* Assumptions drawer */
-    .assumptions-wrap { margin-top: 8px }
+    .assumptions-wrap { margin-top: 10px }
     .assumptions-toggle {
       display: flex; align-items: center; gap: 6px;
-      font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
-      color: var(--text-faint); cursor: pointer; padding: 4px 0;
+      font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      color: var(--text-faint); cursor: pointer; padding: 5px 0;
       border: none; background: none; transition: color var(--tr); width: 100%;
     }
     .assumptions-toggle:hover { color: var(--text-muted) }
     .assumptions-toggle svg { transition: transform var(--tr) }
     .assumptions-toggle.open svg { transform: rotate(90deg) }
     .assumptions-body {
-      display: none; padding: 10px 12px; background: rgba(255,255,255,.72); border-radius: var(--rm);
+      display: none; padding: 10px 12px; background: var(--surface-2); border-radius: var(--rm);
       border: 1px solid var(--divider); margin-top: 6px;
     }
     .assumptions-body.open { display: block }
     .assump-row {
       display: flex; justify-content: space-between; align-items: baseline;
-      padding: 3px 0; border-bottom: 1px solid #1e1e1e; font-size: 11px;
+      padding: 4px 0; border-bottom: 1px solid var(--divider); font-size: 11px;
     }
     .assump-row:last-child { border-bottom: none }
     .assump-key { color: var(--text-muted) }
-    .assump-val { font-family: var(--mono); font-size: 9px; color: var(--text-faint) }
+    .assump-val { font-family: var(--mono); font-size: 10px; color: var(--text-faint) }
+
+    /* Recommendation card (uses rec-card class) */
+    .rec-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--rl);
+      box-shadow: var(--sh);
+      position: relative; overflow: hidden;
+    }
+    .rec-card::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+      background: var(--rec-accent, var(--ok)); transition: background var(--tr);
+    }
+    .rec-card-body { padding: 14px 18px }
+
+    .rec-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 12px }
+    .rec-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: .10em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 4px }
+    .rec-main  { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap }
+    .rec-num   { font-family: var(--mono); font-size: 2.4rem; font-weight: 700; color: var(--text); letter-spacing: -.04em; line-height: 1 }
+    .rec-unit  { font-size: 13px; font-weight: 500; color: var(--text-muted) }
+    .rec-ci    { font-size: 10px; color: var(--text-faint); font-family: var(--mono); width: 100% }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px;
+      border-radius: var(--rm); font-size: 11px; font-weight: 700; white-space: nowrap; flex-shrink: 0;
+    }
+    .status-badge.pass { background: var(--ok-bg); color: var(--ok); border: 1px solid #BEEFD2 }
+    .status-badge.fail { background: var(--err-bg); color: var(--err); border: 1px solid #F3B9BC }
+
+    .rec-meta {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px 18px;
+      border-top: 1px solid var(--divider); margin-top: 10px; padding-top: 12px;
+    }
+    .rmi-label { font-size: 9px; color: var(--text-faint); font-weight: 700; letter-spacing: .07em; text-transform: uppercase; margin-bottom: 3px }
+    .rmi-val   { font-size: 13px; font-weight: 700; color: var(--text); font-family: var(--mono); letter-spacing: -.02em }
+    .rmi-ci    { font-size: 10px; color: var(--text-faint); font-family: var(--mono); margin-top: 2px }
+
+    .rec-narrative {
+      margin-top: 12px; padding: 10px 13px;
+      background: var(--surface-2); border: 1px solid var(--divider); border-radius: var(--rm);
+      font-size: 11px; color: var(--text-muted); line-height: 1.6;
+    }
 
     /* Decision card */
     .dec-card {
-      background: var(--surface); border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(58,134,255,.06), 0 2px 10px rgba(30,42,58,.05); backdrop-filter: blur(10px);
-      border-radius: 14px; padding: 14px 16px; box-shadow: var(--sh);
-      display: flex; flex-direction: column; gap: 0;
+      background: #fff; border: 1px solid var(--border);
+      border-radius: var(--rl); padding: 14px 16px; box-shadow: var(--sh);
+      display: flex; flex-direction: column;
     }
-    .dec-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: .10em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 8px }
+    .dec-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: .10em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 10px }
     .dec-bullets { list-style: none; display: flex; flex-direction: column; gap: 7px; margin-bottom: 10px }
-    .dec-item  { display: flex; align-items: flex-start; gap: 6px; font-size: 11px; color: var(--text-muted); line-height: 1.5 }
-    .dec-dot   { width: 5px; height: 5px; border-radius: 50%; background: var(--primary); flex-shrink: 0; margin-top: 5px }
+    .dec-item  { display: flex; align-items: flex-start; gap: 7px; font-size: 11px; color: var(--text-muted); line-height: 1.55 }
+    .dec-dot   { width: 5px; height: 5px; border-radius: 50%; background: var(--primary); flex-shrink: 0; margin-top: 6px }
     .dec-divider { height: 1px; background: var(--divider); margin-bottom: 10px }
-    .dec-action { padding: 9px 12px; background: var(--primary-bg); border-radius: var(--rm); border: 1px solid rgba(63,168,184,.2) }
-    .dec-action-lbl { font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--primary); margin-bottom: 3px }
-    .dec-action-txt { font-size: 11px; color: #41556E; line-height: 1.5 }
+    .dec-action { padding: 10px 12px; background: var(--primary-bg); border-radius: var(--rm); border: 1px solid rgba(37,99,235,.18) }
+    .dec-action-lbl { font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--primary); margin-bottom: 4px }
+    .dec-action-txt { font-size: 11px; color: var(--text-muted); line-height: 1.55 }
 
-    /* ─── BOTTOM SPACER ──────────────────────────────────────────────────── */
+    /* ─── SUPPORT GRID (drivers, trust, ticker) ──────────────────────────── */
+    .support-fold {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 1300px) {
+      .support-fold { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 900px) {
+      .support-fold { grid-template-columns: 1fr; }
+      .core-fold { grid-template-columns: 1fr; }
+      .op-banner { grid-template-columns: 1fr; }
+      .op-cards { min-width: 0; }
+    }
+
+    /* Risk drivers */
+    .driver-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; border-bottom: 1px solid var(--divider) }
+    .driver-row:last-child { border-bottom: none }
+    .driver-label { font-size: 11px; color: var(--text-muted); min-width: 110px; flex-shrink: 0 }
+    .driver-track { flex: 1; height: 3px; border-radius: 2px; background: var(--surface-2); overflow: hidden }
+    .driver-fill  { height: 100%; border-radius: 2px; transition: width .5s var(--tr), background .4s }
+    .driver-val   { font-family: var(--mono); font-size: 10px; color: var(--text-faint); min-width: 38px; text-align: right }
+    .driver-na    { font-style: italic }
+    .driver-meta  { display: flex; justify-content: space-between; padding-top: 7px; margin-top: 4px; border-top: 1px solid var(--divider); flex-wrap: wrap; gap: 6px }
+    .driver-meta-item { font-size: 10px; color: var(--text-faint) }
+    .driver-meta-item span { color: var(--text-muted) }
+
+    .source-layer-note {
+      display: none; margin-top: 8px; padding: 6px 9px; border-radius: var(--rm);
+      background: var(--wi-bg); border: 1px solid var(--wi-border);
+      font-size: 10px; color: var(--wi-accent); line-height: 1.45;
+    }
+    body.what-if-mode .source-layer-note { display: block }
+
+    /* Trust / Coverage checklist */
+    .coverage-list { display: flex; flex-direction: column; gap: 0 }
+    .cov-item { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--divider) }
+    .cov-item:last-child { border-bottom: none }
+    .cov-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0 }
+    .cov-dot.active  { background: var(--ok) }
+    .cov-dot.warn    { background: var(--warn) }
+    .cov-dot.off     { background: var(--text-faint); opacity: .5 }
+    .cov-dot.future  { background: var(--wi-accent); opacity: .6 }
+    .cov-status {
+      font-size: 8px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+      min-width: 80px; flex-shrink: 0;
+    }
+    .cov-status.active { color: var(--ok) }
+    .cov-status.warn   { color: var(--warn) }
+    .cov-status.off    { color: var(--text-faint) }
+    .cov-status.future { color: var(--wi-accent) }
+    .cov-name { font-size: 11px; color: var(--text-muted); flex: 1 }
+
+    /* Policy ideas */
+    .policy-list { display: flex; flex-direction: column; gap: 7px }
+    .policy-item {
+      display: flex; align-items: flex-start; gap: 7px;
+      font-size: 11px; color: var(--text-muted); line-height: 1.55;
+    }
+    .policy-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--primary); flex-shrink: 0; margin-top: 6px }
+
+    /* Ticker */
+    .ticker-feed {
+      max-height: 240px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: 4px 0;
+    }
+    .ticker-feed::-webkit-scrollbar { width: 3px }
+    .ticker-feed::-webkit-scrollbar-track { background: transparent }
+    .ticker-feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px }
+    .tick {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 6px 16px;
+      border-bottom: 1px solid var(--divider);
+      font-size: 11px; line-height: 1.5;
+      animation: tick-in .2s ease;
+    }
+    .tick:last-child { border-bottom: none }
+    @keyframes tick-in { from { opacity:0; background: var(--primary-dim) } to { opacity:1; background:transparent } }
+    .tick-ts  { font-family: var(--mono); color: var(--text-faint); font-size: 9px; flex-shrink: 0; padding-top: 2px; min-width: 44px }
+    .tick-tag {
+      font-size: 8px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      padding: 2px 5px; border-radius: 2px; flex-shrink: 0; margin-top: 1px;
+    }
+    .tick-tag.DATA   { background: var(--primary-bg); color: var(--primary) }
+    .tick-tag.RISK   { background: var(--err-bg);  color: var(--err) }
+    .tick-tag.POLICY { background: var(--ok-bg);   color: var(--ok) }
+    .tick-tag.SOURCE { background: var(--surface-2); color: var(--text-muted) }
+    .tick-tag.WARN   { background: var(--warn-bg); color: var(--warn) }
+    .tick-tag.MODE   { background: var(--wi-bg); color: var(--wi-accent) }
+    .tick-msg { color: var(--text-muted); flex: 1; min-width: 0 }
+    .tick-msg strong { color: var(--text); font-weight: 600 }
+
+    .ticker-view-btn {
+      font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 3px; border: 1px solid var(--border);
+      background: rgba(255,255,255,.7); color: var(--text-faint); cursor: pointer;
+      transition: all var(--tr);
+    }
+    .ticker-view-btn:hover { background: #fff; color: var(--text-muted) }
+    .ticker-view-btn.active { background: var(--primary-bg); color: var(--primary); border-color: rgba(37,99,235,.22) }
+
+    /* Collapsible bottom drawer */
+    .footer-drawer {
+      background: #fff; border: 1px solid var(--border); border-radius: var(--rl);
+      overflow: hidden; box-shadow: var(--sh);
+    }
+    .footer-drawer summary {
+      cursor: pointer; list-style: none; padding: 12px 16px;
+      font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+      color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;
+    }
+    .footer-drawer summary:hover { background: var(--surface-2) }
+    .footer-drawer .card-body {
+      padding: 4px 16px 14px; font-size: 11px; color: var(--text-muted);
+      line-height: 1.65; display: flex; flex-direction: column; gap: 8px;
+      border-top: 1px solid var(--divider);
+    }
+    .footer-drawer strong { color: var(--text); font-weight: 600 }
+
     .bottom-spacer { height: 24px; flex-shrink: 0 }
 
-    /* ─── FADE TRANSITION ────────────────────────────────────────────────── */
     .kpi-val, .rec-num, .rmi-val, .kpi-ci, .rmi-ci, .hkpi-val { transition: opacity 120ms ease }
     .fading { opacity: 0 }
   </style>
@@ -678,9 +702,8 @@
   <!-- ── TOPBAR ─────────────────────────────────────────────────────────── -->
   <header class="topbar">
     <div class="tl">
-      <!-- SVG Logo -->
-      <svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-label="SAID logo" style="flex-shrink:0">
-        <rect width="28" height="28" rx="6" fill="var(--primary)"/>
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-label="SAID logo" style="flex-shrink:0">
+        <rect width="28" height="28" rx="6" fill="#2563EB"/>
         <rect x="5" y="16" width="6" height="7" rx="1" fill="white" opacity=".9"/>
         <rect x="5" y="12" width="6" height="3.5" rx=".5" fill="white" opacity=".5"/>
         <rect x="12.5" y="14" width="5" height="9" rx="1" fill="white" opacity=".9"/>
@@ -689,9 +712,8 @@
         <circle cx="23" cy="5" r="1.5" fill="white" opacity=".85"/>
       </svg>
       <div>
-        <div class="tl-title">Live Risk Intelligence · Savannah → Atlanta Replenishment Lane</div>
-        <div style="font-size:11px;color:#1E4FA3;font-weight:800;margin-top:4px;line-height:1.3;white-space:normal;">Built by Neil Sharma</div>
-        
+        <div class="tl-title">Live Risk Intelligence · Savannah → Atlanta Lane</div>
+        <div class="tl-sub">Built by Neil Sharma</div>
       </div>
     </div>
     <div class="ta">
@@ -701,7 +723,7 @@
       </div>
       <span class="proto-badge">
         <svg width="6" height="6" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="3"/></svg>
-        LIVE SIGNAL MODEL
+        Live Signal Model
       </span>
     </div>
   </header>
@@ -709,8 +731,7 @@
   <!-- ── SIDEBAR ────────────────────────────────────────────────────────── -->
   <aside class="sidebar">
 
-    <!-- MODE TOGGLE -->
-    <div class="sb-sect" style="margin-bottom:10px">
+    <div class="sb-sect" style="margin-bottom:12px">
       <div class="mode-toggle-wrap">
         <div class="mode-toggle-lbl" data-tip="Live Signal uses real API data to set stress. What-if lets you test a hypothetical scenario.">Mode</div>
         <div class="mode-toggle">
@@ -725,7 +746,7 @@
     <div class="sb-sect">
       <div class="sb-label">Policy Inputs</div>
       <div class="ctrl-group">
-        <label class="ctrl-label" for="docsSlider" data-tip="How many days of inventory you currently hold. Moving this slider calls the live API with the updated value.">Current Days of Cover</label>
+        <label class="ctrl-label" for="docsSlider" data-tip="How many days of inventory you currently hold.">Current days of cover</label>
         <div class="sl-row">
           <input type="range" id="docsSlider" min="2" max="6" step="1" value="3" data-testid="slider-doc" />
           <span class="sl-val" id="docsVal">3d</span>
@@ -739,99 +760,87 @@
           <option value="5">≤ 5%</option>
           <option value="10">≤ 10%</option>
         </select>
-        <div class="ctrl-note">The target is the maximum running-out risk you are willing to accept.</div>
-        <div class="ctrl-note">A 2% target means the plan should fail no more than about 2 times out of 100 model runs.</div>
+        <div class="ctrl-note">The maximum running-out risk you're willing to accept.</div>
       </div>
       <div class="ctrl-group">
-        <label class="ctrl-label" data-tip="Baseline = standard assumptions. Safety stock = adds buffer. Tail mitigation = targets worst-case tail risk.">Scenario</label>
+        <label class="ctrl-label" data-tip="Baseline: standard assumptions. Safety stock: adds buffer. Tail mitigation: targets worst-case tail risk.">Scenario</label>
         <div class="seg c3" id="scenarioGroup">
-          <button class="seg-btn sc-bl active" data-scenario="baseline" data-testid="btn-baseline">Baseline</button>
-          <button class="seg-btn sc-ss" data-scenario="safety" data-testid="btn-safety">Saf. Stock</button>
-          <button class="seg-btn sc-tm" data-scenario="tail" data-testid="btn-tail">Tail Mit.</button>
+          <button class="seg-btn active" data-scenario="baseline" data-testid="btn-baseline">Baseline</button>
+          <button class="seg-btn" data-scenario="safety" data-testid="btn-safety">Safety</button>
+          <button class="seg-btn" data-scenario="tail" data-testid="btn-tail">Tail Mit.</button>
         </div>
-        <div class="ctrl-note">Baseline: Normal plan with no extra protection.</div>
-        <div class="ctrl-note">Safety Stock: Adds extra inventory buffer.</div>
-        <div class="ctrl-note">Tail Mitigation: Tests reducing rare worst-case delay risk.</div>
       </div>
     </div>
 
     <div class="sb-divider"></div>
 
-    <details class="sb-sect" id="analystDrawer" style="padding-top:4px">
+    <details class="sb-sect" id="analystDrawer" style="padding-top:0">
       <summary style="list-style:none;cursor:pointer;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
-        <span>Analyst Controls <span style="font-weight:500;letter-spacing:0;text-transform:none;color:var(--text-muted)">— advanced assumptions, scenarios, and model inputs</span></span>
+        <span>Analyst Controls</span>
         <span aria-hidden="true" style="font-size:12px;color:var(--text-muted);transition:transform var(--tr);">▾</span>
       </summary>
 
-      <div class="sb-label">Disruption level</div>
+      <div class="sb-label" style="margin-top:4px">Active regime</div>
       <div class="regime-ctrl-label">
-        <label class="ctrl-label" data-tip="The stress level applied to the stockout model. In Live mode this is set by the API.">Active regime</label>
+        <label class="ctrl-label" data-tip="The stress level applied to the stockout model. In Live mode this is set by the API.">Disruption level</label>
         <span class="regime-mode-tag api" id="regimeModeTag">API controlled</span>
       </div>
-      <div class="regime-ctrl-wrap" style="margin-bottom:8px">
+      <div class="regime-ctrl-wrap" style="margin-bottom:12px">
         <div class="regime-lock-overlay visible" id="regimeLockOverlay">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:5px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           API controlled
         </div>
         <div class="seg c2" id="regimeGroup">
-          <button disabled aria-disabled="true" class="seg-btn r-low" data-regime="low" data-testid="btn-low">Low</button>
-          <button disabled aria-disabled="true" class="seg-btn r-norm active" data-regime="normal" data-testid="btn-normal">Normal</button>
-          <button disabled aria-disabled="true" class="seg-btn r-hi" data-regime="high" data-testid="btn-high">High</button>
-          <button disabled aria-disabled="true" class="seg-btn r-ex" data-regime="extreme" data-testid="btn-extreme">Extreme</button>
+          <button disabled aria-disabled="true" class="seg-btn" data-regime="low" data-testid="btn-low">Low</button>
+          <button disabled aria-disabled="true" class="seg-btn active" data-regime="normal" data-testid="btn-normal">Normal</button>
+          <button disabled aria-disabled="true" class="seg-btn" data-regime="high" data-testid="btn-high">High</button>
+          <button disabled aria-disabled="true" class="seg-btn" data-regime="extreme" data-testid="btn-extreme">Extreme</button>
         </div>
       </div>
 
       <div class="ctrl-group" id="stressDecompSection">
-        <div class="ctrl-label" style="margin-bottom:8px">
-          Signal Components
-          <span style="font-size:9px;padding:1px 5px;border:1px solid var(--border);border-radius:2px;background:var(--surface-2);color:var(--text-muted);letter-spacing:.04em;margin-left:4px">signal-mapped</span>
-        </div>
+        <div class="ctrl-label" style="margin-bottom:8px">Signal Components</div>
         <div class="stress-bar-row">
-          <div class="stress-bar-label" data-tip="Congestion or throughput constraints at the Savannah port.">Port / flow</div>
+          <div class="stress-bar-label">Port / flow</div>
           <div class="stress-bar-track"><div class="stress-bar-fill" id="sb-throughput"></div></div>
           <div class="stress-bar-val" id="sv-throughput"></div>
         </div>
         <div class="stress-bar-row">
-          <div class="stress-bar-label" data-tip="Variability in transit times — higher means less predictable delivery windows.">Delay var.</div>
+          <div class="stress-bar-label">Delay var.</div>
           <div class="stress-bar-track"><div class="stress-bar-fill" id="sb-leadtime"></div></div>
           <div class="stress-bar-val" id="sv-leadtime"></div>
         </div>
         <div class="stress-bar-row">
-          <div class="stress-bar-label" data-tip="Disruptions from weather events, alerts, or operational incidents.">Operational disruption</div>
+          <div class="stress-bar-label">Operational</div>
           <div class="stress-bar-track"><div class="stress-bar-fill" id="sb-ops"></div></div>
           <div class="stress-bar-val" id="sv-ops"></div>
         </div>
         <div class="stress-bar-row">
-          <div class="stress-bar-label" data-tip="0 = quiet; 1 = severe combined disruption pressure from all signals.">Overall signal</div>
+          <div class="stress-bar-label">Overall</div>
           <div class="stress-bar-track"><div class="stress-bar-fill" id="sb-composite"></div></div>
           <div class="stress-bar-val" id="sv-composite" style="font-weight:600"></div>
         </div>
       </div>
 
-      <div class="sb-divider"></div>
+      <div class="sb-divider" style="margin:14px 0 14px"></div>
 
-      <div class="sb-sect" style="padding:0;margin-bottom:12px">
-        <div class="sb-label">Local Cost Frame</div>
-        <div class="cost-row">
-          <div class="cost-input-wrap">
-            <label for="holdingCost">Holding ($/unit-day)</label>
-            <input type="number" id="holdingCost" class="cost-input" value="0.80" min="0.1" max="50" step="0.1" data-testid="input-holding" />
-          </div>
-          <div class="cost-input-wrap">
-            <label for="shortageCost">Shortage ($/unit)</label>
-            <input type="number" id="shortageCost" class="cost-input" value="18" min="1" max="500" step="1" data-testid="input-shortage" />
-          </div>
+      <div class="sb-label">Cost Frame</div>
+      <div class="cost-row">
+        <div class="cost-input-wrap">
+          <label for="holdingCost">Hold $/u-d</label>
+          <input type="number" id="holdingCost" class="cost-input" value="0.80" min="0.1" max="50" step="0.1" data-testid="input-holding" />
         </div>
-        <div class="ctrl-note">Cost inputs affect local comparison estimates. Live API policy cost index is model-based.</div>
+        <div class="cost-input-wrap">
+          <label for="shortageCost">Short $/u</label>
+          <input type="number" id="shortageCost" class="cost-input" value="18" min="1" max="500" step="1" data-testid="input-shortage" />
+        </div>
       </div>
+      <div class="ctrl-note">Cost inputs affect local comparison estimates only.</div>
 
-      <div class="sb-divider"></div>
+      <div class="sb-divider" style="margin:14px 0 14px"></div>
 
-      <div class="sb-sect" style="padding:0;margin-bottom:0">
-        <div class="sb-label" style="color:var(--text-muted)">Advanced — Phase 1</div>
-        <div style="font-size:11px;color:var(--text-muted);line-height:1.5">
-          Live stress index feed, demand distribution fitting, multi-SKU scope, lead-time distribution source, and Monte Carlo run configuration will be available when the simulation engine is connected.
-        </div>
+      <div class="sb-label">Advanced notes</div>
+      <div style="font-size:11px;color:var(--text-muted);line-height:1.5">
+        Live stress feed, demand distribution fitting, multi-SKU scope, and Monte Carlo configuration arrive when the simulation engine is connected.
       </div>
     </details>
 
@@ -840,45 +849,42 @@
   <!-- ── MAIN SCROLL AREA ───────────────────────────────────────────────── -->
   <div class="main">
 
-    <!-- What-if mode banner (only shown in what-if mode) -->
+    <!-- What-if mode banner -->
     <div class="mode-banner" id="modeBanner">
       <span class="mode-banner-icon">◈</span>
       <span class="mode-banner-txt">
-        <strong style="color:var(--wi-accent)">WHAT-IF STRESS TEST</strong> — Manual input regime active. Live signals continue refreshing in the background but do not override your selection.
+        <strong>What-if stress test</strong> — manual regime active. Live signals keep refreshing in the background but do not override your selection.
       </span>
       <button class="mode-banner-back" onclick="setMode('live')">← Back to Live</button>
     </div>
 
-    
-
-    <div id="operatorStatusBanner" style="background:#1a2e1a;border-bottom:1px solid #243824;padding:10px 18px;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;">
-      <div id="operatorStatusPill" style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.08);color:#fff;">Status</div>
-      <div style="display:flex;flex-direction:column;gap:2px;min-width:260px;flex:1;">
-        <div id="operatorActionTitle" style="font-size:1.1rem;font-weight:700;color:var(--text);letter-spacing:-.02em;">Loading recommendation…</div>
-        <div id="operatorActionSub" style="font-size:13px;color:#23344A;line-height:1.55;font-weight:700;">Connecting to live risk estimate and latest source signals...</div><div id="operatorModeExplain" style="font-size:11px;color:#304761;line-height:1.5;font-weight:700;">Live mode uses current data sources to set the disruption level.</div>
+    <!-- ── OPERATOR DECISION BANNER ──────────────────────────────────────── -->
+    <div id="operatorStatusBanner" class="op-banner">
+      <div id="operatorStatusPill" class="op-pill">Status</div>
+      <div class="op-title-wrap">
+        <div id="operatorActionTitle" class="op-title">Loading recommendation…</div>
+        <div id="operatorActionSub" class="op-sub">Connecting to live risk estimate and latest source signals.</div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:10px;min-width:320px;flex:1;">
-        <div style="padding:8px 10px;background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(244,247,252,.88));border:1px solid rgba(215,224,240,.95);border-radius:12px;box-shadow:0 6px 18px rgba(58,134,255,.05);">
-          <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);">Chance of running out</div><div style="font-size:10px;color:var(--text-muted);line-height:1.4;margin-top:4px;">Estimated chance that demand exceeds available stock before replenishment arrives.</div>
-          <div id="operatorRiskCompare" style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);margin-top:3px;">—</div>
+      <div class="op-cards">
+        <div class="op-card">
+          <div class="op-card-lbl">Chance of running out</div>
+          <div id="operatorRiskCompare" class="op-card-val">—</div>
         </div>
-        <div style="padding:8px 10px;background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(244,247,252,.88));border:1px solid rgba(215,224,240,.95);border-radius:12px;box-shadow:0 6px 18px rgba(58,134,255,.05);">
-          <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);">Days of stock you need</div><div style="font-size:10px;color:var(--text-muted);line-height:1.4;margin-top:4px;">The minimum coverage level the model recommends to stay under the risk target.</div>
-          <div id="operatorCoverageCompare" style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);margin-top:3px;">—</div>
+        <div class="op-card">
+          <div class="op-card-lbl">Days of stock you need</div>
+          <div id="operatorCoverageCompare" class="op-card-val">—</div>
         </div>
-        <div style="padding:8px 10px;background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(244,247,252,.88));border:1px solid rgba(215,224,240,.95);border-radius:12px;box-shadow:0 6px 18px rgba(58,134,255,.05);">
-          <div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);">Can I trust this estimate?</div><div style="font-size:10px;color:var(--text-muted);line-height:1.4;margin-top:4px;">How complete the live data picture is right now.</div>
-          <div id="operatorTrustCompare" style="font-size:13px;font-weight:700;color:var(--text);margin-top:3px;">—</div>
+        <div class="op-card">
+          <div class="op-card-lbl">Confidence</div>
+          <div id="operatorTrustCompare" class="op-card-val" style="font-family:var(--font); font-size:11px; line-height:1.45">—</div>
         </div>
       </div>
     </div>
 
-    <!-- HERO -->
+    <!-- ── HERO ──────────────────────────────────────────────────────────── -->
     <div class="hero">
-      <!-- Mode label -->
       <div class="hero-mode-label live-lbl" id="heroModeLabel">LIVE SIGNAL MODE</div>
 
-      <!-- Score -->
       <div class="score-block">
         <div class="score-eyebrow" data-tip="0 = quiet conditions; 1 = severe disruption pressure.">Disruption pressure</div>
         <div class="score-num" id="heroScore">—</div>
@@ -888,12 +894,11 @@
         </div>
       </div>
 
-      <!-- KPI pills -->
       <div class="hero-kpis">
         <div class="hkpi">
           <div class="hkpi-lbl" data-tip="Estimated chance demand exceeds available inventory during replenishment.">Chance of running out</div>
           <div class="hkpi-val" id="hkpiStockout">—</div>
-          <div class="hkpi-sub" id="hkpiStockoutCI">Best/worst case range: —</div>
+          <div class="hkpi-sub" id="hkpiStockoutCI">Range: —</div>
         </div>
         <div class="hkpi">
           <div class="hkpi-lbl" data-tip="Minimum days of cover needed to stay under the target risk level.">Days of stock you need</div>
@@ -901,18 +906,17 @@
           <div class="hkpi-sub" id="hkpiRecSub">days of cover</div>
         </div>
         <div class="hkpi">
-          <div class="hkpi-lbl" data-tip="Policy assumption being tested: baseline, safety stock, or tail mitigation.">Scenario</div>
+          <div class="hkpi-lbl">Scenario</div>
           <div class="hkpi-val" id="hkpiScenario">—</div>
           <div class="hkpi-sub">active</div>
         </div>
         <div class="hkpi">
-          <div class="hkpi-lbl">Last Updated</div>
-          <div class="hkpi-val" id="hkpiLastTs" style="font-size:.75rem">—</div>
+          <div class="hkpi-lbl">Last updated</div>
+          <div class="hkpi-val" id="hkpiLastTs" style="font-size:.85rem">—</div>
           <div class="hkpi-sub" id="hkpiNextRefresh">next refresh —</div>
         </div>
       </div>
 
-      <!-- Status -->
       <div class="hero-status">
         <div class="hero-status-row">
           <div class="hero-status-dot loading" id="heroStatusDot"></div>
@@ -922,65 +926,37 @@
       </div>
     </div>
 
-        <div style="display:grid;grid-template-columns:1.15fr .95fr;gap:12px;padding:12px 16px 0;">
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">What this app does</div></div>
-        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">
-          <div style="margin-bottom:8px;color:var(--text-muted)">The Savannah to Atlanta delivery route represents a replenishment route from port and distribution activity near Savannah toward grocery demand centers around Atlanta.</div>
-          <div style="display:flex;flex-direction:column;gap:6px;">
-            <div>• It checks live disruption signals such as weather alerts.</div>
-            <div>• It estimates the chance a selected inventory plan runs out before the next replenishment.</div>
-            <div>• It recommends how many days of stock are needed to stay below the risk target.</div>
-          </div>
-        </div>
-      </div>
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">How to use this</div></div>
-        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;display:flex;flex-direction:column;gap:6px;">
-          <div>1. Choose how many days of stock you currently plan to hold.</div>
-          <div>2. Pick a scenario, such as baseline, safety stock, or tail mitigation.</div>
-          <div>3. Check whether the app says the plan meets the target or needs more coverage.</div>
-          <div style="margin-top:4px;color:var(--text-muted)">For example, if the current plan has 3 days of stock but the app recommends 5, the plan is 2 days short.</div>
-        </div>
-      </div>
+    <!-- ── CURRENT READOUT ──────────────────────────────────────────────── -->
+    <div class="readout-bar">
+      <div class="readout-title">Current Readout</div>
+      <span id="execSummary">Connecting to live data feed…</span>
     </div>
 
-    <div style="padding:10px 16px 0;">
-      <div class="method-note" style="margin:0;">This app does not directly track store shelves or real grocery inventory. It estimates risk using disruption signals and a model.</div>
-    </div>
+    <!-- ── MAIN CONTENT ─────────────────────────────────────────────────── -->
+    <div class="content">
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:10px 16px 0;">
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">How the model works</div></div>
-        <div class="card-body" style="font-size:11px;color:var(--text-muted);line-height:1.6;">Live weather, traffic, and port-related signals are mapped into a disruption estimate. The app then uses that estimate to calculate the chance of running out of stock before replenishment arrives and recommends a safer number of stock days.</div>
-      </div>
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">Why this matters</div></div>
-        <div class="card-body" style="font-size:11px;color:var(--text-muted);line-height:1.6;">Small disruptions in a grocery delivery route can change whether a plan is likely to run out before the next shipment. This app turns those signals into a practical inventory decision.</div>
-      </div>
-    </div>
+      <!-- CORE: Chart (left) + Decision + Recommendation (right) -->
+      <div class="core-fold">
 
-    <!-- LOWER FOLD: Chart + Decision Summary -->
-      <div class="lower-fold">
-
+        <!-- Chart card -->
         <div class="chart-card">
           <div class="chart-hdr">
             <div>
-              <div class="chart-ttl">How much stock keeps risk below 2%?</div>
-              <div class="chart-sub">Live source curves by stress regime · target line · selection point</div>
+              <div class="chart-ttl">How much stock keeps risk below target?</div>
+              <div class="chart-sub">Stockout curves by stress regime · target line · selection point</div>
             </div>
             <span class="sim-note" id="chartModeBadge">LIVE SIGNAL</span>
           </div>
           <div id="chartCallout" style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;">Recommended: —</div>
           <div class="legend">
-            <div class="leg-item"><div class="leg-dot" style="background:var(--ch-low)"></div>Low</div>
-            <div class="leg-item"><div class="leg-dot" style="background:var(--ch-norm)"></div>Normal</div>
-            <div class="leg-item"><div class="leg-dot" style="background:var(--ch-hi)"></div>High</div>
-            <div class="leg-item"><div class="leg-dot" style="background:var(--ch-ex)"></div>Extreme</div>
-            <div class="leg-item"><div class="leg-dash" style="border-color:#7a3bbb"></div>Target</div>
-            <div class="leg-item"><div class="leg-band" style="background:var(--primary)"></div>Best/worst case range</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#3fa8b8"></div>Low</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#5aaa38"></div>Normal</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#e08030"></div>High</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#cf4e4e"></div>Extreme</div>
+            <div class="leg-item"><div class="leg-dash" style="border-color:var(--wi-accent)"></div>Target</div>
+            <div class="leg-item"><div class="leg-band" style="background:var(--primary)"></div>Range</div>
             <div class="leg-item"><div class="leg-dot" style="background:var(--primary)"></div>Selection</div>
-            <div class="leg-item"><div class="leg-dot" style="background:var(--ok);border-radius:2px"></div>Min Required</div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--ok)"></div>Min Required</div>
           </div>
           <div class="chart-wrap">
             <canvas id="riskChart"></canvas>
@@ -1003,23 +979,251 @@
           </div>
         </div>
 
-        <!-- Decision Summary -->
-        <div class="dec-card">
-          <div class="dec-eyebrow">Decision Summary</div>
-          <ul class="dec-bullets">
-            <li class="dec-item"><div class="dec-dot"></div><span id="db1">—</span></li>
-            <li class="dec-item"><div class="dec-dot"></div><span id="db2">—</span></li>
-            <li class="dec-item"><div class="dec-dot"></div><span id="db3">—</span></li>
-            <li class="dec-item"><div class="dec-dot"></div><span id="db4">—</span></li>
-          </ul>
-          <div class="dec-divider"></div>
-          <div class="dec-action">
-            <div class="dec-action-lbl">Operational takeaway</div>
-            <div class="dec-action-txt" id="decAction">—</div>
+        <!-- Right column: Recommendation + Decision Summary -->
+        <div style="display:flex;flex-direction:column;gap:14px;min-width:0;">
+
+          <!-- Policy Recommendation -->
+          <div class="rec-card" id="recPanel">
+            <div class="rec-card-body">
+              <div class="rec-top">
+                <div>
+                  <div class="rec-eyebrow">Policy Recommendation</div>
+                  <div class="rec-main">
+                    <span class="rec-num" id="recNum">—</span>
+                    <span class="rec-unit">days of cover</span>
+                    <span class="rec-ci" id="recCI"></span>
+                  </div>
+                </div>
+                <div id="statusBadge" class="status-badge pass" data-testid="badge-status">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  <span id="statusTxt">Meets Target</span>
+                </div>
+              </div>
+
+              <div class="rec-meta">
+                <div>
+                  <div class="rmi-label">Selected policy</div>
+                  <div class="rmi-val" id="rmSel">— days</div>
+                  <div class="rmi-ci" id="rmSelStkout">P(stockout) = —</div>
+                </div>
+                <div>
+                  <div class="rmi-label">Min required</div>
+                  <div class="rmi-val" id="rmMin">— days</div>
+                  <div class="rmi-ci" id="rmMinCI">≤ target</div>
+                </div>
+                <div>
+                  <div class="rmi-label">Lowest cost</div>
+                  <div class="rmi-val" id="rmOpt">— days</div>
+                  <div class="rmi-ci" id="rmOptCI">—</div>
+                </div>
+                <div>
+                  <div class="rmi-label">Stock gap</div>
+                  <div class="rmi-val" id="rmMargin">— days</div>
+                  <div class="rmi-ci" id="rmMarginTxt">—</div>
+                </div>
+              </div>
+
+              <div class="rec-narrative" id="recNarrative" data-testid="text-narrative">Loading…</div>
+            </div>
+          </div>
+
+          <!-- Decision Summary -->
+          <div class="dec-card">
+            <div class="dec-eyebrow">Decision Summary</div>
+            <ul class="dec-bullets">
+              <li class="dec-item"><div class="dec-dot"></div><span id="db1">—</span></li>
+              <li class="dec-item"><div class="dec-dot"></div><span id="db2">—</span></li>
+              <li class="dec-item"><div class="dec-dot"></div><span id="db3">—</span></li>
+              <li class="dec-item"><div class="dec-dot"></div><span id="db4">—</span></li>
+            </ul>
+            <div class="dec-divider"></div>
+            <div class="dec-action">
+              <div class="dec-action-lbl">Operational takeaway</div>
+              <div class="dec-action-txt" id="decAction">—</div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- SUPPORT FOLD: Risk Drivers + Trust + Policy Ideas + Ticker -->
+      <div class="support-fold">
+
+        <!-- Risk Drivers -->
+        <div class="card">
+          <div class="panel-hdr">
+            <div class="panel-title">Risk Drivers</div>
+            <div class="panel-badge" id="driverSourceBadge">—</div>
+          </div>
+          <div class="card-body">
+            <div class="driver-row">
+              <div class="driver-label">NWS alerts</div>
+              <div class="driver-track"><div class="driver-fill" id="df-nws" style="width:0%;background:var(--ok)"></div></div>
+              <div class="driver-val" id="dv-nws">—</div>
+            </div>
+            <div class="driver-row">
+              <div class="driver-label">Weather score</div>
+              <div class="driver-track"><div class="driver-fill" id="df-weather" style="width:0%;background:var(--primary)"></div></div>
+              <div class="driver-val" id="dv-weather">—</div>
+            </div>
+            <div class="driver-row">
+              <div class="driver-label">Traffic events</div>
+              <div class="driver-track"><div class="driver-fill" id="df-traffic" style="width:0%"></div></div>
+              <div class="driver-val driver-na" id="dv-traffic">—</div>
+            </div>
+            <div class="driver-row">
+              <div class="driver-label">Traffic score</div>
+              <div class="driver-track"><div class="driver-fill" id="df-tscore" style="width:0%"></div></div>
+              <div class="driver-val driver-na" id="dv-tscore">—</div>
+            </div>
+            <div class="driver-row">
+              <div class="driver-label">Port baseline</div>
+              <div class="driver-track"><div class="driver-fill" id="df-port" style="width:0%;background:var(--warn)"></div></div>
+              <div class="driver-val" id="dv-port">—</div>
+            </div>
+            <div class="driver-meta">
+              <div class="driver-meta-item">Sources: <span id="dv-sources">—</span></div>
+              <div class="driver-meta-item">Failures: <span id="dv-failures" style="color:var(--text-faint)">none</span></div>
+            </div>
+            <div class="source-layer-note">
+              Live source layer — these are the actual API signals. The what-if regime above is a hypothetical test; this data reflects current real conditions.
+            </div>
           </div>
         </div>
 
-      </div><!-- /.lower-fold -->
+        <!-- Can I trust this estimate? -->
+        <div class="card">
+          <div class="panel-hdr">
+            <div class="panel-title">Can I trust this estimate?</div>
+            <div class="panel-badge">Confidence</div>
+          </div>
+          <div class="card-body">
+            <div class="coverage-list">
+              <div class="cov-item">
+                <div class="cov-dot active"></div>
+                <div class="cov-status active">Live source</div>
+                <div class="cov-name">National Weather Service</div>
+              </div>
+              <div class="cov-item">
+                <div class="cov-dot off" id="trafficConfidenceDot"></div>
+                <div class="cov-status off" id="trafficConfidenceStatus">Not included</div>
+                <div class="cov-name">Georgia 511 traffic feed</div>
+              </div>
+              <div class="cov-item">
+                <div class="cov-dot warn"></div>
+                <div class="cov-status warn">Static</div>
+                <div class="cov-name">Port baseline (static estimate)</div>
+              </div>
+              <div class="cov-item">
+                <div class="cov-dot off"></div>
+                <div class="cov-status off">Not included</div>
+                <div class="cov-name">Real inventory levels</div>
+              </div>
+              <div class="cov-item">
+                <div class="cov-dot off"></div>
+                <div class="cov-status off">Not included</div>
+                <div class="cov-name">Truck GPS / ETA feed</div>
+              </div>
+              <div class="cov-item">
+                <div class="cov-dot future"></div>
+                <div class="cov-status future">Roadmap</div>
+                <div class="cov-name">Historical disruption log</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Policy Ideas + Ticker stacked -->
+        <div style="display:flex;flex-direction:column;gap:14px;min-width:0;">
+
+          <div class="card">
+            <div class="panel-hdr">
+              <div class="panel-title">Policy Ideas</div>
+              <div class="panel-badge" id="policyScenarioBadge">baseline</div>
+            </div>
+            <div class="card-body">
+              <div class="policy-list" id="policyList">
+                <div class="policy-item"><div class="policy-dot"></div><span>Awaiting live data…</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="panel-hdr">
+              <div class="panel-title">What changed?</div>
+              <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
+                <button id="tickerViewExec" class="ticker-view-btn active" onclick="setTickerView('exec')">Exec</button>
+                <button id="tickerViewTech" class="ticker-view-btn" onclick="setTickerView('tech')">Tech</button>
+              </div>
+              <div class="panel-badge" id="tickerCount">0 entries</div>
+            </div>
+            <div class="ticker-feed" id="tickerFeed">
+              <div class="tick">
+                <span class="tick-ts">—</span>
+                <span class="tick-tag SOURCE">SOURCE</span>
+                <span class="tick-msg">Waiting for first live fetch…</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Method note -->
+      <div class="method-note">
+        <strong>Note:</strong> This app does not directly track store shelves or real grocery inventory. It estimates risk from disruption signals (weather, traffic, port baseline) and a stockout model.
+      </div>
+
+      <!-- Footer drawers: how it works, methodology, limitations, creator -->
+      <details class="footer-drawer">
+        <summary>
+          How this dashboard works
+          <span aria-hidden="true" style="color:var(--text-faint);">▾</span>
+        </summary>
+        <div class="card-body">
+          <div>The Savannah → Atlanta route is a replenishment lane from port and distribution activity near Savannah toward grocery demand centers around Atlanta.</div>
+          <div>The app reads live disruption signals (weather alerts, traffic events when connected, port baseline), maps them into a disruption score, and uses that score to estimate the chance the selected inventory plan runs out before the next replenishment.</div>
+          <div><strong>To use it:</strong> pick your current days of cover and scenario, then check whether the plan meets the target or needs more coverage. If the recommendation says 5 days and you've selected 3, your plan is 2 days short.</div>
+        </div>
+      </details>
+
+      <details class="footer-drawer">
+        <summary>
+          Math methodology
+          <span aria-hidden="true" style="color:var(--text-faint);">▾</span>
+        </summary>
+        <div class="card-body">
+          <div><strong>1. Signal aggregation.</strong> Live weather, traffic, and port-related inputs are normalized to a 0–1 scale and combined into a disruption score, mapped into Low, Normal, High, or Extreme.</div>
+          <div><strong>2. Risk curve mapping.</strong> For each disruption level, the app uses an estimated relationship between days of cover and the probability of running out before replenishment. Higher disruption shifts the curve upward.</div>
+          <div><strong>3. Policy selection rule.</strong> Let p(d) denote the estimated probability at d days, and τ the selected risk limit. The recommendation is the smallest d in 2–6 days with p(d) ≤ τ. If none qualifies, the app reports 6d+.</div>
+          <div><strong>4. Comparative outputs.</strong> The interface reports selected plan, minimum recommended coverage, the gap, and a scenario comparison.</div>
+          <div><strong>5. Interpretation.</strong> This is decision-support, not a direct measurement of shelf inventory.</div>
+        </div>
+      </details>
+
+      <details class="footer-drawer">
+        <summary>
+          Limitations &amp; assumptions
+          <span aria-hidden="true" style="color:var(--text-faint);">▾</span>
+        </summary>
+        <div class="card-body">
+          <div>This app does not directly observe store shelves, exact inventory levels, truck GPS feeds, or realized demand. It estimates risk from proxy disruption signals.</div>
+          <div>Recommendations are decision support, not a guarantee of stock availability.</div>
+          <div>Historical backtesting against lane-level replenishment outcomes and demand calibration would improve confidence in future versions.</div>
+        </div>
+      </details>
+
+      <details class="footer-drawer">
+        <summary>
+          Creator note
+          <span aria-hidden="true" style="color:var(--text-faint);">▾</span>
+        </summary>
+        <div class="card-body">
+          <div>Built by <strong>Neil Sharma</strong> as a decision-support prototype exploring how public disruption signals can be translated into clearer operational inventory decisions.</div>
+        </div>
+      </details>
 
       <div class="bottom-spacer"></div>
     </div><!-- /.content -->
@@ -1030,8 +1234,7 @@
 /* ══════════════════════════════════════════════════════════════════════════
    STRESS-AWARE INVENTORY DECISION DASHBOARD
    Phase 0 — Live Signal Model · plain HTML/CSS/JS
-   Do not migrate to React/Next/Vite. Do not change api/latest.js.
-   Probabilities from API are DECIMAL (0–1). Always multiply ×100 for display.
+   Probabilities from API are DECIMAL (0–1). Multiply ×100 for display.
 ══════════════════════════════════════════════════════════════════════════ */
 
 // ── MODEL DATA ────────────────────────────────────────────────────────────
@@ -1044,7 +1247,6 @@ const CHART_COLORS = {
   extreme: '#cf4e4e'
 };
 
-// Per-(regime, scenario) stockout curves: [p, lo, hi] at each day in DAYS
 const MODEL = {
   low: {
     baseline: [[8.2,6.8,9.6],[3.1,2.3,4.0],[1.2,0.8,1.6],[0.5,0.3,0.7],[0.2,0.1,0.3]],
@@ -1068,7 +1270,6 @@ const MODEL = {
   }
 };
 
-// Per-(regime, scenario) expected shortage data [sh, lo, hi]
 const SHORTAGE_DATA = {
   low: {
     baseline: [[2.1,1.4,2.8],[0.7,0.4,1.0],[0.22,0.10,0.34],[0.06,0.02,0.10],[0.01,0.0,0.03]],
@@ -1092,7 +1293,6 @@ const SHORTAGE_DATA = {
   }
 };
 
-// Per-regime stress decomposition
 const STRESS_DATA = {
   low:     { score:0.023, label:'Low Stress',     components:{ throughput_z:0.04, leadtime_var_z:0.02, ops_disruption:0.01 } },
   normal:  { score:0.18,  label:'Normal Stress',  components:{ throughput_z:0.22, leadtime_var_z:0.16, ops_disruption:0.12 } },
@@ -1162,11 +1362,11 @@ function buildBullets(o) {
     ? `Minimum required policy is ${minDays}d under current ${sw} stress conditions.`
     : `No policy in the 2–6d range meets the ${targetProb}% target.`;
   const b3 = optDays && optCost
-    ? `Lowest-cost option is ${optDays}d (estimated Includes shortage-cost reduction. ${optCost.toFixed(2)}).`
+    ? `Lowest-cost option is ${optDays}d (estimated cost index ${optCost.toFixed(2)}).`
     : `Cost optimization requires at least one feasible policy in current range.`;
   const action = meetsTarget
     ? (coverageMargin > 1
-        ? `The current ${daysOfCover}-day policy has ${coverageMargin}d of buffer above the minimum. Evaluate whether the additional inventory cost is justified given a $${shortageCost}/unit shortage cost.`
+        ? `The current ${daysOfCover}-day policy has ${coverageMargin}d of buffer above the minimum. Evaluate whether the extra holding cost is justified given a $${shortageCost}/unit shortage cost.`
         : `The current ${daysOfCover}-day policy is at the minimum required level. Any reduction will breach the ${targetProb}% service target.`)
     : (minDays
         ? `The current ${daysOfCover}-day policy is below the model's recommended ${minDays}-day coverage level. Increasing coverage would reduce estimated stockout risk under current conditions.`
@@ -1182,7 +1382,7 @@ function buildExecSummary(regime, scenario, daysOfCover, selectedProb, minDays, 
   const prefix = isWhatIf
     ? `<strong>What-if scenario:</strong> Under hypothetical <strong>${rl} stress</strong>`
     : `Current live signals indicate <strong>${rl} stress</strong>`;
-  return `${prefix}. At <strong>${daysOfCover} days</strong> of cover under the <strong>${sc}</strong> scenario, estimated stockout risk is <strong>${sp}</strong>. The model recommends <strong>${md}</strong> of cover to meet the 2% service target.`;
+  return `${prefix}. At <strong>${daysOfCover} days</strong> of cover under the <strong>${sc}</strong> scenario, estimated stockout risk is <strong>${sp}</strong>. The model recommends <strong>${md}</strong> of cover to meet the target.`;
 }
 
 function buildPolicyIdeas(regime, scenario, minDays, daysOfCover, meetsTarget, coverageMargin, stressScore) {
@@ -1201,7 +1401,18 @@ function buildPolicyIdeas(regime, scenario, minDays, daysOfCover, meetsTarget, c
     ideas.push(`Low corridor disruption from NWS — standard coverage tiers appear adequate. Continue monitoring.`);
   if (regime === 'high' || regime === 'extreme')
     ideas.push(`Elevated stress: proactively communicate with DC operators and verify inbound ETAs for the Savannah → Atlanta lane.`);
-  ideas.push(`Georgia 511 traffic feed not connected — traffic-side disruptions are not reflected in current risk estimates.`);
+
+  // Dynamic Georgia 511 line — driven by source_summary.traffic_source_enabled
+  const trafficEnabled =
+    window.__lastSourceSummary &&
+    window.__lastSourceSummary.traffic_source_enabled === true;
+
+  if (trafficEnabled) {
+    ideas.push(`Georgia 511 traffic feed connected — traffic-side disruptions are included in current risk estimates.`);
+  } else {
+    ideas.push(`Georgia 511 traffic feed not connected — traffic-side disruptions are not reflected in current risk estimates.`);
+  }
+
   if (ideas.length < 4)
     ideas.push(`Monitor NWS alerts for active corridor weather events — current signal: ${stressScore < 0.2 ? 'no active alerts' : 'disruption signals present'}.`);
   return ideas.slice(0, 5);
@@ -1212,21 +1423,28 @@ let state = {
   regime: 'normal', scenario: 'baseline', daysOfCover: 3, targetProb: 2,
   holdingCost: .80, shortageCost: 18
 };
-let _mode = 'live';           // 'live' | 'whatif'
-let _liveRegime = 'normal';   // last regime received from API
+let _mode = 'live';
+let _liveRegime = 'normal';
 let _currentStatus = 'loading';
 let _applyingPayload = false;
 let _sliderFetchTimer = null;
+window.__lastSourceSummary = null;
 
 // ── MODE MANAGEMENT ───────────────────────────────────────────────────────
 function setMode(mode) {
   _mode = mode;
   const isWhatIf = mode === 'whatif';
 
-  document.getElementById('btnLiveMode').classList.toggle('active', !isWhatIf);
-  document.getElementById('btnWiMode').classList.toggle('active', isWhatIf);
-  document.getElementById('modeBanner').classList.toggle('visible', isWhatIf);
-  document.getElementById('regimeLockOverlay').classList.toggle('visible', !isWhatIf);
+  const btnLive = document.getElementById('btnLiveMode');
+  const btnWi = document.getElementById('btnWiMode');
+  const banner = document.getElementById('modeBanner');
+  const lock = document.getElementById('regimeLockOverlay');
+
+  if (btnLive) btnLive.classList.toggle('active', !isWhatIf);
+  if (btnWi)   btnWi.classList.toggle('active', isWhatIf);
+  if (banner)  banner.classList.toggle('visible', isWhatIf);
+  if (lock)    lock.classList.toggle('visible', !isWhatIf);
+
   document.querySelectorAll('#regimeGroup [data-regime]').forEach(btn => {
     btn.disabled = !isWhatIf;
     btn.setAttribute('aria-disabled', String(!isWhatIf));
@@ -1234,7 +1452,7 @@ function setMode(mode) {
 
   const modeTag = document.getElementById('regimeModeTag');
   if (modeTag) {
-    modeTag.textContent = isWhatIf ? 'Manual input scenario test' : 'API controlled';
+    modeTag.textContent = isWhatIf ? 'Manual scenario test' : 'API controlled';
     modeTag.className = 'regime-mode-tag ' + (isWhatIf ? 'manual' : 'api');
   }
 
@@ -1252,7 +1470,6 @@ function setMode(mode) {
   if (isWhatIf) {
     addTick('MODE', `Mode set to <strong>What-if Stress Test</strong> — manual regime active`);
   } else {
-    // Switching back to live: reapply API regime and fetch
     state.regime = _liveRegime;
     updateDashboard();
     addTick('MODE', `Switched back to <strong>Live Signal Mode</strong> — applying API regime: ${_liveRegime}`);
@@ -1263,7 +1480,7 @@ function setMode(mode) {
 // ── TICKER ────────────────────────────────────────────────────────────────
 const MAX_TICKS = 14;
 const tickerEntries = [];
-let _tickerView = 'exec'; // 'exec' | 'tech'
+let _tickerView = 'exec';
 const EXEC_TAGS = new Set(['POLICY','RISK','MODE','WARN']);
 
 function setTickerView(view) {
@@ -1305,7 +1522,7 @@ function renderTicker() {
       <span class="tick-msg">${e.msg}</span>
     </div>`).join('')
     : `<div class="tick"><span class="tick-ts">—</span><span class="tick-tag SOURCE">SOURCE</span><span class="tick-msg">Waiting for first live fetch…</span></div>`;
-  if (countEl) countEl.textContent = visible.length + ' of ' + tickerEntries.length + ' entries';
+  if (countEl) countEl.textContent = visible.length + ' of ' + tickerEntries.length;
 }
 function buildTicksFromPayload(d) {
   const ss = d.source_summary || {};
@@ -1318,7 +1535,7 @@ function buildTicksFromPayload(d) {
   return [
     { tag:'MODE',   msg:`Live regime set by API stress score — <strong>${rl}</strong>` },
     { tag:'SOURCE', msg:`NWS checked: <strong>${nwsAlerts}</strong> active corridor alert${nwsAlerts !== 1 ? 's' : ''}` },
-    { tag:'SOURCE', msg:`Traffic feed: <strong>${tEnabled === false ? 'n/a, GA511 key not configured' : (ss.traffic_event_count ?? 'unknown') + ' events'}</strong>` },
+    { tag:'SOURCE', msg:`Traffic feed: <strong>${tEnabled === true ? ((ss.traffic_event_count ?? 0) + ' events (Georgia 511)') : 'not connected'}</strong>` },
     { tag:'DATA',   msg:`Weather score <strong>${wScore}</strong>, port baseline <strong>${pScore}</strong>` },
     { tag:'RISK',   msg:`Composite stress <strong>${sScore}</strong> → <strong>${rl}</strong>` },
     { tag:'POLICY', msg:`Scenario ${d.scenario || state.scenario}, ${typeof d.recommended_days === 'number' ? d.recommended_days : '?'}d recommended` },
@@ -1353,18 +1570,17 @@ function updateHero(score, regime, recDays, stockPct, stockLo, stockHi, scenario
   }
   const ciEl = document.getElementById('hkpiStockoutCI');
   if (ciEl && stockLo !== null && stockHi !== null)
-    ciEl.textContent = `Best/worst case range: ${stockLo.toFixed(2)}–${stockHi.toFixed(2)}%`;
+    ciEl.textContent = `Range: ${stockLo.toFixed(2)}–${stockHi.toFixed(2)}%`;
 
   const rdEl = document.getElementById('hkpiRecDays');
   if (rdEl) rdEl.textContent = recDays !== null ? recDays + 'd' : '6d+';
 
   const scEl = document.getElementById('hkpiScenario');
-  if (scEl) scEl.textContent = { baseline:'Baseline', safety:'Safety Stock', tail:'Tail Mit.' }[scenario] || scenario || '—';
+  if (scEl) scEl.textContent = { baseline:'Baseline', safety:'Safety', tail:'Tail Mit.' }[scenario] || scenario || '—';
 
   const tsEl = document.getElementById('hkpiLastTs');
   if (tsEl && ts) tsEl.textContent = new Date(ts).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' });
 
-  // Status dot + label
   const dot = document.getElementById('heroStatusDot');
   const lbl = document.getElementById('heroStatusLbl');
   const tsS = document.getElementById('heroStatusTs');
@@ -1372,14 +1588,12 @@ function updateHero(score, regime, recDays, stockPct, stockLo, stockHi, scenario
   if (lbl) lbl.textContent = { live:'Live', stale:'Stale', error:'Failed', loading:'Connecting' }[status] || '—';
   if (tsS) tsS.textContent = status === 'live' ? 'feed active' : status === 'stale' ? 'last known data' : status === 'error' ? 'using fallback' : 'connecting…';
 
-  // Top badge
   const badge = document.getElementById('topBadge');
   const bTxt  = document.getElementById('topBadgeTxt');
   if (badge) badge.dataset.status = status || 'loading';
   if (bTxt)  bTxt.textContent = { live:'LIVE', stale:'STALE', error:'OFFLINE', loading:'CONNECTING' }[status] || 'CONNECTING';
 }
 
-// Countdown timer
 let _countdownTimer = null, _nextRefreshAt = null;
 function startCountdown(secs) {
   _nextRefreshAt = Date.now() + secs * 1000;
@@ -1408,7 +1622,7 @@ function updateDrivers(ss, regime) {
   const te  = ss.traffic_source_enabled;
   const tf  = document.getElementById('df-traffic'), tv = document.getElementById('dv-traffic');
   const tsf = document.getElementById('df-tscore'),  tsv = document.getElementById('dv-tscore');
-  if (te === false) {
+  if (te !== true) {
     if (tf)  { tf.style.width = '0%'; }
     if (tv)  { tv.textContent = 'n/a'; tv.className = 'driver-val driver-na'; }
     if (tsf) { tsf.style.width = '0%'; }
@@ -1416,7 +1630,7 @@ function updateDrivers(ss, regime) {
   } else {
     const tev = typeof ss.traffic_event_count === 'number' ? ss.traffic_event_count : null;
     if (tf && tev !== null) { tf.style.width = Math.min(tev * 10, 100) + '%'; tf.style.background = tev > 5 ? 'var(--err)' : 'var(--warn)'; }
-    if (tv) { tv.textContent = tev !== null ? tev : '—'; tv.className = 'driver-val'; }
+    if (tv) { tv.textContent = tev !== null ? tev + ' events' : '—'; tv.className = 'driver-val'; }
     const tsc = typeof ss.traffic_score === 'number' ? ss.traffic_score : null;
     if (tsf && tsc !== null) { tsf.style.width = (tsc * 100) + '%'; tsf.style.background = tsc > .5 ? 'var(--err)' : 'var(--warn)'; }
     if (tsv) { tsv.textContent = tsc !== null ? tsc.toFixed(3) : '—'; tsv.className = 'driver-val'; }
@@ -1445,7 +1659,23 @@ function updateDrivers(ss, regime) {
   }
 }
 
-// ── POLICY IDEAS ──────────────────────────────────────────────────────────
+// ── TRAFFIC CONFIDENCE ROW ────────────────────────────────────────────────
+function updateTrafficConfidence(sourceSummary) {
+  const enabled = sourceSummary && sourceSummary.traffic_source_enabled === true;
+  const dot = document.getElementById("trafficConfidenceDot");
+  const status = document.getElementById("trafficConfidenceStatus");
+
+  if (dot) {
+    dot.className = "cov-dot " + (enabled ? "active" : "off");
+  }
+
+  if (status) {
+    status.className = "cov-status " + (enabled ? "active" : "off");
+    status.textContent = enabled ? "Live source" : "Not included";
+  }
+}
+
+// ── POLICY IDEAS RENDER ───────────────────────────────────────────────────
 function renderPolicyIdeas(ideas, scenario) {
   const list  = document.getElementById('policyList');
   const badge = document.getElementById('policyScenarioBadge');
@@ -1455,15 +1685,17 @@ function renderPolicyIdeas(ideas, scenario) {
 
 // ── CHART ─────────────────────────────────────────────────────────────────
 function cssVar(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim() }
-const ctx = document.getElementById('riskChart').getContext('2d');
+let chart;
 
 function buildCIDataset(regime, scenario) {
   const c = getCurve(regime, scenario);
   return { lo: c.map(x => x[1]), hi: c.map(x => x[2]) };
 }
 
-let chart;
 function initChart() {
+  const canvas = document.getElementById('riskChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
   const { regime, scenario, daysOfCover, targetProb } = state;
   const ac = getCurve(regime, scenario);
   const surface = cssVar('--surface'), border = cssVar('--border'), textMuted = cssVar('--text-muted');
@@ -1481,7 +1713,7 @@ function initChart() {
     borderWidth:0, pointRadius:0, tension:0.35, fill:'+1', order:4, _role:'ci' });
   ds.push({ label:'CI_lo', data:ci.lo, borderColor:cssVar('--ch-ci-line'), backgroundColor:'transparent',
     borderWidth:0.8, borderDash:[2,2], pointRadius:0, tension:0.35, fill:false, order:5, _role:'ci' });
-  ds.push({ label:'Target', data:DAYS.map(()=>targetProb), borderColor:'rgba(122,57,187,.7)',
+  ds.push({ label:'Target', data:DAYS.map(()=>targetProb), borderColor:cssVar('--wi-accent'),
     borderWidth:1.5, borderDash:[6,4], pointRadius:0, fill:false, order:1, _role:'target' });
 
   const si = DAYS.indexOf(daysOfCover), sp = ac[si][0];
@@ -1515,7 +1747,7 @@ function initChart() {
             label:  item  => {
               const r = item.dataset._role;
               if (r === 'ci')     return null;
-              if (r === 'target') return ` Target: ≤ ${targetProb}%`;
+              if (r === 'target') return ` Target: ≤ ${state.targetProb}%`;
               if (r === 'sel')    return ` Selection: ${item.parsed.y?.toFixed(2)}%`;
               if (r === 'min')    return ` Min required: ${item.parsed.y?.toFixed(2)}%`;
               if (r === 'curve')  return ` ${item.dataset.label}: ${item.parsed.y?.toFixed(2)}%`;
@@ -1536,6 +1768,7 @@ function initChart() {
 }
 
 function updateChart() {
+  if (!chart) return;
   const { regime, scenario, daysOfCover, targetProb } = state;
   const ac = getCurve(regime, scenario), ci = buildCIDataset(regime, scenario);
   const si = DAYS.indexOf(daysOfCover), sp = ac[si][0];
@@ -1569,14 +1802,11 @@ function updateChart() {
   chart.update();
 }
 
-// ── PASS/FAIL LOGIC ───────────────────────────────────────────────────────
-// Source of truth: stockout_probability <= targetProb means Meets Target.
-// Applied consistently to badge, rec card accent, hero KPI color, decision summary.
+// ── PASS/FAIL ─────────────────────────────────────────────────────────────
 function applyPassFail(meetsTarget, regime) {
-  const accents = { low:'--low-c', normal:'--primary', high:'--hi-c', extreme:'--ex-c' };
   const recPanel = document.getElementById('recPanel');
   if (recPanel) {
-    const accent = meetsTarget ? `var(${accents[regime] || '--primary'})` : 'var(--err)';
+    const accent = meetsTarget ? 'var(--ok)' : 'var(--err)';
     recPanel.style.setProperty('--rec-accent', accent);
   }
 
@@ -1585,22 +1815,23 @@ function applyPassFail(meetsTarget, regime) {
   if (badge && stTxt) {
     if (meetsTarget) {
       badge.className = 'status-badge pass';
-      badge.querySelector('svg').innerHTML = '<polyline points="20 6 9 17 4 12"/>';
-      badge.querySelector('svg').setAttribute('stroke-width','2.5');
+      const svg = badge.querySelector('svg');
+      if (svg) { svg.innerHTML = '<polyline points="20 6 9 17 4 12"/>'; svg.setAttribute('stroke-width','2.5'); }
       stTxt.textContent = 'Meets Target';
     } else {
       badge.className = 'status-badge fail';
-      badge.querySelector('svg').innerHTML = '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>';
-      badge.querySelector('svg').setAttribute('stroke-width','2');
+      const svg = badge.querySelector('svg');
+      if (svg) { svg.innerHTML = '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'; svg.setAttribute('stroke-width','2'); }
       stTxt.textContent = 'Fails Target';
     }
   }
 }
 
-
 function fmtTargetPct(n){ return Number.isInteger(n) ? `${n}%` : `${Number(n).toFixed(2)}%`; }
+
+// ── OPERATOR BANNER ───────────────────────────────────────────────────────
 function updateOperatorBanner(meetsTarget, selectedProb, targetProb, minDays, daysOfCover, stressScore, sourceSummary, scenario, isWhatIf){
-  const riskLimited = sourceSummary && sourceSummary.traffic_source_enabled === false;
+  const trafficEnabled = sourceSummary && sourceSummary.traffic_source_enabled === true;
   const bar = document.getElementById('operatorStatusBanner');
   const pill = document.getElementById('operatorStatusPill');
   const title = document.getElementById('operatorActionTitle');
@@ -1608,40 +1839,41 @@ function updateOperatorBanner(meetsTarget, selectedProb, targetProb, minDays, da
   const risk = document.getElementById('operatorRiskCompare');
   const cov = document.getElementById('operatorCoverageCompare');
   const trust = document.getElementById('operatorTrustCompare');
-  const req = minDays != null ? `${minDays} days needed, ${daysOfCover} days selected` : `6d+ needed, ${daysOfCover} days selected`;
-  const regimeLabel = stressScore < 0.2 ? 'Low' : stressScore < 0.45 ? 'Normal' : stressScore < 0.7 ? 'High' : 'Extreme';
+  const req = minDays != null ? `${minDays} needed · ${daysOfCover} selected` : `6d+ needed · ${daysOfCover} selected`;
 
-  let level = 'green', pillText = 'ON TRACK', titleText = 'PLAN MEETS TARGET';
-  if (!meetsTarget) { level = 'red'; pillText = 'ATTENTION NEEDED'; titleText = 'INCREASE COVERAGE'; }
-  else if (riskLimited) { level = 'yellow'; pillText = 'MONITOR'; titleText = 'PLAN MEETS TARGET'; }
+  let level = 'green', pillText = 'On Track', titleText = 'Plan meets target';
+  if (!meetsTarget) { level = 'red'; pillText = 'Action needed'; titleText = 'Increase coverage'; }
+  else if (!trafficEnabled) { level = 'yellow'; pillText = 'Monitor'; titleText = 'Plan meets target'; }
 
+  // Calm color mapping:
+  //   green = meets target with full source confidence
+  //   yellow/purple = meets target but partial source confidence
+  //   red = action needed
   if (bar) {
-    bar.style.background = level === 'green' ? '#E9FBF2' : level === 'yellow' ? '#FCEEF2' : '#FFF0F1';
-    bar.style.borderBottomColor = level === 'green' ? '#BEEFD2' : level === 'yellow' ? '#E9B8C7' : '#F3B9BC';
+    bar.style.background = level === 'green' ? '#ECFBF6' : level === 'yellow' ? '#F3EEFE' : '#FDEEF3';
+    bar.style.borderBottomColor = level === 'green' ? '#BEEFD2' : level === 'yellow' ? 'rgba(123,97,255,.28)' : '#F3B9BC';
   }
-  if (pill) { pill.textContent = pillText; pill.style.background = level === 'green' ? '#0F9D7A' : level === 'yellow' ? '#7C3AED' : '#BE123C'; pill.style.borderColor = level === 'green' ? '#0B7A5F' : level === 'yellow' ? '#5B21B6' : '#881337'; pill.style.color = '#FFFFFF'; pill.style.boxShadow = level === 'green' ? '0 10px 24px rgba(15,157,122,.24)' : level === 'yellow' ? '0 10px 24px rgba(124,58,237,.24)' : '0 10px 24px rgba(190,18,60,.30)'; }
+  if (pill) {
+    pill.textContent = pillText;
+    pill.style.background = level === 'green' ? 'var(--ok)' : level === 'yellow' ? 'var(--wi-accent)' : 'var(--err)';
+    pill.style.color = '#FFFFFF';
+    pill.style.boxShadow = level === 'green' ? '0 6px 16px rgba(15,157,122,.22)' : level === 'yellow' ? '0 6px 16px rgba(124,58,237,.22)' : '0 6px 16px rgba(200,30,91,.22)';
+  }
   if (title) title.textContent = titleText;
   if (sub) sub.textContent = meetsTarget
     ? `Current ${daysOfCover}-day policy meets the ${fmtTargetPct(targetProb)} target ${isWhatIf ? 'in this hypothetical test' : 'under current live conditions'}.`
     : `Increase coverage from ${daysOfCover} to ${minDays != null ? minDays : '6d+'} days. Current plan fails the ${fmtTargetPct(targetProb)} target.`;
-  if (risk) risk.textContent = `${selectedProb.toFixed(2)}% vs ${fmtTargetPct(targetProb)} target`;
+  if (risk) risk.textContent = `${selectedProb.toFixed(2)}% vs ${fmtTargetPct(targetProb)}`;
   if (cov) cov.textContent = req;
-  if (trust) trust.innerHTML = `Confidence: Medium<br><span style="font-weight:500;color:var(--warn)">Weather feed active; traffic feed not connected.</span>`;
+
+  if (trust) {
+    trust.innerHTML = trafficEnabled
+      ? `Confidence: Higher<br><span style="font-weight:500;color:var(--ok)">Weather and Georgia 511 traffic feeds active.</span>`
+      : `Confidence: Medium<br><span style="font-weight:500;color:var(--warn)">Weather feed active; traffic feed not connected.</span>`;
+  }
+
   const callout = document.getElementById('chartCallout');
   if (callout) callout.textContent = `Recommended: ${minDays != null ? minDays + ' days' : '6d+'}`;
-
-  const execFeed = document.getElementById('tickerFeed');
-  if (execFeed && window.__tickerView === 'exec') {
-    const ts = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-    const items = [
-      `Current ${daysOfCover}-day plan ${meetsTarget ? 'meets' : 'fails'} the ${fmtTargetPct(targetProb)} target.`,
-      `Model recommends ${minDays != null ? minDays : '6d+'} days${minDays != null && daysOfCover > minDays ? `; selected plan has ${daysOfCover - minDays} day${daysOfCover - minDays === 1 ? '' : 's'} of buffer.` : ''}`,
-      `Weather feed active; Georgia 511 traffic feed not connected.`,
-      `Current disruption level is ${regimeLabel}.`
-    ];
-    execFeed.innerHTML = items.map(msg => `<div class="tick"><span class="tick-ts">${ts}</span><span class="tick-msg">${msg}</span></div>`).join('');
-    const badge = document.getElementById('tickerCount'); if (badge) badge.textContent = `${items.length} entries`;
-  }
 }
 
 function updateDashboard() {
@@ -1666,32 +1898,31 @@ function updateDashboard() {
   document.querySelectorAll('.kpi-val,.rec-num,.rmi-val,.kpi-ci,.rmi-ci,.hkpi-val').forEach(e => e.classList.add('fading'));
 
   setTimeout(() => {
-    // Rec panel
-    document.getElementById('recNum').textContent = minDays !== null ? minDays : '6d+';
-    document.getElementById('recCI').textContent  = minDays ? `(${regime} stress, ${scenario})` : '(above 6d range — strengthen mitigation)';
+    const recNumEl = document.getElementById('recNum');
+    if (recNumEl) recNumEl.textContent = minDays !== null ? minDays : '6d+';
+    const recCIEl = document.getElementById('recCI');
+    if (recCIEl) recCIEl.textContent = minDays ? `(${regime} stress, ${scenario})` : '(above 6d range — strengthen mitigation)';
 
-    // Pass/fail (authoritative: sp vs targetProb)
     applyPassFail(meetsTarget, regime);
 
-    document.getElementById('rmSel').textContent      = daysOfCover + ' days';
-    document.getElementById('rmSelStkout').textContent = `P(stockout) = ${sp.toFixed(2)}% [${spLo.toFixed(2)}–${spHi.toFixed(2)}%]`;
-    document.getElementById('rmMin').textContent       = minDays !== null ? minDays + ' days' : '> 6 days';
-    document.getElementById('rmMinCI').textContent     = minDays ? `≤ ${targetProb}% constraint` : 'exceeds modeled range';
-    document.getElementById('rmOpt').textContent       = optDays ? optDays + ' days' : 'N/A';
-    document.getElementById('rmOptCI').textContent     = optCost ? `Includes shortage-cost reduction. ${optCost.toFixed(2)}` : '—';
-    document.getElementById('rmMargin').textContent    = coverageMargin !== null ? (coverageMargin >= 0 ? '+' : '') + coverageMargin + ' days' : 'n/a';
-    document.getElementById('rmMarginTxt').textContent = coverageMargin === null ? 'no policy in 2–6d range meets target'
+    const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+    set('rmSel', daysOfCover + ' days');
+    set('rmSelStkout', `P(stockout) = ${sp.toFixed(2)}% [${spLo.toFixed(2)}–${spHi.toFixed(2)}%]`);
+    set('rmMin', minDays !== null ? minDays + ' days' : '> 6 days');
+    set('rmMinCI', minDays ? `≤ ${targetProb}% target` : 'exceeds modeled range');
+    set('rmOpt', optDays ? optDays + ' days' : 'N/A');
+    set('rmOptCI', optCost ? `cost index ${optCost.toFixed(2)}` : '—');
+    set('rmMargin', coverageMargin !== null ? (coverageMargin >= 0 ? '+' : '') + coverageMargin + ' days' : 'n/a');
+    set('rmMarginTxt', coverageMargin === null ? 'no policy in 2–6d range meets target'
       : coverageMargin < 0 ? 'below minimum — fails'
       : coverageMargin === 0 ? 'at minimum threshold'
-      : coverageMargin + 'd buffer';
-    document.getElementById('recNarrative').textContent = buildNarrative(outputs);
+      : coverageMargin + 'd buffer');
+    set('recNarrative', buildNarrative(outputs));
 
-    // Regime buttons highlight (what-if only — in live mode buttons are locked)
     document.querySelectorAll('[data-regime]').forEach(b => b.classList.remove('active'));
     const rb = document.querySelector(`[data-regime="${regime}"]`);
     if (rb) rb.classList.add('active');
 
-    // Signal bars
     const comp = sd.components;
     function setBar(id, val) {
       const fill = document.getElementById('sb-' + id), valEl = document.getElementById('sv-' + id);
@@ -1704,28 +1935,22 @@ function updateDashboard() {
     if (compFill) compFill.style.background = sd.score > .7 ? 'var(--err)' : sd.score > .45 ? 'var(--warn)' : 'var(--primary)';
     setBar('composite', sd.score);
 
-    // Decision summary
     const bullets = buildBullets(outputs);
-    const db1 = document.getElementById('db1'), db2 = document.getElementById('db2'),
-          db3 = document.getElementById('db3'), db4 = document.getElementById('db4'),
-          da  = document.getElementById('decAction');
-    if (db1) db1.textContent = bullets.b1;
-    if (db2) db2.textContent = bullets.b2;
-    if (db3) db3.textContent = bullets.b3;
-    if (db4) db4.textContent = bullets.b4;
-    if (da)  da.textContent  = bullets.action;
+    set('db1', bullets.b1);
+    set('db2', bullets.b2);
+    set('db3', bullets.b3);
+    set('db4', bullets.b4);
+    set('decAction', bullets.action);
 
-    // Executive summary
     const exec = document.getElementById('execSummary');
     if (exec) exec.innerHTML = buildExecSummary(regime, scenario, daysOfCover, sp, minDays, _mode === 'whatif');
 
-    // Hero (model-based values — overwritten by applyPayload when API responds)
     updateHero(sd.score, regime, minDays, sp, spLo, spHi, scenario, null, _currentStatus);
 
-    // Policy ideas
     const ideas = buildPolicyIdeas(regime, scenario, minDays, daysOfCover, meetsTarget, coverageMargin, sd.score);
     renderPolicyIdeas(ideas, scenario);
     updateOperatorBanner(meetsTarget, sp, targetProb, minDays, daysOfCover, sd.score, window.__lastSourceSummary || null, scenario, _mode === 'whatif');
+    updateTrafficConfidence(window.__lastSourceSummary || null);
 
     document.querySelectorAll('.kpi-val,.rec-num,.rmi-val,.kpi-ci,.rmi-ci,.hkpi-val').forEach(e => e.classList.remove('fading'));
     updateChart();
@@ -1733,59 +1958,69 @@ function updateDashboard() {
 }
 
 // ── EVENT HANDLERS ────────────────────────────────────────────────────────
-document.getElementById('regimeGroup').addEventListener('click', e => {
-  const btn = e.target.closest('[data-regime]'); if (!btn) return;
-  // Only act if in what-if mode
-  if (_mode !== 'whatif') return;
-  state.regime = btn.dataset.regime;
-  updateDashboard();
-  const rl = { low:'Low Stress', normal:'Normal Stress', high:'High Stress', extreme:'Extreme Stress' }[state.regime];
-  addTick('MODE', `User selected what-if regime: <strong>${rl}</strong>`);
-  addTick('WARN', `What-if output shown; live source layer remains <strong>${{ low:'Low Stress', normal:'Normal Stress', high:'High Stress', extreme:'Extreme Stress' }[_liveRegime] || _liveRegime}</strong>`);
-});
+function bindEventHandlers() {
+  const regimeGroup = document.getElementById('regimeGroup');
+  if (regimeGroup) regimeGroup.addEventListener('click', e => {
+    const btn = e.target.closest('[data-regime]'); if (!btn) return;
+    if (_mode !== 'whatif') return;
+    state.regime = btn.dataset.regime;
+    updateDashboard();
+    const rl = { low:'Low Stress', normal:'Normal Stress', high:'High Stress', extreme:'Extreme Stress' }[state.regime];
+    addTick('MODE', `User selected what-if regime: <strong>${rl}</strong>`);
+  });
 
-document.getElementById('scenarioGroup').addEventListener('click', e => {
-  const btn = e.target.closest('[data-scenario]'); if (!btn) return;
-  document.querySelectorAll('[data-scenario]').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  state.scenario = btn.dataset.scenario;
-  updateDashboard();
-  if (_mode === 'live') {
-    addTick('DATA', `Scenario changed to <strong>${btn.dataset.scenario}</strong> — fetching live data`);
-    LiveData.fetchLatest();
-  } else {
-    addTick('DATA', `What-if scenario changed to <strong>${btn.dataset.scenario}</strong>`);
-  }
-});
-
-document.getElementById('docsSlider').addEventListener('input', e => {
-  state.daysOfCover = +e.target.value;
-  const dv = document.getElementById('docsVal');
-  if (dv) dv.textContent = state.daysOfCover + 'd';
-  updateDashboard();
-  if (_mode === 'live' && !_applyingPayload) {
-    clearTimeout(_sliderFetchTimer);
-    _sliderFetchTimer = setTimeout(() => {
-      addTick('DATA', `Days of cover set to <strong>${state.daysOfCover}d</strong> — fetching live data`);
+  const scenarioGroup = document.getElementById('scenarioGroup');
+  if (scenarioGroup) scenarioGroup.addEventListener('click', e => {
+    const btn = e.target.closest('[data-scenario]'); if (!btn) return;
+    document.querySelectorAll('[data-scenario]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.scenario = btn.dataset.scenario;
+    updateDashboard();
+    if (_mode === 'live') {
+      addTick('DATA', `Scenario changed to <strong>${btn.dataset.scenario}</strong> — fetching live data`);
       LiveData.fetchLatest();
-    }, 400);
-  }
-});
+    } else {
+      addTick('DATA', `What-if scenario changed to <strong>${btn.dataset.scenario}</strong>`);
+    }
+  });
 
-document.getElementById('targetSel').addEventListener('change', e => { state.targetProb = +e.target.value; updateDashboard(); });
-document.getElementById('holdingCost').addEventListener('change', e => { state.holdingCost = +e.target.value; updateDashboard(); });
-document.getElementById('shortageCost').addEventListener('change', e => { state.shortageCost = +e.target.value; updateDashboard(); });
-document.getElementById('assumpToggle').addEventListener('click', () => {
-  const open = document.getElementById('assumpBody').classList.toggle('open');
-  document.getElementById('assumpToggle').classList.toggle('open', open);
-  document.getElementById('assumpToggle').setAttribute('aria-expanded', open);
-});
-document.documentElement.setAttribute('data-theme', 'dark');
+  const docsSlider = document.getElementById('docsSlider');
+  if (docsSlider) docsSlider.addEventListener('input', e => {
+    state.daysOfCover = +e.target.value;
+    const dv = document.getElementById('docsVal');
+    if (dv) dv.textContent = state.daysOfCover + 'd';
+    updateDashboard();
+    if (_mode === 'live' && !_applyingPayload) {
+      clearTimeout(_sliderFetchTimer);
+      _sliderFetchTimer = setTimeout(() => {
+        addTick('DATA', `Days of cover set to <strong>${state.daysOfCover}d</strong> — fetching live data`);
+        LiveData.fetchLatest();
+      }, 400);
+    }
+  });
+
+  const targetSel = document.getElementById('targetSel');
+  if (targetSel) targetSel.addEventListener('change', e => { state.targetProb = +e.target.value; updateDashboard(); });
+
+  const holdingCost = document.getElementById('holdingCost');
+  if (holdingCost) holdingCost.addEventListener('change', e => { state.holdingCost = +e.target.value; updateDashboard(); });
+
+  const shortageCost = document.getElementById('shortageCost');
+  if (shortageCost) shortageCost.addEventListener('change', e => { state.shortageCost = +e.target.value; updateDashboard(); });
+
+  const assumpToggle = document.getElementById('assumpToggle');
+  if (assumpToggle) assumpToggle.addEventListener('click', () => {
+    const body = document.getElementById('assumpBody');
+    if (!body) return;
+    const open = body.classList.toggle('open');
+    assumpToggle.classList.toggle('open', open);
+    assumpToggle.setAttribute('aria-expanded', open);
+  });
+}
 
 /* ══════════════════════════════════════════════════════════════════════════
    LIVE DATA MODULE
    Polls /api/latest every 60 seconds. Graceful fallback on failure.
-   stockout_probability / ci_low / ci_high arrive as DECIMAL (0–1).
 ══════════════════════════════════════════════════════════════════════════ */
 const LiveData = (() => {
   const POLL_INTERVAL = 60_000;
@@ -1810,10 +2045,16 @@ const LiveData = (() => {
   function applyPayload(d) {
     if (!d) return;
 
-    // Always update the live regime tracker
+    // Save source_summary globally so all helpers can read it
+    if (d.source_summary) {
+      window.__lastSourceSummary = d.source_summary;
+    }
+
+    // Update the traffic-confidence row immediately
+    updateTrafficConfidence(d.source_summary);
+
     if (d.regime) _liveRegime = d.regime;
 
-    // Only update displayed regime if in live mode
     if (_mode === 'live') {
       if (d.regime && d.regime !== state.regime) state.regime = d.regime;
       if (d.scenario) {
@@ -1828,18 +2069,15 @@ const LiveData = (() => {
       }
       _applyingPayload = true; updateDashboard(); _applyingPayload = false;
     }
-    // In what-if mode: do NOT update regime/dashboard — just update drivers and ticker
 
     setTimeout(() => {
       if (_mode === 'live') {
-        // Full overlay in live mode
         if (typeof d.stockout_probability === 'number') {
           const pct = d.stockout_probability * 100;
           if (typeof d.stockout_ci_low === 'number' && typeof d.stockout_ci_high === 'number') {
             const rmSS = document.getElementById('rmSelStkout');
             if (rmSS) rmSS.textContent = 'P(stockout) = ' + pct.toFixed(2) + '% [' + (d.stockout_ci_low*100).toFixed(2) + '\u2013' + (d.stockout_ci_high*100).toFixed(2) + '%]';
           }
-          // Re-evaluate pass/fail from API stockout probability
           const apiMeetsTarget = (d.stockout_probability * 100) <= state.targetProb;
           applyPassFail(apiMeetsTarget, d.regime || state.regime);
         }
@@ -1853,7 +2091,7 @@ const LiveData = (() => {
             : d.minimum_feasible_days !== null && d.minimum_feasible_days !== undefined ? d.minimum_feasible_days : '6d+'; }
         { const rm = document.getElementById('rmMin');
           if (rm) rm.textContent = (d.minimum_feasible_days !== null && d.minimum_feasible_days !== undefined) ? d.minimum_feasible_days + ' days' : '> 6 days'; }
-        // Hero full overlay — decision summary + takeaway handled below with unified API values
+
         const sp2 = typeof d.stockout_probability === 'number' ? d.stockout_probability * 100 : null;
         const sl2 = typeof d.stockout_ci_low  === 'number' ? d.stockout_ci_low  * 100 : null;
         const sh2 = typeof d.stockout_ci_high === 'number' ? d.stockout_ci_high * 100 : null;
@@ -1872,11 +2110,8 @@ const LiveData = (() => {
 
         updateHero(liveScore, liveRegime, recD2, sp2, sl2, sh2, liveScenario, d.timestamp, 'live');
 
-        // Exec summary — use API values as source of truth
-        const exec = document.getElementById('execSummary');
         if (exec) exec.innerHTML = buildExecSummary(liveRegime, liveScenario, state.daysOfCover, sp2pct, minD2, false);
 
-        // Decision summary — rebuild bullets from API values so they match hero
         const apiOutputs = {
           regime: liveRegime, scenario: liveScenario, daysOfCover: state.daysOfCover,
           targetProb: state.targetProb, meetsTarget: metT2,
@@ -1894,19 +2129,18 @@ const LiveData = (() => {
         if (db2e) db2e.textContent = apiBullets.b2;
         if (db3e) db3e.textContent = apiBullets.b3;
         if (db4e) db4e.textContent = apiBullets.b4;
-        // Prefer operational_takeaway from API; fall back to built bullets
         const takeaway = (typeof d.operational_takeaway === 'string' && d.operational_takeaway)
           ? d.operational_takeaway : apiBullets.action;
         if (dae) dae.textContent = takeaway;
-        // Also patch narrative to match API values
         const recNarEl = document.getElementById('recNarrative');
         if (recNarEl) recNarEl.textContent = buildNarrative(apiOutputs);
-        // Pass/fail with API values
         applyPassFail(metT2, liveRegime);
 
-        // Policy ideas — use API values
         const ideas = buildPolicyIdeas(liveRegime, liveScenario, minD2, state.daysOfCover, metT2, covM2, liveScore);
         renderPolicyIdeas(ideas, liveScenario);
+
+        // User-required: refresh operator banner with API values + live source_summary so traffic-trust text updates
+        updateOperatorBanner(metT2, sp2pct, state.targetProb, minD2, state.daysOfCover, liveScore, d.source_summary || window.__lastSourceSummary || null, liveScenario, false);
       }
 
       // Always update drivers (live source layer — shown in both modes)
@@ -1925,7 +2159,6 @@ const LiveData = (() => {
       applyPayload(d);
       const ticks = buildTicksFromPayload(d);
       if (_mode === 'whatif') {
-        // In what-if, note that live API refreshed but what-if is active
         const rl = { low:'Low Stress', normal:'Normal Stress', high:'High Stress', extreme:'Extreme Stress' }[d.regime] || d.regime;
         ticks[0] = { tag:'MODE', msg:`Live fetch completed — API regime: <strong>${rl}</strong>. What-if override active.` };
       }
@@ -1948,287 +2181,38 @@ const LiveData = (() => {
   return { startPolling, fetchLatest: fetchLiveData };
 })();
 
-// ── INIT ──────────────────────────────────────────────────────────────────
-initChart();
-updateDashboard();
-LiveData.startPolling();
+// ── REQUIRED-ELEMENTS GUARD ──────────────────────────────────────────────
+function verifyRequiredElements() {
+  const requiredIds = [
+    "riskChart","recNum","recCI","rmSel","rmSelStkout","rmMin","rmMinCI",
+    "rmOpt","rmOptCI","rmMargin","rmMarginTxt","recNarrative","statusBadge",
+    "statusTxt","execSummary","tickerFeed","tickerCount","policyList",
+    "policyScenarioBadge","df-nws","dv-nws","df-weather","dv-weather",
+    "df-traffic","dv-traffic","df-tscore","dv-tscore","df-port","dv-port",
+    "dv-sources","dv-failures"
+  ];
+  const missing = [];
+  for (const id of requiredIds) {
+    if (!document.getElementById(id)) missing.push(id);
+  }
+  if (missing.length) {
+    try { console.error("[SAID] Missing required DOM elements:", missing); } catch (e) {}
+    return false;
+  }
+  return true;
+}
+
+// ── INIT (DOM-safe) ──────────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", () => {
+  if (!verifyRequiredElements()) {
+    const badge = document.getElementById("topBadgeTxt");
+    if (badge) badge.textContent = "PAGE ERROR";
+    return;
+  }
+  initChart();
+  updateDashboard();
+  LiveData.startPolling();
+});
 </script>
 </body>
 </html>
-    <div style="padding:10px 16px 0;">
-      <details class="card" style="min-height:auto;overflow:hidden;">
-        <summary style="cursor:pointer;list-style:none;padding:12px 14px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text);display:flex;justify-content:space-between;align-items:center;">
-          Limitations & assumptions
-          <span aria-hidden="true" style="color:var(--text-muted);">▾</span>
-        </summary>
-        <div class="card-body" style="padding-top:0;font-size:11px;color:var(--text-muted);line-height:1.65;display:flex;flex-direction:column;gap:8px;">
-          <div>This app does not directly observe store shelves, exact inventory levels, truck GPS feeds, or realized grocery demand. It estimates risk from proxy disruption signals and a model.</div>
-          <div>Current recommendations are most useful as decision support, not as a guarantee of actual stock availability.</div>
-          <div>Historical backtesting against real lane-level replenishment outcomes and demand calibration would improve confidence in future versions.</div>
-        </div>
-      </details>
-    </div>
-
-    <div style="padding:10px 16px 0;">
-      <details class="card" style="min-height:auto;overflow:hidden;">
-        <summary style="cursor:pointer;list-style:none;padding:12px 14px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text);display:flex;justify-content:space-between;align-items:center;">
-          Math methodology
-          <span aria-hidden="true" style="color:var(--text-muted);">▾</span>
-        </summary>
-        <div class="card-body" style="padding-top:0;font-size:11px;color:var(--text-muted);line-height:1.7;display:flex;flex-direction:column;gap:8px;">
-          <div><strong style="color:var(--text)">1. Signal aggregation.</strong> Live weather, traffic, and port-related inputs are normalized to a 0–1 scale and combined into a disruption score. This score is mapped into a qualitative disruption level such as Low, Normal, High, or Extreme.</div>
-          <div><strong style="color:var(--text)">2. Risk curve mapping.</strong> For each disruption level, the app uses an estimated relationship between days of stock coverage and the probability of running out before replenishment arrives. Higher disruption shifts the curve upward, meaning more coverage is needed to achieve the same risk limit.</div>
-          <div><strong style="color:var(--text)">3. Policy selection rule.</strong> Let p(d) denote the estimated probability of running out at d days of stock, and let tau denote the selected risk limit. The recommended policy is the smallest d in the allowed range such that p(d) is less than or equal to tau. If no policy from 2 to 6 days satisfies the rule, the app reports 6d+.</div>
-          <div><strong style="color:var(--text)">4. Comparative outputs.</strong> The interface reports the selected plan, the minimum recommended coverage, the gap between them, and a scenario comparison so users can see how the decision changes as disruption increases.</div>
-          <div><strong style="color:var(--text)">5. Practical interpretation.</strong> This is a decision-support approximation, not a direct measurement of shelf inventory. The math helps translate proxy disruption signals into an operational recommendation under uncertainty.</div>
-        </div>
-      </details>
-    </div>
-
-    <div style="padding:10px 16px 0;">
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">Creator note</div></div>
-        <div class="card-body" style="font-size:11px;color:var(--text-muted);line-height:1.6;">Built by <strong style="color:var(--text)">Neil Sharma</strong> as a decision-support prototype exploring how public disruption signals can be translated into clearer operational inventory decisions.</div>
-      </div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:10px 16px 0;">
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">Why this matters</div></div>
-        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">Small delays in weather, traffic, or port flow can change whether a grocery inventory plan is likely to run out before the next delivery. This tool turns those signals into a practical stocking recommendation.</div>
-      </div>
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">How it works</div></div>
-        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">Live disruption signals feed a risk model, the model estimates the chance of running out of stock, and the app recommends how many days of coverage are needed to stay below the selected risk limit.</div>
-      </div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:12px 16px 0;">
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">Why this matters</div></div>
-        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">This app turns live delivery-route disruption signals into a practical grocery inventory decision.</div>
-      </div>
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">What makes it useful</div></div>
-        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">It compares the current plan with the recommended plan instead of only showing a risk score.</div>
-      </div>
-      <div class="card" style="min-height:auto;">
-        <div class="panel-hdr"><div class="panel-title">Why trust it carefully</div></div>
-        <div class="card-body" style="font-size:12px;color:#314760;line-height:1.65;">It shows what live sources are active and clearly separates current conditions from hypothetical tests.</div>
-      </div>
-    </div>
-
-<!-- CURRENT READOUT (executive summary) -->
-    <div class="readout-bar">
-      <div class="readout-title">Current Readout</div>
-      <span id="execSummary">Connecting to live data feed…</span>
-    </div>
-
-    <!-- HOW TO READ THIS -->
-      <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:none;color:var(--text);padding:7px 18px 0;">How to read this</div>
-    <div class="how-to-bar">
-      <div class="how-to-item">
-        <div class="how-to-dot"></div>
-        <span><strong>Disruption pressure</strong> shows current disruption pressure from live signals.</span>
-      </div>
-      <div class="how-to-item">
-        <div class="how-to-dot"></div>
-        <span><strong>Chance of running out</strong> estimates the chance the selected coverage policy fails.</span>
-      </div>
-      <div class="how-to-item">
-        <div class="how-to-dot"></div>
-        <span><strong>Days of stock you need</strong> shows the minimum days of inventory needed to meet the service target.</span>
-      </div>
-    </div>
-
-    <!-- SCROLLABLE CONTENT -->
-    <div class="content">
-
-      <!-- Methodology note -->
-      <div class="method-note">
-        <strong>Note:</strong> Live data sources do not directly measure grocery stockouts. They measure disruption signals such as weather and port conditions. The model uses those signals to estimate inventory risk on the Savannah to Atlanta replenishment lane.
-      </div>
-
-      <!-- ABOVE FOLD: Ticker (left, wide) + Drivers/Policy (right, stacked) -->
-      <div class="above-fold">
-
-        <!-- Ticker -->
-        <div class="ticker-panel">
-          <div class="panel-hdr">
-            <div class="panel-title">What changed?</div>
-            <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
-              <button id="tickerViewExec" class="ticker-view-btn active" onclick="setTickerView('exec')" title="Show policy, risk, and mode events only">Executive</button>
-              
-              <button id="tickerViewTech" class="ticker-view-btn"         onclick="setTickerView('tech')" title="Show all diagnostic entries">Technical Log</button>
-            </div>
-            <div class="panel-badge" id="tickerCount">0 entries</div>
-          </div>
-          <div class="ticker-feed" id="tickerFeed">
-            <div class="tick">
-              <span class="tick-ts">—</span>
-              <span class="tick-tag SOURCE">SOURCE</span>
-              <span class="tick-msg">Waiting for first live fetch…</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right column: Drivers + Policy Ideas -->
-        <div class="right-col">
-
-          <!-- Risk Drivers -->
-          <div class="card">
-            <div class="panel-hdr">
-              <div class="panel-title">Risk Drivers</div>
-              <div class="panel-badge" id="driverSourceBadge">—</div>
-            </div>
-            <div class="card-body">
-              <div class="driver-row">
-                <div class="driver-label">National Weather Service alerts</div>
-                <div class="driver-track"><div class="driver-fill" id="df-nws" style="width:0%;background:var(--ok)"></div></div>
-                <div class="driver-val" id="dv-nws">—</div>
-              </div>
-              <div class="driver-row">
-                <div class="driver-label">Weather Score</div>
-                <div class="driver-track"><div class="driver-fill" id="df-weather" style="width:0%;background:var(--primary)"></div></div>
-                <div class="driver-val" id="dv-weather">—</div>
-              </div>
-              <div class="driver-row">
-                <div class="driver-label">Traffic Events</div>
-                <div class="driver-track"><div class="driver-fill" id="df-traffic" style="width:0%"></div></div>
-                <div class="driver-val driver-na" id="dv-traffic">n/a</div>
-              </div>
-              <div class="driver-row">
-                <div class="driver-label">Traffic Score</div>
-                <div class="driver-track"><div class="driver-fill" id="df-tscore" style="width:0%"></div></div>
-                <div class="driver-val driver-na" id="dv-tscore">n/a</div>
-              </div>
-              <div class="driver-row">
-                <div class="driver-label">Port Baseline</div>
-                <div class="driver-track"><div class="driver-fill" id="df-port" style="width:0%;background:var(--warn)"></div></div>
-                <div class="driver-val" id="dv-port">—</div>
-              </div>
-              <div class="driver-meta">
-                <div class="driver-meta-item">Sources: <span id="dv-sources">—</span></div>
-                <div class="driver-meta-item" id="dv-failures-wrap">Failures: <span id="dv-failures" style="color:var(--text-muted)">none</span></div>
-              </div>
-              <!-- Note shown only in what-if mode -->
-              <div class="source-layer-note">
-                Live source layer — these are the actual API signals. The what-if regime above is a hypothetical test; this data reflects current real conditions.
-              </div>
-            </div>
-          </div>
-
-          <!-- Policy Ideas -->
-          <div class="card">
-            <div class="panel-hdr">
-              <div class="panel-title">Policy Ideas</div>
-              <div class="panel-badge" id="policyScenarioBadge">baseline</div>
-            </div>
-            <div class="card-body">
-              <div class="policy-list" id="policyList">
-                <div class="policy-item"><div class="policy-dot"></div><span>Awaiting live data…</span></div>
-              </div>
-            </div>
-          </div>
-
-        </div><!-- /.right-col -->
-      </div><!-- /.above-fold -->
-
-      <!-- MID FOLD: Can I trust this estimate? + Recommendation -->
-      <div class="mid-fold">
-
-        <!-- Can I trust this estimate? -->
-        <div class="card">
-          <div class="panel-hdr">
-            <div class="panel-title">Can I trust this estimate?</div>
-            <div class="panel-badge">Confidence</div>
-          </div>
-          <div class="card-body">
-            <div class="coverage-list">
-              <div class="cov-item">
-                <div class="cov-dot active"></div>
-                <div class="cov-status active">Live source</div>
-                <div class="cov-name">National Weather Service weather feed</div>
-              </div>
-              <div class="cov-item">
-                <div class="cov-dot off"></div>
-                <div class="cov-status off">Not included</div>
-                <div class="cov-name">Georgia 511 traffic feed</div>
-              </div>
-              <div class="cov-item">
-                <div class="cov-dot warn"></div>
-                <div class="cov-status warn">Manual input</div>
-                <div class="cov-name">Port baseline (static estimate)</div>
-              </div>
-              <div class="cov-item">
-                <div class="cov-dot off"></div>
-                <div class="cov-status off">Not included</div>
-                <div class="cov-name">Real inventory levels</div>
-              </div>
-              <div class="cov-item">
-                <div class="cov-dot off"></div>
-                <div class="cov-status off">Not included</div>
-                <div class="cov-name">Truck GPS / estimated arrival time feed</div>
-              </div>
-              <div class="cov-item">
-                <div class="cov-dot future"></div>
-                <div class="cov-status future">Not included</div>
-                <div class="cov-name">Historical disruption log</div>
-              </div>
-              <div class="cov-item">
-                <div class="cov-dot future"></div>
-                <div class="cov-status future">Not included</div>
-                <div class="cov-name">Demand distribution fitting</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Policy Recommendation -->
-        <div class="rec-card" id="recPanel">
-          <div class="rec-card-body">
-            <div class="rec-top">
-              <div>
-                <div class="rec-eyebrow">Policy Recommendation</div>
-                <div class="rec-main">
-                  <span class="rec-num" id="recNum">—</span>
-                  <span class="rec-unit">days of cover</span>
-                  <span class="rec-ci" id="recCI"></span>
-                </div>
-              </div>
-              <div id="statusBadge" class="status-badge pass" data-testid="badge-status">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span id="statusTxt">Meets Target</span>
-              </div>
-            </div>
-
-            <div class="rec-meta">
-              <div>
-                <div class="rmi-label">Selected policy</div>
-                <div class="rmi-val" id="rmSel">— days</div>
-                <div class="rmi-ci" id="rmSelStkout">P(stockout) = —</div>
-              </div>
-              <div>
-                <div class="rmi-label">Minimum Required</div>
-                <div class="rmi-val" id="rmMin">— days</div>
-                <div class="rmi-ci" id="rmMinCI">≤ 2% target</div>
-              </div>
-              <div>
-                <div class="rmi-label">Lowest Estimated Total Cost</div>
-                <div class="rmi-val" id="rmOpt">— days</div>
-                <div class="rmi-ci" id="rmOptCI">Includes shortage-cost reduction. —</div>
-              </div>
-              <div>
-                <div class="rmi-label">Stock gap</div>
-                <div class="rmi-val" id="rmMargin">— days</div>
-                <div class="rmi-ci" id="rmMarginTxt">—</div>
-              </div>
-            </div>
-
-            <div class="rec-narrative" id="recNarrative" data-testid="text-narrative">Loading…</div><div style="margin-top:8px;font-size:10px;color:var(--text-muted);line-height:1.5;">If the plan fails target, the selected number of stock days is not enough to keep estimated running-out risk below the chosen limit. If the plan meets target, the selected number of stock days is enough under the current model estimate.</div>
-          </div>
-        </div>
-
-      </div><!-- /.mid-fold -->
-
-  

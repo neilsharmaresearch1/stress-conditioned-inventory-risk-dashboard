@@ -106,6 +106,7 @@
     .live-badge[data-status="live"]  { background: var(--primary-bg); color: var(--primary); border-color: rgba(37,99,235,.22) }
     .live-badge[data-status="stale"] { background: var(--warn-bg); color: var(--warn); border-color: rgba(139,92,246,.24) }
     .live-badge[data-status="error"] { background: var(--err-bg); color: var(--err); border-color: rgba(200,30,91,.22) }
+    .live-badge[data-status="local"] { background: #FFF7E6; color: #B26B00; border-color: #FFE0A3 }
     .live-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0 }
     [data-status="live"] .live-dot { animation: blink 2.4s ease-in-out infinite }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
@@ -421,10 +422,10 @@
     /* ─── CONTENT GRID ───────────────────────────────────────────────────── */
     .content {
       flex: 1;
-      padding: 16px 18px;
+      padding: 20px 22px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 18px;
     }
 
     .method-note {
@@ -437,8 +438,11 @@
     /* ─── CORE TWO-COLUMN: chart + decision ──────────────────────────────── */
     .core-fold {
       display: grid;
-      grid-template-columns: 1fr 380px;
-      gap: 14px;
+      grid-template-columns: 1fr 440px;
+      gap: 18px;
+    }
+    @media (max-width: 1200px) {
+      .core-fold { grid-template-columns: 1fr 380px; gap: 14px; }
     }
 
     /* Generic card */
@@ -522,7 +526,7 @@
       content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
       background: var(--rec-accent, var(--ok)); transition: background var(--tr);
     }
-    .rec-card-body { padding: 14px 18px }
+    .rec-card-body { padding: 16px 20px }
 
     .rec-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 12px }
     .rec-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: .10em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 4px }
@@ -539,8 +543,8 @@
     .status-badge.fail { background: var(--err-bg); color: var(--err); border: 1px solid #F3B9BC }
 
     .rec-meta {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 12px 18px;
-      border-top: 1px solid var(--divider); margin-top: 10px; padding-top: 12px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px 22px;
+      border-top: 1px solid var(--divider); margin-top: 12px; padding-top: 14px;
     }
     .rmi-label { font-size: 9px; color: var(--text-faint); font-weight: 700; letter-spacing: .07em; text-transform: uppercase; margin-bottom: 3px }
     .rmi-val   { font-size: 13px; font-weight: 700; color: var(--text); font-family: var(--mono); letter-spacing: -.02em }
@@ -631,7 +635,7 @@
 
     /* Ticker */
     .ticker-feed {
-      max-height: 240px;
+      max-height: 180px;
       overflow-y: auto;
       overscroll-behavior: contain;
       padding: 4px 0;
@@ -1096,7 +1100,6 @@
         <div class="card">
           <div class="panel-hdr">
             <div class="panel-title">Can I trust this estimate?</div>
-            <div class="panel-badge">Confidence</div>
           </div>
           <div class="card-body">
             <div class="coverage-list">
@@ -1408,9 +1411,9 @@ function buildPolicyIdeas(regime, scenario, minDays, daysOfCover, meetsTarget, c
     window.__lastSourceSummary.traffic_source_enabled === true;
 
   if (trafficEnabled) {
-    ideas.push(`Georgia 511 traffic feed connected — traffic-side disruptions are included in current risk estimates.`);
+    ideas.push(`Georgia 511 traffic feed connected — traffic disruptions are included in current risk estimates.`);
   } else {
-    ideas.push(`Georgia 511 traffic feed not connected — traffic-side disruptions are not reflected in current risk estimates.`);
+    ideas.push(`Traffic feed not connected — traffic-side disruptions are not reflected in current risk estimates.`);
   }
 
   if (ideas.length < 4)
@@ -1585,13 +1588,17 @@ function updateHero(score, regime, recDays, stockPct, stockLo, stockHi, scenario
   const lbl = document.getElementById('heroStatusLbl');
   const tsS = document.getElementById('heroStatusTs');
   if (dot) dot.className = 'hero-status-dot ' + (status || 'loading');
-  if (lbl) lbl.textContent = { live:'Live', stale:'Stale', error:'Failed', loading:'Connecting' }[status] || '—';
-  if (tsS) tsS.textContent = status === 'live' ? 'feed active' : status === 'stale' ? 'last known data' : status === 'error' ? 'using fallback' : 'connecting…';
+  if (lbl) lbl.textContent = { live:'Live', stale:'Stale', error:'Failed', loading:'Connecting', local:'Local preview' }[status] || '—';
+  if (tsS) tsS.textContent = status === 'live' ? 'feed active'
+                          : status === 'stale' ? 'last known data'
+                          : status === 'error' ? 'using fallback'
+                          : status === 'local' ? 'deploy to enable /api/latest'
+                          : 'connecting…';
 
   const badge = document.getElementById('topBadge');
   const bTxt  = document.getElementById('topBadgeTxt');
   if (badge) badge.dataset.status = status || 'loading';
-  if (bTxt)  bTxt.textContent = { live:'LIVE', stale:'STALE', error:'OFFLINE', loading:'CONNECTING' }[status] || 'CONNECTING';
+  if (bTxt)  bTxt.textContent = { live:'LIVE', stale:'STALE', error:'OFFLINE', loading:'CONNECTING', local:'LOCAL PREVIEW' }[status] || 'CONNECTING';
 }
 
 let _countdownTimer = null, _nextRefreshAt = null;
@@ -2148,12 +2155,31 @@ const LiveData = (() => {
     }, 150);
   }
 
+  // Local-file detection: when index.html is opened via file:// (e.g. double-clicked
+  // on disk), /api/latest cannot resolve. Show a clear one-time message and do not
+  // spam "Live fetch failed" every cycle.
+  const IS_LOCAL_FILE = (typeof window !== 'undefined') && window.location && window.location.protocol === 'file:';
+
   async function fetchLiveData() {
+    if (IS_LOCAL_FILE) {
+      // Already handled in startPolling(); skip silently.
+      return;
+    }
     try {
-      const res = await fetch(buildEndpoint(), { cache:'no-store' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const d = await res.json();
-      if (!d || typeof d.timestamp !== 'string' || typeof d.regime !== 'string') throw new Error('Bad shape');
+      let res;
+      try {
+        res = await fetch(buildEndpoint(), { cache:'no-store' });
+      } catch (netErr) {
+        throw new Error('fetch failed: ' + (netErr && netErr.message ? netErr.message : 'network error'));
+      }
+      if (!res.ok) throw new Error('HTTP ' + res.status + (res.statusText ? ' ' + res.statusText : ''));
+      let d;
+      try { d = await res.json(); }
+      catch (jsonErr) { throw new Error('bad JSON shape: ' + (jsonErr && jsonErr.message ? jsonErr.message : 'invalid JSON')); }
+      if (!d || typeof d !== 'object') throw new Error('bad JSON shape: payload not an object');
+      if (typeof d.timestamp !== 'string') throw new Error('missing timestamp');
+      if (typeof d.regime !== 'string')    throw new Error('missing regime');
+
       lastPayload = d; lastSuccessTime = Date.now();
       setStatus('live', 'Live', d.timestamp, d.source_summary);
       applyPayload(d);
@@ -2165,38 +2191,57 @@ const LiveData = (() => {
       addTickBatch(ticks);
       startCountdown(60);
     } catch (err) {
-      const first = lastSuccessTime === null;
-      const stale = !first && (Date.now() - lastSuccessTime) > POLL_INTERVAL * 2;
-      if (first)       { setStatus('error','Fallback',null);                                    addTick('WARN','Live fetch failed — using embedded fallback model data'); }
-      else if (stale)  { setStatus('stale','Stale',lastPayload?.timestamp ?? null);             addTick('WARN','Live data stale — showing last known values'); }
-      else             { setStatus('live','Retrying',lastPayload?.timestamp ?? null);           addTick('WARN','Transient fetch failure — retrying on next cycle'); }
+      const reason = (err && err.message) ? err.message : String(err);
+      const first  = lastSuccessTime === null;
+      const stale  = !first && (Date.now() - lastSuccessTime) > POLL_INTERVAL * 2;
+      if (first) {
+        setStatus('error','Fallback',null);
+        addTick('WARN', `Live fetch failed (${reason}) — using embedded fallback model data`);
+      } else if (stale) {
+        setStatus('stale','Stale', lastPayload?.timestamp ?? null);
+        addTick('WARN', `Live data stale (${reason}) — showing last known values`);
+      } else {
+        setStatus('live','Retrying', lastPayload?.timestamp ?? null);
+        addTick('WARN', `Transient fetch failure (${reason}) — retrying next cycle`);
+      }
     }
   }
 
   function startPolling() {
+    if (IS_LOCAL_FILE) {
+      setStatus('local', 'Local', null);
+      addTick('MODE', 'Local preview mode — deploy to Vercel or run <strong>vercel dev</strong> to connect <strong>/api/latest</strong>.');
+      addTick('WARN', 'Embedded model fallback is active. Scenarios, sliders, and what-if mode all work; only live source signals are disabled.');
+      // Do not poll; do not spam errors.
+      return;
+    }
     addTick('MODE', 'Mode set to <strong>Live Signal</strong> — regime follows API stress score');
     fetchLiveData();
     pollTimer = setInterval(fetchLiveData, POLL_INTERVAL);
   }
-  return { startPolling, fetchLatest: fetchLiveData };
+  return { startPolling, fetchLatest: fetchLiveData, isLocalFile: () => IS_LOCAL_FILE };
 })();
 
 // ── REQUIRED-ELEMENTS GUARD ──────────────────────────────────────────────
+// Only the truly critical elements (the chart canvas + recommendation card numbers)
+// are treated as hard requirements. Everything else is logged as a warning so a
+// single missing optional element never bricks the whole dashboard.
 function verifyRequiredElements() {
-  const requiredIds = [
-    "riskChart","recNum","recCI","rmSel","rmSelStkout","rmMin","rmMinCI",
-    "rmOpt","rmOptCI","rmMargin","rmMarginTxt","recNarrative","statusBadge",
-    "statusTxt","execSummary","tickerFeed","tickerCount","policyList",
-    "policyScenarioBadge","df-nws","dv-nws","df-weather","dv-weather",
-    "df-traffic","dv-traffic","df-tscore","dv-tscore","df-port","dv-port",
-    "dv-sources","dv-failures"
+  const criticalIds = ["riskChart", "recNum", "recCI"];
+  const optionalIds = [
+    "rmSel","rmSelStkout","rmMin","rmMinCI","rmOpt","rmOptCI","rmMargin",
+    "rmMarginTxt","recNarrative","statusBadge","statusTxt","execSummary",
+    "tickerFeed","tickerCount","policyList","policyScenarioBadge",
+    "df-nws","dv-nws","df-weather","dv-weather","df-traffic","dv-traffic",
+    "df-tscore","dv-tscore","df-port","dv-port","dv-sources","dv-failures"
   ];
-  const missing = [];
-  for (const id of requiredIds) {
-    if (!document.getElementById(id)) missing.push(id);
+  const missingCritical = criticalIds.filter(id => !document.getElementById(id));
+  const missingOptional = optionalIds.filter(id => !document.getElementById(id));
+  if (missingOptional.length) {
+    try { console.warn("[SAID] Missing optional DOM elements (continuing):", missingOptional); } catch (e) {}
   }
-  if (missing.length) {
-    try { console.error("[SAID] Missing required DOM elements:", missing); } catch (e) {}
+  if (missingCritical.length) {
+    try { console.error("[SAID] Missing CRITICAL DOM elements:", missingCritical); } catch (e) {}
     return false;
   }
   return true;
@@ -2209,6 +2254,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (badge) badge.textContent = "PAGE ERROR";
     return;
   }
+  bindEventHandlers();
   initChart();
   updateDashboard();
   LiveData.startPolling();

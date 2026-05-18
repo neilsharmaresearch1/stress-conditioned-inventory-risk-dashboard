@@ -4,6 +4,11 @@
       "memory": 128,
       "maxDuration": 5,
       "includeFiles": "data/**"
+    },
+    "api/history.js": {
+      "memory": 128,
+      "maxDuration": 5,
+      "includeFiles": "data/**"
     }
   }
 }

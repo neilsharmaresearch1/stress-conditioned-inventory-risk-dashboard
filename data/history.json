@@ -1,0 +1,194 @@
+{
+  "status": "prototype_sample_history",
+  "updated_at": "2026-05-18T00:00:00Z",
+  "limitations": "Prototype/sample public-proxy history only. Not validated historical GPA operational data. Weather and port values derived from public sources. Traffic values estimated from public Georgia 511 proxy. All values illustrative.",
+  "points": [
+    {
+      "date": "2026-03-01",
+      "stress_score": 0.192,
+      "regime": "normal",
+      "weather_contribution": 0.045,
+      "traffic_contribution": 0.119,
+      "port_contribution": 0.044,
+      "stockout_probability": 0.072,
+      "recommended_days": 5,
+      "source_confidence": "medium"
+    },
+    {
+      "date": "2026-03-05",
+      "stress_score": 0.143,
+      "regime": "normal",
+      "weather_contribution": 0.012,
+      "traffic_contribution": 0.098,
+      "port_contribution": 0.044,
+      "stockout_probability": 0.038,
+      "recommended_days": 4,
+      "source_confidence": "medium"
+    },
+    {
+      "date": "2026-03-10",
+      "stress_score": 0.088,
+      "regime": "low",
+      "weather_contribution": 0.000,
+      "traffic_contribution": 0.044,
+      "port_contribution": 0.044,
+      "stockout_probability": 0.019,
+      "recommended_days": 3,
+      "source_confidence": "medium"
+    },
+    {
+      "date": "2026-03-15",
+      "stress_score": 0.342,
+      "regime": "normal",
+      "weather_contribution": 0.180,
+      "traffic_contribution": 0.112,
+      "port_contribution": 0.044,
+      "stockout_probability": 0.094,
+      "recommended_days": 5,
+      "source_confidence": "medium"
+    },
+    {
+      "date": "2026-03-20",
+      "stress_score": 0.487,
+      "regime": "high",
+      "weather_contribution": 0.270,
+      "traffic_contribution": 0.162,
+      "port_contribution": 0.055,
+      "stockout_probability": 0.158,
+      "recommended_days": 6,
+      "source_confidence": "medium"
+    },
+    {
+      "date": "2026-03-25",
+      "stress_score": 0.621,
+      "regime": "high",
+      "weather_contribution": 0.360,
+      "traffic_contribution": 0.196,
+      "port_contribution": 0.066,
+      "stockout_probability": 0.263,
+      "recommended_days": 6,
+      "source_confidence": "medium"
+    },
+    {
+      "date": "2026-04-01",
+      "stress_score": 0.534,
+      "regime": "high",
+      "weather_contribution": 0.270,
+      "traffic_contribution": 0.196,
+      "port_contribution": 0.066,
+      "stockout_probability": 0.191,
+      "recommended_days": 6,
+      "source_confidence": "medium"
+    },
+    {
+      "date": "2026-04-05",
+      "stress_score": 0.289,
+      "regime": "normal",
+      "weather_contribution": 0.090,
+      "traffic_contribution": 0.154,
+      "port_contribution": 0.044,
+      "stockout_probability": 0.086,
+      "recommended_days": 5,
+      "source_confidence": "medium"
+    },
+    {
+      "date": "2026-04-10",
+      "stress_score": 0.114,
+      "regime": "low",
+      "weather_contribution": 0.000,
+      "traffic_contribution": 0.063,
+      "port_contribution": 0.044,
+      "stockout_probability": 0.024,
+      "recommended_days": 3,
+      "source_confidence": "medium"
+    },
+    {
+      "date": "2026-04-15",
+      "stress_score": 0.176,
+      "regime": "normal",
+      "weather_contribution": 0.045,
+      "traffic_contribution": 0.091,
+      "port_contribution": 0.044,
+      "stockout_probability": 0.059,
+      "recommended_days": 4,
+      "source_confidence": "medium"
+    },
+    {
+      "date": "2026-04-20",
+      "stress_score": 0.713,
+      "regime": "extreme",
+      "weather_contribution": 0.405,
+      "traffic_contribution": 0.224,
+      "port_contribution": 0.066,
+      "stockout_probability": 0.296,
+      "recommended_days": 6,
+      "source_confidence": "medium"
+    },
+    {
+      "date": "2026-04-25",
+      "stress_score": 0.658,
+      "regime": "high",
+      "weather_contribution": 0.360,
+      "traffic_contribution": 0.224,
+      "port_contribution": 0.066,
+      "stockout_probability": 0.278,
+      "recommended_days": 6,
+      "source_confidence": "medium"
+    },
+    {
+      "date": "2026-05-01",
+      "stress_score": 0.389,
+      "regime": "normal",
+      "weather_contribution": 0.180,
+      "traffic_contribution": 0.154,
+      "port_contribution": 0.044,
+      "stockout_probability": 0.112,
+      "recommended_days": 5,
+      "source_confidence": "medium"
+    },
+    {
+      "date": "2026-05-05",
+      "stress_score": 0.228,
+      "regime": "normal",
+      "weather_contribution": 0.045,
+      "traffic_contribution": 0.140,
+      "port_contribution": 0.044,
+      "stockout_probability": 0.078,
+      "recommended_days": 5,
+      "source_confidence": "medium"
+    },
+    {
+      "date": "2026-05-10",
+      "stress_score": 0.159,
+      "regime": "normal",
+      "weather_contribution": 0.022,
+      "traffic_contribution": 0.084,
+      "port_contribution": 0.044,
+      "stockout_probability": 0.052,
+      "recommended_days": 4,
+      "source_confidence": "medium"
+    },
+    {
+      "date": "2026-05-15",
+      "stress_score": 0.192,
+      "regime": "normal",
+      "weather_contribution": 0.045,
+      "traffic_contribution": 0.103,
+      "port_contribution": 0.044,
+      "stockout_probability": 0.072,
+      "recommended_days": 5,
+      "source_confidence": "medium"
+    },
+    {
+      "date": "2026-05-18",
+      "stress_score": 0.220,
+      "regime": "normal",
+      "weather_contribution": 0.068,
+      "traffic_contribution": 0.108,
+      "port_contribution": 0.044,
+      "stockout_probability": 0.072,
+      "recommended_days": 5,
+      "source_confidence": "medium"
+    }
+  ]
+}

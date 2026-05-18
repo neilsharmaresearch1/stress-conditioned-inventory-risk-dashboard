@@ -706,6 +706,56 @@
     .ms-label { font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 2px }
     .ms-val   { font-size: 11px; font-weight: 500; color: var(--text-muted); line-height: 1.35 }
     .ms-note  { font-size: 10px; color: var(--text-faint); line-height: 1.5; padding: 7px 10px; background: var(--surface-2); border: 1px solid var(--divider); border-radius: var(--rm) }
+
+    /* ─── PAGE TABS ──────────────────────────────────────────────────────── */
+    .page-tabs {
+      display: flex; align-items: center; gap: 2px;
+      padding: 0 18px;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      flex-shrink: 0; z-index: 20;
+    }
+    .ptab {
+      padding: 10px 14px; border: none; background: none; cursor: pointer;
+      font-family: var(--font); font-size: 11px; font-weight: 700;
+      letter-spacing: .05em; text-transform: uppercase;
+      color: var(--text-faint); border-bottom: 2px solid transparent;
+      margin-bottom: -1px; transition: color var(--tr), border-color var(--tr);
+      white-space: nowrap;
+    }
+    .ptab:hover { color: var(--text-muted) }
+    .ptab.active { color: var(--primary); border-bottom-color: var(--primary) }
+
+    .tab-pane { display: none; flex: 1; overflow-y: auto; overscroll-behavior: contain }
+    .tab-pane.active { display: flex; flex-direction: column }
+
+    /* ─── HISTORY TAB ────────────────────────────────────────────────────── */
+    .ht-disclaimer {
+      display: flex; align-items: center; gap: 10px;
+      background: #FFF7E6; border-bottom: 1px solid #FFE0A3;
+      padding: 9px 20px; flex-shrink: 0;
+      font-size: 11px; color: #7A4800; line-height: 1.45;
+    }
+    .ht-disclaimer-badge {
+      font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 3px;
+      background: #FFE0A3; color: #7A4800; border: 1px solid #F5C76E;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .ht-content { padding: 20px 22px; display: flex; flex-direction: column; gap: 18px; flex: 1 }
+    .ht-chart-wrap { position: relative; height: 220px }
+    .ht-empty { font-size: 12px; color: var(--text-faint); padding: 40px 0; text-align: center }
+
+    /* ─── VALIDATION TAB ─────────────────────────────────────────────────── */
+    .vt-content { padding: 20px 22px; display: flex; flex-direction: column; gap: 18px; flex: 1 }
+    .or-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; margin-bottom: 10px }
+    .or-missing-list { list-style: disc; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; margin-top: 6px }
+    .or-missing-list li { font-size: 11px; color: var(--text-muted); line-height: 1.5 }
+
+    /* ─── METHODS TAB ────────────────────────────────────────────────────── */
+    .mt-content { padding: 20px 22px; display: flex; flex-direction: column; gap: 14px; flex: 1 }
+    .mt-card { background: #fff; border: 1px solid var(--border); border-radius: var(--rl); box-shadow: var(--sh) }
+    .mt-card .card-body { font-size: 11px; color: var(--text-muted); line-height: 1.65; display: flex; flex-direction: column; gap: 8px }
+    .mt-card strong { color: var(--text); font-weight: 600 }
   </style>
 </head>
 <body>
@@ -861,6 +911,20 @@
 
   <!-- ── MAIN SCROLL AREA ───────────────────────────────────────────────── -->
   <div class="main">
+
+    <!-- ── PAGE TAB NAV ──────────────────────────────────────────────────── -->
+    <nav class="page-tabs" role="tablist" aria-label="Dashboard sections">
+      <button class="ptab active" data-tab="cc"         onclick="switchTab('cc')"        role="tab">Command Center</button>
+      <button class="ptab"        data-tab="history"    onclick="switchTab('history')"   role="tab">Historical Trends</button>
+      <button class="ptab"        data-tab="scenario"   onclick="switchTab('scenario')"  role="tab">Scenario Lab</button>
+      <button class="ptab"        data-tab="validation" onclick="switchTab('validation')" role="tab">Validation</button>
+      <button class="ptab"        data-tab="methods"    onclick="switchTab('methods')"   role="tab">Methods</button>
+    </nav>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         TAB: COMMAND CENTER
+    ══════════════════════════════════════════════════════════════════════ -->
+    <div id="tab-cc" class="tab-pane active">
 
     <!-- What-if mode banner -->
     <div class="mode-banner" id="modeBanner">
@@ -1232,136 +1296,245 @@
               </div>
             </div>
 
-            <!-- Validation Status -->
-            <div class="card">
-              <div class="panel-hdr">
-                <div class="panel-title">Validation Status</div>
-              </div>
-              <div class="card-body">
-                <div class="ms-grid">
-                  <span class="ms-label">Directionality</span>  <span class="ms-val" id="vsDir">—</span>
-                  <span class="ms-label">Sensitivity</span>     <span class="ms-val" id="vsSens">—</span>
-                  <span class="ms-label">Backtest</span>        <span class="ms-val" id="vsBacktest">—</span>
-                  <span class="ms-label">GPA calibration</span> <span class="ms-val" id="vsGpa">—</span>
-                </div>
-                <ul class="ms-note" id="vsNotesList" style="margin-top:6px;padding-left:14px"></ul>
-              </div>
-            </div>
-
           </div><!-- /.support-fold -->
 
-          <!-- Model Status -->
-          <div class="card" id="modelStatusCard" style="margin-top:4px">
-            <div class="panel-hdr">
-              <div class="panel-title">Model Status</div>
-              <div class="panel-badge">Phase 0 Prototype</div>
-            </div>
-            <div class="card-body">
-              <div class="ms-grid">
-                <div>
-                  <div class="ms-label">Status</div>
-                  <div class="ms-val">Phase 0 prototype</div>
-                </div>
-                <div>
-                  <div class="ms-label">Mode</div>
-                  <div class="ms-val">Illustrative live-signal overlay</div>
-                </div>
-                <div>
-                  <div class="ms-label">Calibration</div>
-                  <div class="ms-val">Not calibrated to GPA operational data</div>
-                </div>
-                <div>
-                  <div class="ms-label">Data quality</div>
-                  <div class="ms-val">Illustrative</div>
-                </div>
-                <div>
-                  <div class="ms-label">Source confidence</div>
-                  <div class="ms-val" id="msSourceConf">—</div>
-                </div>
-                <div>
-                  <div class="ms-label">Live sources</div>
-                  <div class="ms-val" id="msLiveSources">—</div>
-                </div>
-                <div>
-                  <div class="ms-label">Port signal</div>
-                  <div class="ms-val">Public/manual proxy</div>
-                </div>
-              </div>
-              <div class="ms-note">
-                Phase 0 prototype using public weather and traffic signals and a public/manual port proxy. Not calibrated to GPA operational data. All outputs are illustrative estimates.
-              </div>
-            </div>
-          </div>
-
-          <!-- Path to Production Grade -->
-          <div class="card" id="prodPathCard" style="margin-top:4px">
-            <div class="panel-hdr">
-              <div class="panel-title">Path to Production Grade</div>
-            </div>
-            <div class="card-body">
-              <div class="policy-list">
-                <div class="policy-item"><div class="policy-dot"></div><span>Replace the port proxy with GPA throughput, gate, dwell-time, or turn-time signals.</span></div>
-                <div class="policy-item"><div class="policy-dot"></div><span>Backtest stress regimes against historical disruption periods.</span></div>
-                <div class="policy-item"><div class="policy-dot"></div><span>Replace precomputed risk curves with calibrated Monte Carlo simulation outputs.</span></div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </details>
-
-      <!-- Footer drawers: how it works, methodology, limitations, creator -->
-      <details class="footer-drawer">
-        <summary>
-          How this dashboard works
-          <span aria-hidden="true" style="color:var(--text-faint);">▾</span>
-        </summary>
-        <div class="card-body">
-          <div><strong>Scope:</strong> This dashboard estimates risk from disruption signals (weather, traffic, port baseline) and a stockout model. It does not directly track store shelves or real inventory levels.</div>
-          <div>The Savannah → Atlanta route is a replenishment lane from port and distribution activity near Savannah toward grocery demand centers around Atlanta.</div>
-          <div>The app reads live disruption signals (weather alerts, traffic events when connected, port baseline), maps them into a disruption score, and uses that score to estimate the chance the selected inventory plan runs out before the next replenishment.</div>
-          <div><strong>To use it:</strong> pick your current days of cover and scenario, then check whether the plan meets the target or needs more coverage. If the recommendation says 5 days and you've selected 3, your plan is 2 days short.</div>
-        </div>
-      </details>
-
-      <details class="footer-drawer">
-        <summary>
-          Math methodology
-          <span aria-hidden="true" style="color:var(--text-faint);">▾</span>
-        </summary>
-        <div class="card-body">
-          <div><strong>1. Signal aggregation.</strong> Live weather, traffic, and port-related inputs are normalized to a 0–1 scale and combined into a disruption score, mapped into Low, Normal, High, or Extreme.</div>
-          <div><strong>2. Risk curve mapping.</strong> For each disruption level, the app uses an estimated relationship between days of cover and the probability of running out before replenishment. Higher disruption shifts the curve upward.</div>
-          <div><strong>3. Policy selection rule.</strong> Let p(d) denote the estimated probability at d days, and τ the selected risk limit. The recommendation is the smallest d in 2–6 days with p(d) ≤ τ. If none qualifies, the app reports 6d+.</div>
-          <div><strong>4. Comparative outputs.</strong> The interface reports selected plan, minimum recommended coverage, the gap, and a scenario comparison.</div>
-          <div><strong>5. Interpretation.</strong> This is decision-support, not a direct measurement of shelf inventory.</div>
-        </div>
-      </details>
-
-      <details class="footer-drawer">
-        <summary>
-          Limitations &amp; assumptions
-          <span aria-hidden="true" style="color:var(--text-faint);">▾</span>
-        </summary>
-        <div class="card-body">
-          <div>This app does not directly observe store shelves, exact inventory levels, truck GPS feeds, or realized demand. It estimates risk from proxy disruption signals.</div>
-          <div>Recommendations are decision support, not a guarantee of stock availability.</div>
-          <div>Historical backtesting against lane-level replenishment outcomes and demand calibration would improve confidence in future versions.</div>
-        </div>
-      </details>
-
-      <details class="footer-drawer">
-        <summary>
-          Creator note
-          <span aria-hidden="true" style="color:var(--text-faint);">▾</span>
-        </summary>
-        <div class="card-body">
-          <div>Built by <strong>Neil Sharma</strong> as a decision-support prototype exploring how public disruption signals can be translated into clearer operational inventory decisions.</div>
         </div>
       </details>
 
       <div class="bottom-spacer"></div>
     </div><!-- /.content -->
+
+    </div><!-- /#tab-cc -->
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         TAB: HISTORICAL TRENDS
+    ══════════════════════════════════════════════════════════════════════ -->
+    <div id="tab-history" class="tab-pane">
+
+      <div class="ht-disclaimer">
+        <span class="ht-disclaimer-badge">Prototype Sample History</span>
+        <span>Prototype/sample history only. Not validated GPA operational history. All values derived from public proxies and are illustrative estimates.</span>
+      </div>
+
+      <div class="ht-content">
+        <div id="htLoadMsg" class="ht-empty">Loading historical data…</div>
+
+        <div id="htCharts" style="display:none; display:flex; flex-direction:column; gap:18px">
+
+          <div class="chart-card">
+            <div class="chart-hdr">
+              <div>
+                <div class="chart-ttl">Disruption Stress Over Time</div>
+                <div class="chart-sub">Composite stress score · weather, traffic, port contributions · sample/prototype data</div>
+              </div>
+              <span class="sim-note">SAMPLE HISTORY</span>
+            </div>
+            <div class="ht-chart-wrap"><canvas id="htStressChart"></canvas></div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-hdr">
+              <div>
+                <div class="chart-ttl">Stockout Risk &amp; Recommended Coverage</div>
+                <div class="chart-sub">Estimated stockout probability and recommended days of cover · sample/prototype data</div>
+              </div>
+              <span class="sim-note">SAMPLE HISTORY</span>
+            </div>
+            <div class="ht-chart-wrap"><canvas id="htRiskChart"></canvas></div>
+          </div>
+
+          <div class="card">
+            <div class="panel-hdr">
+              <div class="panel-title">Data Points</div>
+              <div class="panel-badge" id="htPointCount">— points</div>
+            </div>
+            <div class="card-body" style="overflow-x:auto">
+              <table id="htTable" style="width:100%;border-collapse:collapse;font-size:11px"></table>
+            </div>
+          </div>
+
+        </div><!-- /#htCharts -->
+      </div><!-- /.ht-content -->
+
+    </div><!-- /#tab-history -->
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         TAB: SCENARIO LAB
+    ══════════════════════════════════════════════════════════════════════ -->
+    <div id="tab-scenario" class="tab-pane">
+      <div style="padding:28px 24px; max-width:640px">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px">Scenario Lab</div>
+        <div style="font-size:11px;color:var(--text-muted);line-height:1.65;margin-bottom:16px">
+          The scenario controls live in the left sidebar. Use the <strong>Scenario</strong> selector (Baseline, Safety, Tail Mitigation),
+          the <strong>Days of Cover</strong> slider, and the <strong>What-if Test</strong> mode to explore hypothetical disruption levels.
+          The stockout risk chart and policy recommendation update in real time.
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);line-height:1.65;margin-bottom:20px">
+          <strong>What-if mode</strong> lets you manually set the disruption regime (Low → Extreme) independent of live signals.
+          Switch back to Live Signal mode to return to the API-driven estimate.
+        </div>
+        <button class="mode-btn live-mode active" style="padding:9px 18px;border-radius:var(--rm);font-size:11px"
+                onclick="switchTab('cc'); setMode('whatif')">Open What-if Controls →</button>
+      </div>
+    </div><!-- /#tab-scenario -->
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         TAB: VALIDATION
+    ══════════════════════════════════════════════════════════════════════ -->
+    <div id="tab-validation" class="tab-pane">
+      <div class="vt-content">
+
+        <!-- Validation Status -->
+        <div class="card">
+          <div class="panel-hdr">
+            <div class="panel-title">Validation Status</div>
+          </div>
+          <div class="card-body">
+            <div class="ms-grid">
+              <span class="ms-label">Directionality</span>  <span class="ms-val" id="vsDir">—</span>
+              <span class="ms-label">Sensitivity</span>     <span class="ms-val" id="vsSens">—</span>
+              <span class="ms-label">Backtest</span>        <span class="ms-val" id="vsBacktest">—</span>
+              <span class="ms-label">GPA calibration</span> <span class="ms-val" id="vsGpa">—</span>
+            </div>
+            <ul class="ms-note" id="vsNotesList" style="margin-top:6px;padding-left:14px"></ul>
+          </div>
+        </div>
+
+        <!-- Operational Readiness (dynamic from API d.operational_readiness, fallback to static) -->
+        <div class="card" id="orCard">
+          <div class="panel-hdr">
+            <div class="panel-title">Operational Readiness</div>
+            <div class="panel-badge" id="orReadyBadge">Phase 0</div>
+          </div>
+          <div class="card-body">
+            <div class="or-grid">
+              <div>
+                <div class="ms-label">Readiness level</div>
+                <div class="ms-val" id="orLevel">Operational-grade prototype</div>
+              </div>
+              <div>
+                <div class="ms-label">Production ready</div>
+                <div class="ms-val" id="orReady" style="color:var(--err);font-weight:700">No</div>
+              </div>
+            </div>
+            <div class="ms-label" style="margin-top:8px;margin-bottom:4px">Missing for production</div>
+            <ul class="or-missing-list" id="orMissingList">
+              <li>Direct GPA operational data feed</li>
+              <li>Historical backtesting</li>
+              <li>Demand and lead-time calibration</li>
+              <li>Versioned simulation engine</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Model Status -->
+        <div class="card" id="modelStatusCard">
+          <div class="panel-hdr">
+            <div class="panel-title">Model Status</div>
+            <div class="panel-badge">Phase 0 Prototype</div>
+          </div>
+          <div class="card-body">
+            <div class="ms-grid">
+              <div>
+                <div class="ms-label">Status</div>
+                <div class="ms-val">Phase 0 prototype</div>
+              </div>
+              <div>
+                <div class="ms-label">Mode</div>
+                <div class="ms-val">Illustrative live-signal overlay</div>
+              </div>
+              <div>
+                <div class="ms-label">Calibration</div>
+                <div class="ms-val">Not calibrated to GPA operational data</div>
+              </div>
+              <div>
+                <div class="ms-label">Data quality</div>
+                <div class="ms-val">Illustrative</div>
+              </div>
+              <div>
+                <div class="ms-label">Source confidence</div>
+                <div class="ms-val" id="msSourceConf">—</div>
+              </div>
+              <div>
+                <div class="ms-label">Live sources</div>
+                <div class="ms-val" id="msLiveSources">—</div>
+              </div>
+              <div>
+                <div class="ms-label">Port signal</div>
+                <div class="ms-val">Public/manual proxy</div>
+              </div>
+            </div>
+            <div class="ms-note">
+              Phase 0 prototype using public weather and traffic signals and a public/manual port proxy. Not calibrated to GPA operational data. All outputs are illustrative estimates.
+            </div>
+          </div>
+        </div>
+
+        <!-- Path to Production Grade -->
+        <div class="card" id="prodPathCard">
+          <div class="panel-hdr">
+            <div class="panel-title">Path to Production Grade</div>
+          </div>
+          <div class="card-body">
+            <div class="policy-list">
+              <div class="policy-item"><div class="policy-dot"></div><span>Replace the port proxy with GPA throughput, gate, dwell-time, or turn-time signals.</span></div>
+              <div class="policy-item"><div class="policy-dot"></div><span>Backtest stress regimes against historical disruption periods.</span></div>
+              <div class="policy-item"><div class="policy-dot"></div><span>Replace precomputed risk curves with calibrated Monte Carlo simulation outputs.</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bottom-spacer"></div>
+      </div><!-- /.vt-content -->
+    </div><!-- /#tab-validation -->
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         TAB: METHODS
+    ══════════════════════════════════════════════════════════════════════ -->
+    <div id="tab-methods" class="tab-pane">
+      <div class="mt-content">
+
+        <div class="mt-card">
+          <div class="panel-hdr"><div class="panel-title">How This Dashboard Works</div></div>
+          <div class="card-body">
+            <div><strong>Scope:</strong> This dashboard estimates risk from disruption signals (weather, traffic, port baseline) and a stockout model. It does not directly track store shelves or real inventory levels.</div>
+            <div>The Savannah → Atlanta route is a replenishment lane from port and distribution activity near Savannah toward grocery demand centers around Atlanta.</div>
+            <div>The app reads live disruption signals (weather alerts, traffic events when connected, port baseline), maps them into a disruption score, and uses that score to estimate the chance the selected inventory plan runs out before the next replenishment.</div>
+            <div><strong>To use it:</strong> pick your current days of cover and scenario, then check whether the plan meets the target or needs more coverage. If the recommendation says 5 days and you've selected 3, your plan is 2 days short.</div>
+          </div>
+        </div>
+
+        <div class="mt-card">
+          <div class="panel-hdr"><div class="panel-title">Math Methodology</div></div>
+          <div class="card-body">
+            <div><strong>1. Signal aggregation.</strong> Live weather, traffic, and port-related inputs are normalized to a 0–1 scale and combined into a disruption score, mapped into Low, Normal, High, or Extreme.</div>
+            <div><strong>2. Risk curve mapping.</strong> For each disruption level, the app uses an estimated relationship between days of cover and the probability of running out before replenishment. Higher disruption shifts the curve upward.</div>
+            <div><strong>3. Policy selection rule.</strong> Let p(d) denote the estimated probability at d days, and τ the selected risk limit. The recommendation is the smallest d in 2–6 days with p(d) ≤ τ. If none qualifies, the app reports 6d+.</div>
+            <div><strong>4. Comparative outputs.</strong> The interface reports selected plan, minimum recommended coverage, the gap, and a scenario comparison.</div>
+            <div><strong>5. Interpretation.</strong> This is decision-support, not a direct measurement of shelf inventory.</div>
+          </div>
+        </div>
+
+        <div class="mt-card">
+          <div class="panel-hdr"><div class="panel-title">Limitations &amp; Assumptions</div></div>
+          <div class="card-body">
+            <div>This app does not directly observe store shelves, exact inventory levels, truck GPS feeds, or realized demand. It estimates risk from proxy disruption signals.</div>
+            <div>Recommendations are decision support, not a guarantee of stock availability.</div>
+            <div>Historical backtesting against lane-level replenishment outcomes and demand calibration would improve confidence in future versions.</div>
+          </div>
+        </div>
+
+        <div class="mt-card">
+          <div class="panel-hdr"><div class="panel-title">Creator Note</div></div>
+          <div class="card-body">
+            <div>Built by <strong>Neil Sharma</strong> as a decision-support prototype exploring how public disruption signals can be translated into clearer operational inventory decisions.</div>
+          </div>
+        </div>
+
+        <div class="bottom-spacer"></div>
+      </div><!-- /.mt-content -->
+    </div><!-- /#tab-methods -->
+
   </div><!-- /.main -->
 </div><!-- /.shell -->
 
@@ -2320,6 +2493,7 @@ const LiveData = (() => {
     updateModelStatus(d);
     updateHeroPrimaryDriver(d.source_summary || null);
     updateOperationalCards(d);
+    updateOperationalReadiness(d);
 
     if (d.regime) _liveRegime = d.regime;
 
@@ -2482,6 +2656,203 @@ const LiveData = (() => {
   }
   return { startPolling, fetchLatest: fetchLiveData, isLocalFile: () => IS_LOCAL_FILE };
 })();
+
+// ── TAB NAVIGATION ───────────────────────────────────────────────────────
+let _activeTab = 'cc';
+let _historyLoaded = false;
+
+function switchTab(name) {
+  _activeTab = name;
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.ptab').forEach(b => b.classList.remove('active'));
+  const pane = document.getElementById('tab-' + name);
+  if (pane) pane.classList.add('active');
+  const btn = document.querySelector(`.ptab[data-tab="${name}"]`);
+  if (btn) btn.classList.add('active');
+  if (name === 'history' && !_historyLoaded) loadHistory();
+}
+
+// ── OPERATIONAL READINESS (dynamic from API, fallback to static) ──────────
+function updateOperationalReadiness(d) {
+  const or = d && d.operational_readiness;
+  if (!or) return; // static fallback HTML already in DOM
+
+  const lvlEl = document.getElementById('orLevel');
+  if (lvlEl) {
+    const raw = or.current_level || 'operational_grade_prototype';
+    lvlEl.textContent = raw.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  const rdyEl = document.getElementById('orReady');
+  if (rdyEl) {
+    rdyEl.textContent = or.production_ready ? 'Yes' : 'No';
+    rdyEl.style.color = or.production_ready ? 'var(--ok)' : 'var(--err)';
+  }
+
+  const badge = document.getElementById('orReadyBadge');
+  if (badge) {
+    const raw = or.current_level || '';
+    badge.textContent = raw.includes('prototype') ? 'Phase 0 Prototype'
+      : raw.includes('production') ? 'Production'
+      : raw.replace(/_/g,' ');
+  }
+
+  const list = document.getElementById('orMissingList');
+  if (list && Array.isArray(or.missing_for_production) && or.missing_for_production.length) {
+    list.innerHTML = or.missing_for_production.map(item =>
+      `<li>${item.replace(/\b\w/g, c => c.toUpperCase())}</li>`
+    ).join('');
+  }
+}
+
+// ── HISTORICAL TRENDS ─────────────────────────────────────────────────────
+let _htStressChart = null, _htRiskChart = null;
+
+const REGIME_COLORS = { low:'#3fa8b8', normal:'#5aaa38', high:'#e08030', extreme:'#cf4e4e' };
+const CONF_COLOR    = { high:'var(--ok)', medium:'#B26B00', low:'var(--err)' };
+
+function loadHistory() {
+  _historyLoaded = true;
+  const msgEl = document.getElementById('htLoadMsg');
+  const chartsEl = document.getElementById('htCharts');
+
+  fetch('/api/history', { cache: 'no-store' })
+    .then(r => r.ok ? r.json() : Promise.reject('HTTP ' + r.status))
+    .then(data => {
+      if (!data || !Array.isArray(data.points) || data.points.length === 0) {
+        if (msgEl) msgEl.textContent = 'No historical data available.';
+        return;
+      }
+      if (msgEl) msgEl.style.display = 'none';
+      if (chartsEl) chartsEl.style.display = 'flex';
+      renderHistoryCharts(data.points);
+      renderHistoryTable(data.points);
+      const countEl = document.getElementById('htPointCount');
+      if (countEl) countEl.textContent = data.points.length + ' points';
+    })
+    .catch(err => {
+      if (msgEl) msgEl.textContent = 'Could not load historical data (' + err + ').';
+    });
+}
+
+function renderHistoryCharts(pts) {
+  const labels = pts.map(p => p.date);
+  const surface = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
+  const border  = getComputedStyle(document.documentElement).getPropertyValue('--border').trim();
+  const textMuted = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim();
+
+  const baseOpts = {
+    responsive: true, maintainAspectRatio: false,
+    animation: { duration: 280 },
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: true, labels: { font: { size: 10 }, color: textMuted, boxWidth: 10 } },
+      tooltip: {
+        backgroundColor: surface, titleColor: '#18263A', bodyColor: textMuted,
+        borderColor: border, borderWidth: 1, padding: 9,
+        titleFont: { size: 11, weight: '600' }, bodyFont: { size: 11 }
+      }
+    },
+    scales: {
+      x: { grid: { color: border }, border: { display: false },
+           ticks: { color: textMuted, font: { size: 9 }, maxRotation: 45 } }
+    }
+  };
+
+  // Chart 1: stress score + contributions
+  const c1 = document.getElementById('htStressChart');
+  if (c1) {
+    if (_htStressChart) { _htStressChart.destroy(); _htStressChart = null; }
+    _htStressChart = new Chart(c1.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Composite stress', data: pts.map(p => p.stress_score),
+            borderColor: '#2563EB', backgroundColor: 'rgba(37,99,235,.08)',
+            borderWidth: 2.5, pointRadius: 3, tension: 0.3, fill: true, order: 1 },
+          { label: 'Weather contrib.', data: pts.map(p => p.weather_contribution),
+            borderColor: REGIME_COLORS.high, backgroundColor: 'transparent',
+            borderWidth: 1.2, borderDash: [4,3], pointRadius: 0, tension: 0.3, fill: false, order: 2 },
+          { label: 'Traffic contrib.', data: pts.map(p => p.traffic_contribution),
+            borderColor: REGIME_COLORS.normal, backgroundColor: 'transparent',
+            borderWidth: 1.2, borderDash: [4,3], pointRadius: 0, tension: 0.3, fill: false, order: 3 },
+          { label: 'Port contrib.', data: pts.map(p => p.port_contribution),
+            borderColor: REGIME_COLORS.low, backgroundColor: 'transparent',
+            borderWidth: 1.2, borderDash: [4,3], pointRadius: 0, tension: 0.3, fill: false, order: 4 }
+        ]
+      },
+      options: { ...baseOpts,
+        scales: { ...baseOpts.scales,
+          y: { min: 0, max: 1, grid: { color: border }, border: { display: false },
+               ticks: { color: textMuted, font: { size: 10 }, callback: v => v.toFixed(1) } }
+        }
+      }
+    });
+  }
+
+  // Chart 2: stockout probability + recommended days
+  const c2 = document.getElementById('htRiskChart');
+  if (c2) {
+    if (_htRiskChart) { _htRiskChart.destroy(); _htRiskChart = null; }
+    _htRiskChart = new Chart(c2.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Stockout probability', data: pts.map(p => +(p.stockout_probability * 100).toFixed(2)),
+            borderColor: '#C81E5B', backgroundColor: 'rgba(200,30,91,.08)',
+            borderWidth: 2, pointRadius: 3, tension: 0.3, fill: true, yAxisID: 'yLeft', order: 1 },
+          { label: 'Recommended days', data: pts.map(p => p.recommended_days),
+            borderColor: '#7C3AED', backgroundColor: 'transparent',
+            borderWidth: 1.5, borderDash: [5,3], pointRadius: 3, tension: 0.2, fill: false, yAxisID: 'yRight', order: 2 }
+        ]
+      },
+      options: { ...baseOpts,
+        scales: {
+          x: baseOpts.scales.x,
+          yLeft:  { type: 'linear', position: 'left', min: 0,
+                    grid: { color: border }, border: { display: false },
+                    ticks: { color: textMuted, font: { size: 10 }, callback: v => v.toFixed(1) + '%' } },
+          yRight: { type: 'linear', position: 'right', min: 0, max: 8,
+                    grid: { drawOnChartArea: false },
+                    ticks: { color: textMuted, font: { size: 10 }, callback: v => v + 'd' } }
+        }
+      }
+    });
+  }
+}
+
+function renderHistoryTable(pts) {
+  const tbl = document.getElementById('htTable');
+  if (!tbl) return;
+  const confBadge = c => {
+    const col = CONF_COLOR[c] || 'var(--text-faint)';
+    return `<span style="font-weight:700;color:${col}">${c || '—'}</span>`;
+  };
+  const regimeBadge = r => {
+    const col = REGIME_COLORS[r] || 'var(--text-faint)';
+    return `<span style="font-weight:700;color:${col}">${r || '—'}</span>`;
+  };
+  const hdrs = ['Date','Stress','Regime','Weather','Traffic','Port','Stockout %','Rec Days','Confidence'];
+  tbl.innerHTML =
+    `<thead><tr>${hdrs.map(h =>
+      `<th style="text-align:left;padding:5px 10px;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint);border-bottom:1px solid var(--border)">${h}</th>`
+    ).join('')}</tr></thead>` +
+    `<tbody>${pts.map((p, i) =>
+      `<tr style="background:${i%2===0?'#fff':'var(--surface-2)'}">
+        <td style="padding:5px 10px;font-family:var(--mono);font-size:10px;white-space:nowrap">${p.date}</td>
+        <td style="padding:5px 10px;font-family:var(--mono);font-size:10px">${(+p.stress_score).toFixed(3)}</td>
+        <td style="padding:5px 10px">${regimeBadge(p.regime)}</td>
+        <td style="padding:5px 10px;font-family:var(--mono);font-size:10px">${(+p.weather_contribution).toFixed(3)}</td>
+        <td style="padding:5px 10px;font-family:var(--mono);font-size:10px">${(+p.traffic_contribution).toFixed(3)}</td>
+        <td style="padding:5px 10px;font-family:var(--mono);font-size:10px">${(+p.port_contribution).toFixed(3)}</td>
+        <td style="padding:5px 10px;font-family:var(--mono);font-size:10px">${(+p.stockout_probability*100).toFixed(2)}%</td>
+        <td style="padding:5px 10px;font-family:var(--mono);font-size:10px">${p.recommended_days}d</td>
+        <td style="padding:5px 10px">${confBadge(p.source_confidence)}</td>
+      </tr>`
+    ).join('')}</tbody>`;
+}
 
 // ── REQUIRED-ELEMENTS GUARD ──────────────────────────────────────────────
 // Only the truly critical elements (the chart canvas + recommendation card numbers)

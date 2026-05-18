@@ -1,10 +1,17 @@
 /**
- * /api/latest — Stress-Aware Inventory Dashboard · Live data endpoint
+ * /api/latest — Stress-Aware Inventory Dashboard · Phase 0 GPA-Facing Prototype
+ *
+ * PROTOTYPE NOTICE: This is a Phase 0 exploratory prototype for evaluation and
+ * discussion purposes only. It is NOT a production Georgia Ports Authority model
+ * and has NOT been calibrated to GPA operational data, actual port throughput,
+ * real demand patterns, or GPA-specific parameters. All outputs are illustrative
+ * estimates derived from public weather and traffic signals only. Review all
+ * results with qualified operational context before any planning or decision use.
  *
  * Deployed as a Vercel serverless function at /api/latest.
  *
  * Phase 0: Returns a stress-regime-aware illustrative payload driven by
- *   live NWS corridor alert checks and a static port baseline.
+ *   live NWS corridor alert checks and a static port baseline estimate.
  *   Query params `days` and `scenario` are read and echoed back correctly.
  *
  * Phase 1 upgrade path: Replace the payload construction below with a real
@@ -250,6 +257,12 @@ const STRESS_DATA = {
   extreme: { score: 0.87,  components: { throughput_z: 0.92, leadtime_var_z: 0.88, ops_disruption: 0.81 } }
 };
 
+const PORT_SIGNAL = {
+  score:       0.10,
+  mode:        'static_phase_0_proxy',
+  explanation: 'Static Phase 0 estimate. No live GPA throughput or port congestion data is ingested. Replace with a live port signal in Phase 1.'
+};
+
 function deriveRegime(stressScore) {
   if (stressScore >= 0.8) return 'extreme';
   if (stressScore >= 0.6) return 'high';
@@ -263,15 +276,15 @@ function buildTakeaway(regime, scenario, selectedDays, minFeasible, meetsTarget,
   const sc = { baseline: 'baseline', safety: 'safety stock', tail: 'tail mitigation' }[scenario];
 
   if (minFeasible === null) {
-    return `No policy within the 2 to 6 day range meets the 2% service target under ${sw} stress and the ${sc} scenario. Coverage above 6 days or a stronger mitigation policy would be required.`;
+    return `The model suggests no policy within the 2–6 day range meets the estimated 2% service target under ${sw} stress and the ${sc} scenario, under current public-signal conditions. Coverage above 6 days or a stronger mitigation scenario may be required. Review with operational context before acting.`;
   }
   if (!meetsTarget) {
-    return `The current ${selectedDays}-day policy is below the model's recommended ${minFeasible}-day coverage level under ${sw} stress (${sc}). Increasing coverage would reduce estimated stockout risk under current conditions.`;
+    return `The model suggests the current ${selectedDays}-day policy falls below the estimated minimum of ${minFeasible} days under ${sw} stress (${sc}), under current public-signal conditions. Increasing coverage may reduce estimated stockout risk. Review with operational context before acting.`;
   }
   if (coverageMargin > 1) {
-    return `The current ${selectedDays}-day policy meets the 2% target with ${coverageMargin} day(s) of buffer under ${sw} stress (${sc}). Evaluate whether the additional inventory cost is justified.`;
+    return `The model suggests the current ${selectedDays}-day policy meets the estimated 2% target with ${coverageMargin} day(s) of buffer under ${sw} stress (${sc}), under current public-signal conditions. Evaluate whether the estimated holding cost is justified. Review with operational context.`;
   }
-  return `The current ${selectedDays}-day policy is at the minimum required level under ${sw} stress (${sc}). Any reduction will breach the 2% service target.`;
+  return `The model suggests the current ${selectedDays}-day policy is at the estimated minimum required level under ${sw} stress (${sc}), under current public-signal conditions. Any reduction may breach the estimated 2% service target. Review with operational context before acting.`;
 }
 
 export default async function handler(req, res) {
@@ -291,8 +304,6 @@ export default async function handler(req, res) {
     const scenario = VALID_SCENARIOS.includes(rawScenario) ? rawScenario : 'baseline';
 
     // ── Live signal fetch ─────────────────────────────────────────────────────
-    const PORT_BASELINE = 0.10; // static Phase 0 estimate
-
     const [nwsResult, trafficResult] = await Promise.all([
       fetchNWSAlerts(),
       fetchGA511TrafficEvents()
@@ -312,9 +323,19 @@ export default async function handler(req, res) {
     if (!nwsResult.error) sourcesUsed.push('nws_alerts');
     if (trafficResult.enabled && !trafficResult.error) sourcesUsed.push('ga511_traffic');
 
-    const stressScoreRaw = (0.45 * weatherScore) + (0.35 * trafficScore) + (0.20 * PORT_BASELINE);
+    const nwsAvailable    = !nwsResult.error;
+    const ga511Available  = trafficResult.enabled && !trafficResult.error;
+    const liveSourceCount = [nwsAvailable, ga511Available].filter(Boolean).length;
+    const sourceConfidence = liveSourceCount >= 2 ? 'high' : liveSourceCount === 1 ? 'medium' : 'low';
+
+    const stressScoreRaw = (0.45 * weatherScore) + (0.35 * trafficScore) + (0.20 * PORT_SIGNAL.score);
     const stressScore = parseFloat(Math.max(0, Math.min(1, stressScoreRaw)).toFixed(4));
     const regime = deriveRegime(stressScore);
+    const stressContributions = {
+      weather: parseFloat((0.45 * weatherScore).toFixed(4)),
+      traffic: parseFloat((0.35 * trafficScore).toFixed(4)),
+      port:    parseFloat((0.20 * PORT_SIGNAL.score).toFixed(4))
+    };
 
     // ── Stockout estimates ────────────────────────────────────────────────────
     const curve = MODEL[regime]?.[scenario] || MODEL.normal.baseline;
@@ -336,6 +357,13 @@ export default async function handler(req, res) {
 
     const takeaway = buildTakeaway(regime, scenario, selectedDays, minFeasible, meetsTarget, coverageMargin);
 
+    const recBasis = `Phase 0 illustrative model: regime "${regime}", scenario "${scenario}", ${liveSourceCount} live public signal source(s). No GPA operational or demand data ingested.`;
+    const recConfidence = liveSourceCount >= 2 ? 'low' : liveSourceCount === 1 ? 'very_low' : 'minimal';
+    const recStability  = minFeasible === null
+      ? 'target_unreachable_in_range'
+      : meetsTarget ? 'meets_estimated_target' : 'below_estimated_target';
+    const recNextStep = 'Validate against GPA throughput records, actual demand history, and port-specific lead-time distributions before any operational or planning use.';
+
     // ── Build payload ─────────────────────────────────────────────────────────
     const payload = {
       timestamp:              new Date().toISOString(),
@@ -356,15 +384,40 @@ export default async function handler(req, res) {
       coverage_margin:        coverageMargin,
       operational_takeaway:   takeaway,
 
+      recommendation_basis:       recBasis,
+      recommendation_confidence:  recConfidence,
+      recommendation_stability:   recStability,
+      next_validation_step:       recNextStep,
+
+      model_metadata: {
+        model_status:       'phase0_prototype',
+        model_mode:         'illustrative_live_signal_overlay',
+        calibration_status: 'not_calibrated_to_gpa_operations',
+        data_quality:       'illustrative',
+        professional_note:  'Phase 0 prototype using public weather and traffic signals, a static Phase 0 port proxy, and precomputed stockout-risk curves. Not calibrated to Georgia Ports Authority operational data, actual throughput, or GPA-specific demand patterns. All outputs are illustrative estimates. Review with qualified operational context before any planning or decision use.'
+      },
+
       source_summary: {
         weather_alert_count:    nwsAlertCount,
         weather_score:          parseFloat(weatherScore.toFixed(4)),
         traffic_event_count:    trafficEventCount,
         traffic_score:          parseFloat(trafficScore.toFixed(4)),
-        baseline_port_score:    PORT_BASELINE,
+        baseline_port_score:    PORT_SIGNAL.score,
         traffic_source_enabled: trafficResult.enabled,
         sources_used:           sourcesUsed,
-        source_failures:        sourceFailures
+        source_failures:        sourceFailures,
+
+        stress_formula_weights:  { weather: 0.45, traffic: 0.35, port: 0.20 },
+        stress_contributions:    stressContributions,
+        stress_score_raw:        parseFloat(stressScoreRaw.toFixed(4)),
+        stress_score_capped:     stressScore,
+        port_signal_mode:        PORT_SIGNAL.mode,
+        port_signal_explanation: PORT_SIGNAL.explanation,
+
+        nws_available:           nwsAvailable,
+        ga511_available:         ga511Available,
+        live_source_count:       liveSourceCount,
+        source_confidence:       sourceConfidence
       }
     };
 

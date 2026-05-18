@@ -284,6 +284,9 @@
       font-size: 12px; color: var(--text-muted); margin-top: 4px;
       line-height: 1.5; font-weight: 500;
     }
+    .op-driver-conf {
+      font-size: 11px; color: var(--text-faint); margin-top: 5px; font-weight: 500; line-height: 1.45;
+    }
     .op-cards {
       display: grid;
       grid-template-columns: repeat(3, minmax(150px, 1fr));
@@ -874,6 +877,7 @@
       <div class="op-title-wrap">
         <div id="operatorActionTitle" class="op-title">Loading recommendation…</div>
         <div id="operatorActionSub" class="op-sub">Connecting to live risk estimate and latest source signals.</div>
+        <div id="operatorDriverConf" class="op-driver-conf"></div>
       </div>
       <div class="op-cards">
         <div class="op-card">
@@ -916,9 +920,9 @@
           <div class="hkpi-sub" id="hkpiRecSub">days of cover</div>
         </div>
         <div class="hkpi">
-          <div class="hkpi-lbl">Scenario</div>
-          <div class="hkpi-val" id="hkpiScenario">—</div>
-          <div class="hkpi-sub">active</div>
+          <div class="hkpi-lbl">Primary driver</div>
+          <div class="hkpi-val" id="hkpiDriver" style="font-size:.9rem">—</div>
+          <div class="hkpi-sub" id="hkpiDriverSub">of disruption score</div>
         </div>
         <div class="hkpi">
           <div class="hkpi-lbl">Last updated</div>
@@ -1102,10 +1106,10 @@
           </div>
         </div>
 
-        <!-- Can I trust this estimate? -->
+        <!-- Signal Coverage -->
         <div class="card">
           <div class="panel-hdr">
-            <div class="panel-title">Can I trust this estimate?</div>
+            <div class="panel-title">Signal Coverage</div>
           </div>
           <div class="card-body">
             <div class="coverage-list">
@@ -1140,6 +1144,7 @@
                 <div class="cov-name">Historical disruption log</div>
               </div>
             </div>
+            <div class="ms-note" style="margin-top:8px">Source confidence reflects live data available. Recommendation confidence reflects model calibration and validation status.</div>
           </div>
         </div>
 
@@ -1178,71 +1183,6 @@
 
         </div>
 
-      </div>
-
-      <!-- Method note -->
-      <div class="method-note">
-        <strong>Note:</strong> This app does not directly track store shelves or real grocery inventory. It estimates risk from disruption signals (weather, traffic, port baseline) and a stockout model.
-      </div>
-
-      <!-- Model Status / Transparency -->
-      <div class="card" id="modelStatusCard">
-        <div class="panel-hdr">
-          <div class="panel-title">Model Status</div>
-          <div class="panel-badge">Phase 0 Prototype</div>
-        </div>
-        <div class="card-body">
-          <div class="ms-grid">
-            <div>
-              <div class="ms-label">Status</div>
-              <div class="ms-val">Phase 0 prototype</div>
-            </div>
-            <div>
-              <div class="ms-label">Mode</div>
-              <div class="ms-val">Illustrative live-signal overlay</div>
-            </div>
-            <div>
-              <div class="ms-label">Calibration</div>
-              <div class="ms-val">Not calibrated to GPA operational data</div>
-            </div>
-            <div>
-              <div class="ms-label">Data Quality</div>
-              <div class="ms-val">Illustrative</div>
-            </div>
-            <div>
-              <div class="ms-label">Source Confidence</div>
-              <div class="ms-val" id="msSourceConf">—</div>
-            </div>
-            <div>
-              <div class="ms-label">Live Sources</div>
-              <div class="ms-val" id="msLiveSources">—</div>
-            </div>
-            <div>
-              <div class="ms-label">Port Signal</div>
-              <div class="ms-val">Public/manual proxy</div>
-            </div>
-          </div>
-          <div class="ms-note">
-            This dashboard combines public live signals, a static Phase 0 port proxy, and precomputed stockout-risk curves. It is not a production Georgia Ports Authority operational model.
-          </div>
-        </div>
-      </div>
-
-      <!-- Path to Production Grade -->
-      <div class="card" id="prodPathCard">
-        <div class="panel-hdr">
-          <div class="panel-title">Path to Production Grade</div>
-        </div>
-        <div class="card-body">
-          <div class="policy-list">
-            <div class="policy-item"><div class="policy-dot"></div><span>Replace the static port proxy with GPA throughput, gate, advisory, dwell-time, or truck/rail turn-time signals.</span></div>
-            <div class="policy-item"><div class="policy-dot"></div><span>Backtest stress regimes against historical disruption periods such as storms, corridor closures, port slowdowns, or severe congestion events.</span></div>
-            <div class="policy-item"><div class="policy-dot"></div><span>Replace precomputed stockout-risk curves with versioned simulation outputs from a calibrated Monte Carlo model.</span></div>
-          </div>
-          <div class="ms-note" style="margin-top:8px">
-            These steps would improve calibration, validation, and operational trust before the dashboard could be used for real planning decisions.
-          </div>
-        </div>
       </div>
 
       <!-- Operational transparency cards (collapsed by default) -->
@@ -1309,6 +1249,64 @@
             </div>
 
           </div><!-- /.support-fold -->
+
+          <!-- Model Status -->
+          <div class="card" id="modelStatusCard" style="margin-top:4px">
+            <div class="panel-hdr">
+              <div class="panel-title">Model Status</div>
+              <div class="panel-badge">Phase 0 Prototype</div>
+            </div>
+            <div class="card-body">
+              <div class="ms-grid">
+                <div>
+                  <div class="ms-label">Status</div>
+                  <div class="ms-val">Phase 0 prototype</div>
+                </div>
+                <div>
+                  <div class="ms-label">Mode</div>
+                  <div class="ms-val">Illustrative live-signal overlay</div>
+                </div>
+                <div>
+                  <div class="ms-label">Calibration</div>
+                  <div class="ms-val">Not calibrated to GPA operational data</div>
+                </div>
+                <div>
+                  <div class="ms-label">Data quality</div>
+                  <div class="ms-val">Illustrative</div>
+                </div>
+                <div>
+                  <div class="ms-label">Source confidence</div>
+                  <div class="ms-val" id="msSourceConf">—</div>
+                </div>
+                <div>
+                  <div class="ms-label">Live sources</div>
+                  <div class="ms-val" id="msLiveSources">—</div>
+                </div>
+                <div>
+                  <div class="ms-label">Port signal</div>
+                  <div class="ms-val">Public/manual proxy</div>
+                </div>
+              </div>
+              <div class="ms-note">
+                Phase 0 prototype using public weather and traffic signals and a public/manual port proxy. Not calibrated to GPA operational data. All outputs are illustrative estimates.
+              </div>
+            </div>
+          </div>
+
+          <!-- Path to Production Grade -->
+          <div class="card" id="prodPathCard" style="margin-top:4px">
+            <div class="panel-hdr">
+              <div class="panel-title">Path to Production Grade</div>
+            </div>
+            <div class="card-body">
+              <div class="policy-list">
+                <div class="policy-item"><div class="policy-dot"></div><span>Replace the port proxy with GPA throughput, gate, dwell-time, or turn-time signals.</span></div>
+                <div class="policy-item"><div class="policy-dot"></div><span>Backtest stress regimes against historical disruption periods.</span></div>
+                <div class="policy-item"><div class="policy-dot"></div><span>Replace precomputed risk curves with calibrated Monte Carlo simulation outputs.</span></div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </details>
 
@@ -1319,6 +1317,7 @@
           <span aria-hidden="true" style="color:var(--text-faint);">▾</span>
         </summary>
         <div class="card-body">
+          <div><strong>Scope:</strong> This dashboard estimates risk from disruption signals (weather, traffic, port baseline) and a stockout model. It does not directly track store shelves or real inventory levels.</div>
           <div>The Savannah → Atlanta route is a replenishment lane from port and distribution activity near Savannah toward grocery demand centers around Atlanta.</div>
           <div>The app reads live disruption signals (weather alerts, traffic events when connected, port baseline), maps them into a disruption score, and uses that score to estimate the chance the selected inventory plan runs out before the next replenishment.</div>
           <div><strong>To use it:</strong> pick your current days of cover and scenario, then check whether the plan meets the target or needs more coverage. If the recommendation says 5 days and you've selected 3, your plan is 2 days short.</div>
@@ -1711,8 +1710,6 @@ function updateHero(score, regime, recDays, stockPct, stockLo, stockHi, scenario
   const rdEl = document.getElementById('hkpiRecDays');
   if (rdEl) rdEl.textContent = recDays !== null ? recDays + 'd' : '6d+';
 
-  const scEl = document.getElementById('hkpiScenario');
-  if (scEl) scEl.textContent = { baseline:'Baseline', safety:'Safety', tail:'Tail Mit.' }[scenario] || scenario || '—';
 
   const tsEl = document.getElementById('hkpiLastTs');
   if (tsEl && ts) tsEl.textContent = new Date(ts).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' });
@@ -1732,6 +1729,22 @@ function updateHero(score, regime, recDays, stockPct, stockLo, stockHi, scenario
   const bTxt  = document.getElementById('topBadgeTxt');
   if (badge) badge.dataset.status = status || 'loading';
   if (bTxt)  bTxt.textContent = { live:'LIVE', stale:'STALE', error:'OFFLINE', loading:'CONNECTING', local:'LOCAL PREVIEW' }[status] || 'CONNECTING';
+}
+
+function updateHeroPrimaryDriver(sourceSummary) {
+  const el = document.getElementById('hkpiDriver');
+  if (!el) return;
+  const sc = sourceSummary && sourceSummary.stress_contributions;
+  if (!sc) return;
+  const candidates = [
+    { label: 'Weather alerts', val: sc.weather || 0 },
+    { label: 'Traffic',        val: sc.traffic  || 0 },
+    { label: 'Port proxy',     val: sc.port     || 0 }
+  ];
+  const max = candidates.reduce((a, b) => b.val > a.val ? b : a);
+  el.textContent = max.val > 0 ? max.label : '—';
+  const sub = document.getElementById('hkpiDriverSub');
+  if (sub) sub.textContent = max.val > 0 ? 'contribution: ' + max.val.toFixed(3) : 'of disruption score';
 }
 
 let _countdownTimer = null, _nextRefreshAt = null;
@@ -1868,7 +1881,8 @@ function updateOperationalCards(d) {
   if (limEl) limEl.textContent = psd.limitations || '';
 
   // ── Data Health ────────────────────────────────────────────────────────
-  const fmt = v => v ? (v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g,' ')) : '—';
+  const LABEL_DISPLAY = { 'manual_or_public_proxy':'Manual/public proxy', 'precomputed_static_curves':'Precomputed model curves', 'live':'Live', 'unavailable':'Unavailable', 'static_phase_0_proxy':'Static proxy', 'public_proxy_v1':'Public proxy' };
+  const fmt = v => v ? (LABEL_DISPLAY[v] || (v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g,' '))) : '—';
   setText('dhNws',   fmt(df.nws));
   setText('dhGa511', fmt(df.ga511));
   setText('dhPort',  fmt(df.port_signal));
@@ -2105,6 +2119,23 @@ function updateOperatorBanner(meetsTarget, selectedProb, targetProb, minDays, da
       : `Confidence: Medium<br><span style="font-weight:500;color:var(--warn)">Weather feed active; traffic feed not connected.</span>`;
   }
 
+  const driverConf = document.getElementById('operatorDriverConf');
+  if (driverConf && sourceSummary) {
+    const sc2 = sourceSummary.stress_contributions;
+    if (sc2) {
+      const cands = [
+        { label: 'weather alerts', val: sc2.weather || 0 },
+        { label: 'traffic',        val: sc2.traffic  || 0 },
+        { label: 'port proxy',     val: sc2.port     || 0 }
+      ];
+      const mx = cands.reduce((a, b) => b.val > a.val ? b : a);
+      const conf = sourceSummary.source_confidence || '—';
+      driverConf.textContent = mx.val > 0
+        ? `Primary driver: ${mx.label}.  Source confidence: ${conf}.`
+        : `Source confidence: ${conf}.`;
+    }
+  }
+
   const callout = document.getElementById('chartCallout');
   if (callout) callout.textContent = `Recommended: ${minDays != null ? minDays + ' days' : '6d+'}`;
 }
@@ -2179,6 +2210,7 @@ function updateDashboard() {
     if (exec) exec.innerHTML = buildExecSummary(regime, scenario, daysOfCover, sp, minDays, _mode === 'whatif');
 
     updateHero(sd.score, regime, minDays, sp, spLo, spHi, scenario, null, _currentStatus);
+    updateHeroPrimaryDriver(window.__lastSourceSummary || null);
 
     const ideas = buildPolicyIdeas(regime, scenario, minDays, daysOfCover, meetsTarget, coverageMargin, sd.score);
     renderPolicyIdeas(ideas, scenario);
@@ -2286,6 +2318,7 @@ const LiveData = (() => {
     // Update the traffic-confidence row immediately
     updateTrafficConfidence(d.source_summary);
     updateModelStatus(d);
+    updateHeroPrimaryDriver(d.source_summary || null);
     updateOperationalCards(d);
 
     if (d.regime) _liveRegime = d.regime;

@@ -2,7 +2,8 @@
   "functions": {
     "api/latest.js": {
       "memory": 128,
-      "maxDuration": 5
+      "maxDuration": 5,
+      "includeFiles": "data/**"
     }
   }
 }

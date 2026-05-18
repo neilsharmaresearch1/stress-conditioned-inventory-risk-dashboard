@@ -46,6 +46,9 @@
  * display. Do NOT pass percent values (e.g. 3.8) — pass decimal (e.g. 0.038).
  */
 
+import { readFile } from 'fs/promises';
+import { join }     from 'path';
+
 const GA511_KEY = process.env.GA511_API_KEY || null;
 
 // ── NWS live alert check ──────────────────────────────────────────────────────
@@ -257,10 +260,28 @@ const STRESS_DATA = {
   extreme: { score: 0.87,  components: { throughput_z: 0.92, leadtime_var_z: 0.88, ops_disruption: 0.81 } }
 };
 
+async function loadJsonFile(relativePath, fallback) {
+  try {
+    const text = await readFile(join(process.cwd(), relativePath), 'utf8');
+    return JSON.parse(text);
+  } catch (e) {
+    return fallback;
+  }
+}
+
 const PORT_SIGNAL = {
   score:       0.10,
   mode:        'static_phase_0_proxy',
   explanation: 'Static Phase 0 estimate. No live GPA throughput or port congestion data is ingested. Replace with a live port signal in Phase 1.'
+};
+
+const VALIDATION_FALLBACK = {
+  updated_at:            null,
+  directionality_checks: 'unknown',
+  sensitivity_analysis:  'pending',
+  historical_backtest:   'pending',
+  gpa_calibration:       'not_connected',
+  notes:                 []
 };
 
 function deriveRegime(stressScore) {
@@ -304,7 +325,9 @@ export default async function handler(req, res) {
     const scenario = VALID_SCENARIOS.includes(rawScenario) ? rawScenario : 'baseline';
 
     // ── Live signal fetch ─────────────────────────────────────────────────────
-    const [nwsResult, trafficResult] = await Promise.all([
+    const [portSignalFile, validationFile, nwsResult, trafficResult] = await Promise.all([
+      loadJsonFile('data/port_signal.json', null),
+      loadJsonFile('data/validation_status.json', null),
       fetchNWSAlerts(),
       fetchGA511TrafficEvents()
     ]);
@@ -328,13 +351,30 @@ export default async function handler(req, res) {
     const liveSourceCount = [nwsAvailable, ga511Available].filter(Boolean).length;
     const sourceConfidence = liveSourceCount >= 2 ? 'high' : liveSourceCount === 1 ? 'medium' : 'low';
 
-    const stressScoreRaw = (0.45 * weatherScore) + (0.35 * trafficScore) + (0.20 * PORT_SIGNAL.score);
+    const rawPortScore   = portSignalFile?.port_score;
+    const portScoreValid = typeof rawPortScore === 'number' && isFinite(rawPortScore)
+      && rawPortScore >= 0 && rawPortScore <= 1;
+    const portScore    = portScoreValid ? rawPortScore : PORT_SIGNAL.score;
+    const portFallback = !portScoreValid;
+
+    const portUpdatedAt = portSignalFile?.updated_at ?? null;
+    let portAgeHours = null;
+    let portStale    = true;
+    if (portUpdatedAt) {
+      const ms = Date.now() - new Date(portUpdatedAt).getTime();
+      if (isFinite(ms) && ms >= 0) {
+        portAgeHours = parseFloat((ms / 3_600_000).toFixed(2));
+        portStale    = portAgeHours > 168;
+      }
+    }
+
+    const stressScoreRaw = (0.45 * weatherScore) + (0.35 * trafficScore) + (0.20 * portScore);
     const stressScore = parseFloat(Math.max(0, Math.min(1, stressScoreRaw)).toFixed(4));
     const regime = deriveRegime(stressScore);
     const stressContributions = {
       weather: parseFloat((0.45 * weatherScore).toFixed(4)),
       traffic: parseFloat((0.35 * trafficScore).toFixed(4)),
-      port:    parseFloat((0.20 * PORT_SIGNAL.score).toFixed(4))
+      port:    parseFloat((0.20 * portScore).toFixed(4))
     };
 
     // ── Stockout estimates ────────────────────────────────────────────────────
@@ -394,7 +434,7 @@ export default async function handler(req, res) {
         model_mode:         'illustrative_live_signal_overlay',
         calibration_status: 'not_calibrated_to_gpa_operations',
         data_quality:       'illustrative',
-        professional_note:  'Phase 0 prototype using public weather and traffic signals, a static Phase 0 port proxy, and precomputed stockout-risk curves. Not calibrated to Georgia Ports Authority operational data, actual throughput, or GPA-specific demand patterns. All outputs are illustrative estimates. Review with qualified operational context before any planning or decision use.'
+        professional_note:  'Phase 0 prototype using public weather and traffic signals, an updateable public/manual port proxy from data/port_signal.json, and precomputed stockout-risk curves. Not calibrated to Georgia Ports Authority operational data, actual throughput, or GPA-specific demand patterns. All outputs are illustrative estimates and should be reviewed with qualified operational context before any planning or decision use.'
       },
 
       source_summary: {
@@ -402,7 +442,7 @@ export default async function handler(req, res) {
         weather_score:          parseFloat(weatherScore.toFixed(4)),
         traffic_event_count:    trafficEventCount,
         traffic_score:          parseFloat(trafficScore.toFixed(4)),
-        baseline_port_score:    PORT_SIGNAL.score,
+        baseline_port_score:    portScore,
         traffic_source_enabled: trafficResult.enabled,
         sources_used:           sourcesUsed,
         source_failures:        sourceFailures,
@@ -411,13 +451,46 @@ export default async function handler(req, res) {
         stress_contributions:    stressContributions,
         stress_score_raw:        parseFloat(stressScoreRaw.toFixed(4)),
         stress_score_capped:     stressScore,
-        port_signal_mode:        PORT_SIGNAL.mode,
-        port_signal_explanation: PORT_SIGNAL.explanation,
+        port_signal_mode:        portSignalFile?.mode        ?? PORT_SIGNAL.mode,
+        port_signal_explanation: portSignalFile?.limitations  ?? PORT_SIGNAL.explanation,
 
         nws_available:           nwsAvailable,
         ga511_available:         ga511Available,
         live_source_count:       liveSourceCount,
-        source_confidence:       sourceConfidence
+        source_confidence:       sourceConfidence,
+
+        port_signal_details: {
+          updated_at:          portUpdatedAt,
+          mode:                portSignalFile?.mode        ?? PORT_SIGNAL.mode,
+          confidence:          portSignalFile?.confidence  ?? 'unknown',
+          components:          portSignalFile?.components  ?? null,
+          source_notes:        portSignalFile?.source_notes ?? [],
+          limitations:         portSignalFile?.limitations  ?? PORT_SIGNAL.explanation,
+          loaded_from_file:    portSignalFile !== null,
+          fallback_used:       portFallback,
+          port_signal_age_hours: portAgeHours,
+          port_signal_stale:   portStale
+        },
+
+        data_freshness: {
+          nws:           nwsAvailable    ? 'live' : 'unavailable',
+          ga511:         ga511Available  ? 'live' : 'unavailable',
+          port_signal:   'manual_or_public_proxy',
+          model_outputs: 'precomputed_static_curves'
+        }
+      },
+
+      validation_status:    validationFile ?? VALIDATION_FALLBACK,
+
+      operational_readiness: {
+        current_level:         'operational_grade_prototype',
+        production_ready:      false,
+        missing_for_production: [
+          'direct GPA operational data feed',
+          'historical backtesting',
+          'demand and lead-time calibration',
+          'versioned simulation engine'
+        ]
       }
     };
 

@@ -1,0 +1,20 @@
+{
+  "updated_at": "2026-05-18T00:00:00Z",
+  "mode": "public_proxy_v1",
+  "port_score": 0.22,
+  "components": {
+    "throughput_pressure": 0.18,
+    "gate_status_pressure": 0.10,
+    "traffic_advisory_pressure": 0.35,
+    "vessel_schedule_pressure": 0.20,
+    "manual_override": 0.00
+  },
+  "source_notes": [
+    "GPA monthly TEU trend",
+    "GPA traffic advisory page",
+    "Garden City gate hours or closings",
+    "GPA vessel schedule"
+  ],
+  "confidence": "medium",
+  "limitations": "Public proxy only. Not connected to secure GPA operational APIs."
+}

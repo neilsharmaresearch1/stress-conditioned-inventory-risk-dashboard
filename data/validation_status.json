@@ -1,0 +1,12 @@
+{
+  "updated_at": "2026-05-18T00:00:00Z",
+  "directionality_checks": "passed",
+  "sensitivity_analysis": "pending",
+  "historical_backtest": "pending",
+  "gpa_calibration": "not_connected",
+  "notes": [
+    "Current model is directionally structured but not production-calibrated.",
+    "Future validation should compare stress regimes against known disruption windows.",
+    "Future calibration should use actual demand, lead-time, throughput, dwell-time, gate activity, or turn-time data."
+  ]
+}

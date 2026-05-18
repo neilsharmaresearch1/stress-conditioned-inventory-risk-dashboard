@@ -1219,7 +1219,7 @@
             </div>
             <div>
               <div class="ms-label">Port Signal</div>
-              <div class="ms-val">Static Phase 0 proxy</div>
+              <div class="ms-val">Public/manual proxy</div>
             </div>
           </div>
           <div class="ms-note">
@@ -1244,6 +1244,73 @@
           </div>
         </div>
       </div>
+
+      <!-- Operational transparency cards (collapsed by default) -->
+      <details class="footer-drawer">
+        <summary>
+          Operational Transparency &amp; Data Quality
+          <span aria-hidden="true" style="color:var(--text-faint);">▾</span>
+        </summary>
+        <div class="card-body">
+          <div class="support-fold">
+
+            <!-- Port Signal Details -->
+            <div class="card">
+              <div class="panel-hdr">
+                <div class="panel-title">Port Signal Details</div>
+                <div class="panel-badge" id="psConfBadge">—</div>
+              </div>
+              <div class="card-body">
+                <div class="ms-grid">
+                  <span class="ms-label">Mode</span>         <span class="ms-val" id="psMode">—</span>
+                  <span class="ms-label">Score used</span>   <span class="ms-val" id="psScore">—</span>
+                  <span class="ms-label">Confidence</span>   <span class="ms-val" id="psConf">—</span>
+                  <span class="ms-label">Updated</span>      <span class="ms-val" id="psUpdatedAt">—</span>
+                  <span class="ms-label">Age (hrs)</span>    <span class="ms-val" id="psAge">—</span>
+                  <span class="ms-label">Stale?</span>       <span class="ms-val" id="psStale">—</span>
+                  <span class="ms-label">Source notes</span> <span class="ms-val" id="psSource">—</span>
+                </div>
+                <div class="ms-note" id="psComponents" style="margin-top:6px"></div>
+                <div class="ms-note" id="psLimitations" style="margin-top:4px"></div>
+              </div>
+            </div>
+
+            <!-- Data Health -->
+            <div class="card">
+              <div class="panel-hdr">
+                <div class="panel-title">Data Health</div>
+                <div class="panel-badge" id="dhConfBadge">—</div>
+              </div>
+              <div class="card-body">
+                <div class="ms-grid">
+                  <span class="ms-label">NWS alerts</span>   <span class="ms-val" id="dhNws">—</span>
+                  <span class="ms-label">GA 511</span>        <span class="ms-val" id="dhGa511">—</span>
+                  <span class="ms-label">Port signal</span>  <span class="ms-val" id="dhPort">—</span>
+                  <span class="ms-label">Model outputs</span><span class="ms-val" id="dhModel">—</span>
+                  <span class="ms-label">Confidence</span>   <span class="ms-val" id="dhConf">—</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Validation Status -->
+            <div class="card">
+              <div class="panel-hdr">
+                <div class="panel-title">Validation Status</div>
+              </div>
+              <div class="card-body">
+                <div class="ms-grid">
+                  <span class="ms-label">Directionality</span>  <span class="ms-val" id="vsDir">—</span>
+                  <span class="ms-label">Sensitivity</span>     <span class="ms-val" id="vsSens">—</span>
+                  <span class="ms-label">Backtest</span>        <span class="ms-val" id="vsBacktest">—</span>
+                  <span class="ms-label">GPA calibration</span> <span class="ms-val" id="vsGpa">—</span>
+                </div>
+                <ul class="ms-note" id="vsNotesList" style="margin-top:6px;padding-left:14px"></ul>
+              </div>
+            </div>
+
+          </div><!-- /.support-fold -->
+        </div>
+      </details>
 
       <!-- Footer drawers: how it works, methodology, limitations, creator -->
       <details class="footer-drawer">
@@ -1763,6 +1830,84 @@ function updateModelStatus(d) {
   if (srcEl) srcEl.textContent = liveCount !== null ? liveCount + ' live public source' + (liveCount !== 1 ? 's' : '') : '—';
 }
 
+// ── OPERATIONAL TRANSPARENCY CARDS ───────────────────────────────────────
+function updateOperationalCards(d) {
+  const ss  = (d && d.source_summary) || {};
+  const psd = ss.port_signal_details  || {};
+  const df  = ss.data_freshness       || {};
+  const vs  = d.validation_status     || {};
+
+  // ── Port Signal Details ────────────────────────────────────────────────
+  const psConf = psd.confidence || '—';
+  const badge  = document.getElementById('psConfBadge');
+  if (badge) {
+    badge.textContent = psConf.charAt(0).toUpperCase() + psConf.slice(1);
+    badge.style.background = psConf === 'high' ? 'var(--ok-bg)'   : psConf === 'medium' ? 'var(--warn-bg)' : 'var(--surface-2)';
+    badge.style.color      = psConf === 'high' ? 'var(--ok)'      : psConf === 'medium' ? 'var(--warn)'    : 'var(--text-faint)';
+  }
+  const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v ?? '—'; };
+  setText('psMode',      psd.mode      ?? '—');
+  setText('psScore',     typeof ss.baseline_port_score === 'number' ? ss.baseline_port_score.toFixed(2) : '—');
+  setText('psConf',      psConf);
+  setText('psUpdatedAt', psd.updated_at ? psd.updated_at.replace('T',' ').replace('Z',' UTC') : '—');
+  setText('psAge',       psd.port_signal_age_hours !== null && psd.port_signal_age_hours !== undefined ? psd.port_signal_age_hours : '—');
+  const staleEl = document.getElementById('psStale');
+  if (staleEl) {
+    staleEl.textContent  = psd.port_signal_stale ? 'Yes' : 'No';
+    staleEl.style.color  = psd.port_signal_stale ? 'var(--err)' : 'var(--ok)';
+    staleEl.style.fontWeight = '700';
+  }
+  setText('psSource', Array.isArray(psd.source_notes) && psd.source_notes.length ? psd.source_notes.join('; ') : '—');
+  const compEl = document.getElementById('psComponents');
+  if (compEl) {
+    if (psd.components && typeof psd.components === 'object') {
+      compEl.textContent = 'Components: ' + Object.entries(psd.components).map(([k,v]) => k.replace(/_/g,' ') + '=' + v).join(', ');
+    } else { compEl.textContent = ''; }
+  }
+  const limEl = document.getElementById('psLimitations');
+  if (limEl) limEl.textContent = psd.limitations || '';
+
+  // ── Data Health ────────────────────────────────────────────────────────
+  const fmt = v => v ? (v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g,' ')) : '—';
+  setText('dhNws',   fmt(df.nws));
+  setText('dhGa511', fmt(df.ga511));
+  setText('dhPort',  fmt(df.port_signal));
+  setText('dhModel', fmt(df.model_outputs));
+  const confRaw = ss.source_confidence;
+  const dhConfEl = document.getElementById('dhConf');
+  if (dhConfEl) {
+    dhConfEl.textContent  = confRaw ? (confRaw.charAt(0).toUpperCase() + confRaw.slice(1)) : '—';
+    dhConfEl.style.color      = confRaw === 'high' ? 'var(--ok)' : confRaw === 'medium' ? 'var(--warn)' : confRaw === 'low' ? 'var(--err)' : '';
+    dhConfEl.style.fontWeight = confRaw ? '700' : '';
+  }
+  const dhBadge = document.getElementById('dhConfBadge');
+  if (dhBadge) {
+    dhBadge.textContent = confRaw ? (confRaw.charAt(0).toUpperCase() + confRaw.slice(1)) : '—';
+    dhBadge.style.background = confRaw === 'high' ? 'var(--ok-bg)' : confRaw === 'medium' ? 'var(--warn-bg)' : 'var(--surface-2)';
+    dhBadge.style.color      = confRaw === 'high' ? 'var(--ok)'    : confRaw === 'medium' ? 'var(--warn)'    : 'var(--text-faint)';
+  }
+
+  // ── Validation Status ──────────────────────────────────────────────────
+  const statusColor = v => v === 'passed' ? 'var(--ok)' : v === 'pending' ? 'var(--warn)' : v === 'not_connected' ? 'var(--text-faint)' : '';
+  const statusFmt   = v => v ? (v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g,' ')) : '—';
+  ['vsDir','vsSens','vsBacktest','vsGpa'].forEach((id, i) => {
+    const keys = ['directionality_checks','sensitivity_analysis','historical_backtest','gpa_calibration'];
+    const val  = vs[keys[i]];
+    const el   = document.getElementById(id);
+    if (el) {
+      el.textContent  = statusFmt(val);
+      el.style.color  = statusColor(val);
+      el.style.fontWeight = val ? '700' : '';
+    }
+  });
+  const notesList = document.getElementById('vsNotesList');
+  if (notesList) {
+    notesList.innerHTML = Array.isArray(vs.notes) && vs.notes.length
+      ? vs.notes.map(n => `<li>${n}</li>`).join('')
+      : '';
+  }
+}
+
 // ── POLICY IDEAS RENDER ───────────────────────────────────────────────────
 function renderPolicyIdeas(ideas, scenario) {
   const list  = document.getElementById('policyList');
@@ -2141,6 +2286,7 @@ const LiveData = (() => {
     // Update the traffic-confidence row immediately
     updateTrafficConfidence(d.source_summary);
     updateModelStatus(d);
+    updateOperationalCards(d);
 
     if (d.regime) _liveRegime = d.regime;
 

@@ -1,0 +1,8 @@
+{
+  "model_version": "phase0_static_curves",
+  "run_timestamp": "2026-05-18T00:00:00Z",
+  "n_trials": null,
+  "status": "placeholder_structure",
+  "source": "Current api/latest.js MODEL object remains active. This file shows the intended Phase 2 structure for versioned simulation outputs.",
+  "next_step": "Replace with calibrated Monte Carlo simulation output after validation and backtesting."
+}

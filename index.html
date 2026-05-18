@@ -697,6 +697,12 @@
 
     .kpi-val, .rec-num, .rmi-val, .kpi-ci, .rmi-ci, .hkpi-val { transition: opacity 120ms ease }
     .fading { opacity: 0 }
+
+    /* ─── MODEL STATUS CARD ──────────────────────────────────────────────── */
+    .ms-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; margin-bottom: 10px }
+    .ms-label { font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 2px }
+    .ms-val   { font-size: 11px; font-weight: 500; color: var(--text-muted); line-height: 1.35 }
+    .ms-note  { font-size: 10px; color: var(--text-faint); line-height: 1.5; padding: 7px 10px; background: var(--surface-2); border: 1px solid var(--divider); border-radius: var(--rm) }
   </style>
 </head>
 <body>
@@ -1177,6 +1183,49 @@
       <!-- Method note -->
       <div class="method-note">
         <strong>Note:</strong> This app does not directly track store shelves or real grocery inventory. It estimates risk from disruption signals (weather, traffic, port baseline) and a stockout model.
+      </div>
+
+      <!-- Model Status / Transparency -->
+      <div class="card" id="modelStatusCard">
+        <div class="panel-hdr">
+          <div class="panel-title">Model Status</div>
+          <div class="panel-badge">Phase 0 Prototype</div>
+        </div>
+        <div class="card-body">
+          <div class="ms-grid">
+            <div>
+              <div class="ms-label">Status</div>
+              <div class="ms-val">Phase 0 prototype</div>
+            </div>
+            <div>
+              <div class="ms-label">Mode</div>
+              <div class="ms-val">Illustrative live-signal overlay</div>
+            </div>
+            <div>
+              <div class="ms-label">Calibration</div>
+              <div class="ms-val">Not calibrated to GPA operational data</div>
+            </div>
+            <div>
+              <div class="ms-label">Data Quality</div>
+              <div class="ms-val">Illustrative</div>
+            </div>
+            <div>
+              <div class="ms-label">Source Confidence</div>
+              <div class="ms-val" id="msSourceConf">—</div>
+            </div>
+            <div>
+              <div class="ms-label">Live Sources</div>
+              <div class="ms-val" id="msLiveSources">—</div>
+            </div>
+            <div>
+              <div class="ms-label">Port Signal</div>
+              <div class="ms-val">Static Phase 0 proxy</div>
+            </div>
+          </div>
+          <div class="ms-note">
+            This dashboard combines public live signals, a static Phase 0 port proxy, and precomputed stockout-risk curves. It is not a production Georgia Ports Authority operational model.
+          </div>
+        </div>
       </div>
 
       <!-- Footer drawers: how it works, methodology, limitations, creator -->
@@ -1682,6 +1731,21 @@ function updateTrafficConfidence(sourceSummary) {
   }
 }
 
+// ── MODEL STATUS CARD ─────────────────────────────────────────────────────
+function updateModelStatus(d) {
+  const ss = (d && d.source_summary) || {};
+  const confRaw = ss.source_confidence;
+  const confEl  = document.getElementById('msSourceConf');
+  if (confEl) {
+    confEl.textContent  = confRaw ? (confRaw.charAt(0).toUpperCase() + confRaw.slice(1)) : '—';
+    confEl.style.color      = confRaw === 'high' ? 'var(--ok)' : confRaw === 'medium' ? 'var(--warn)' : confRaw === 'low' ? 'var(--err)' : '';
+    confEl.style.fontWeight = confRaw ? '700' : '';
+  }
+  const liveCount = typeof ss.live_source_count === 'number' ? ss.live_source_count : null;
+  const srcEl = document.getElementById('msLiveSources');
+  if (srcEl) srcEl.textContent = liveCount !== null ? liveCount + ' live public source' + (liveCount !== 1 ? 's' : '') : '—';
+}
+
 // ── POLICY IDEAS RENDER ───────────────────────────────────────────────────
 function renderPolicyIdeas(ideas, scenario) {
   const list  = document.getElementById('policyList');
@@ -2059,6 +2123,7 @@ const LiveData = (() => {
 
     // Update the traffic-confidence row immediately
     updateTrafficConfidence(d.source_summary);
+    updateModelStatus(d);
 
     if (d.regime) _liveRegime = d.regime;
 

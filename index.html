@@ -2,7 +2,7 @@
 <html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Live Risk Intelligence — Savannah → Atlanta Lane</title>
   <meta name="description" content="Live disruption signals mapped into model-based stockout risk estimates for the Savannah to Atlanta replenishment lane." />
 
@@ -756,6 +756,144 @@
     .mt-card { background: #fff; border: 1px solid var(--border); border-radius: var(--rl); box-shadow: var(--sh) }
     .mt-card .card-body { font-size: 11px; color: var(--text-muted); line-height: 1.65; display: flex; flex-direction: column; gap: 8px }
     .mt-card strong { color: var(--text); font-weight: 600 }
+
+    /* ─── HAMBURGER BUTTON ───────────────────────────────────────────────── */
+    .hamburger-btn {
+      display: none;
+      align-items: center; justify-content: center;
+      width: 36px; height: 36px; border-radius: var(--r);
+      color: var(--text-muted); flex-shrink: 0;
+      border: 1px solid var(--border); background: rgba(255,255,255,.7);
+      transition: background var(--tr);
+    }
+    .hamburger-btn:hover { background: #fff }
+    .hbr-close { display: none }
+    body.drawer-open .hbr-bars  { display: none }
+    body.drawer-open .hbr-close { display: block }
+
+    /* ─── DRAWER OVERLAY ─────────────────────────────────────────────────── */
+    .drawer-overlay {
+      display: none;
+      position: fixed; inset: 0; background: rgba(0,0,0,.32); z-index: 50;
+    }
+    body.drawer-open .drawer-overlay { display: block }
+
+    /* ─── MOBILE LAYOUT (<=768px) ────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .hamburger-btn { display: flex }
+
+      /* D3: shell scrolls naturally instead of clipping */
+      .shell {
+        display: block;
+        height: auto;
+        min-height: 100dvh;
+        overflow: visible;
+      }
+
+      /* D7: topbar sticky with safe-area insets */
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 60;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-left: calc(18px + env(safe-area-inset-left, 0px));
+        padding-right: calc(18px + env(safe-area-inset-right, 0px));
+      }
+
+      /* D2: sidebar as off-canvas slide-in drawer */
+      .sidebar {
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
+        width: 280px; max-width: 85vw;
+        z-index: 55;
+        transform: translateX(-100%);
+        transition: transform 0.25s cubic-bezier(.16,1,.3,1);
+        box-shadow: none;
+        padding-top: calc(48px + env(safe-area-inset-top, 0px));
+        border-right: 1px solid var(--border);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+      }
+      body.drawer-open .sidebar {
+        transform: translateX(0);
+        box-shadow: 4px 0 32px rgba(0,0,0,.14);
+      }
+
+      /* D3: main scrolls with page */
+      .main { height: auto; overflow-y: visible; overflow-x: hidden }
+      .tab-pane { overflow-y: visible }
+      .tab-pane.active { overflow-y: visible }
+
+      /* D8: tabs horizontally scrollable */
+      .page-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .page-tabs::-webkit-scrollbar { display: none }
+      .ptab { white-space: nowrap }
+
+      /* D5: prevent iOS auto-zoom on form focus (requires 16px) */
+      .cost-input, .ctrl-sel, input[type=number] { font-size: 16px }
+
+      /* D6: touch targets minimum 44x44 */
+      .seg-btn { min-height: 44px }
+      .mode-btn { min-height: 44px }
+      .ptab { min-height: 44px; padding: 12px 14px }
+      .ticker-view-btn { min-height: 44px; padding: 10px 12px }
+      input[type=range]::-webkit-slider-thumb { width: 24px; height: 24px }
+
+      /* D7: bottom home-indicator clearance */
+      .bottom-spacer { height: calc(24px + env(safe-area-inset-bottom, 0px)) }
+    }
+
+    /* ─── PHONE STACK (<=640px) ──────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      /* D4: hero column stack */
+      .hero {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+        padding: 12px 16px;
+      }
+      .score-block {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        margin-right: 0;
+        padding-right: 0;
+        padding-bottom: 12px;
+        min-width: 0;
+      }
+      .hero-kpis {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+        flex: none;
+      }
+      .hkpi {
+        border-right: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        padding: 8px 10px;
+      }
+      .hkpi:nth-child(even) { border-right: none }
+      .hkpi:nth-child(3), .hkpi:nth-child(4) { border-bottom: none }
+      .hero-status {
+        border-left: none;
+        border-top: 1px solid var(--border);
+        padding-left: 0;
+        padding-top: 8px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 8px 12px;
+      }
+
+      /* D4: op-cards single column on phone */
+      .op-cards { min-width: 0; grid-template-columns: 1fr }
+
+      /* Tighten content padding on small screens */
+      .content  { padding: 12px 14px; gap: 14px }
+      .ht-content, .vt-content, .mt-content { padding: 12px 14px }
+    }
   </style>
 </head>
 <body>
@@ -764,6 +902,17 @@
 
   <!-- ── TOPBAR ─────────────────────────────────────────────────────────── -->
   <header class="topbar">
+    <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleDrawer()" aria-label="Toggle sidebar">
+      <svg class="hbr-bars" width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden="true">
+        <rect width="18" height="2" rx="1" fill="currentColor"/>
+        <rect y="6" width="18" height="2" rx="1" fill="currentColor"/>
+        <rect y="12" width="18" height="2" rx="1" fill="currentColor"/>
+      </svg>
+      <svg class="hbr-close" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+        <line x1="1" y1="1" x2="13" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <line x1="13" y1="1" x2="1" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
     <div class="tl">
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-label="SAID logo" style="flex-shrink:0">
         <rect width="28" height="28" rx="6" fill="#2563EB"/>
@@ -790,6 +939,8 @@
       </span>
     </div>
   </header>
+
+  <div class="drawer-overlay" id="drawerOverlay" onclick="toggleDrawer()"></div>
 
   <!-- ── SIDEBAR ────────────────────────────────────────────────────────── -->
   <aside class="sidebar">
@@ -942,6 +1093,7 @@
         <div id="operatorActionTitle" class="op-title">Loading recommendation…</div>
         <div id="operatorActionSub" class="op-sub">Connecting to live risk estimate and latest source signals.</div>
         <div id="operatorDriverConf" class="op-driver-conf"></div>
+        <div id="operatorWarnings" style="font-size:10px;color:var(--warn);margin-top:3px;font-weight:500;line-height:1.4;display:none;"></div>
       </div>
       <div class="op-cards">
         <div class="op-card">
@@ -1036,6 +1188,7 @@
             <div class="leg-item"><div class="leg-dot" style="background:var(--primary)"></div>Selection</div>
             <div class="leg-item"><div class="leg-dot" style="background:var(--ok)"></div>Min Required</div>
           </div>
+          <div style="font-size:10px;color:var(--muted,#8898aa);margin:2px 0 4px 0;line-height:1.4;">High and Extreme at B2 to B4: published values (Appendix A1, Paper 242, N=50,000, seed 42). Low, Normal, and B5 to B6: illustrative, pending full simulation export.</div>
           <div class="chart-wrap">
             <canvas id="riskChart"></canvas>
           </div>
@@ -1512,6 +1665,7 @@
             <div><strong>3. Policy selection rule.</strong> Let p(d) denote the estimated probability at d days, and τ the selected risk limit. The recommendation is the smallest d in 2–6 days with p(d) ≤ τ. If none qualifies, the app reports 6d+.</div>
             <div><strong>4. Comparative outputs.</strong> The interface reports selected plan, minimum recommended coverage, the gap, and a scenario comparison.</div>
             <div><strong>5. Interpretation.</strong> This is decision-support, not a direct measurement of shelf inventory.</div>
+            <div><strong>6. Data provenance.</strong> High and Extreme stress curves at B=2, 3, and 4 match the paper's published verification table (Appendix A1, Paper 242, N=50,000, seed 42). Low, Normal, and the B=5 to B=6 extension are illustrative and pending full simulation export.</div>
           </div>
         </div>
 
@@ -1555,49 +1709,56 @@ const CHART_COLORS = {
   extreme: '#cf4e4e'
 };
 
+// Stockout model: [p, lo, hi] at B=[2,3,4,5,6] (percent, 0-100).
+// HIGH and EXTREME at B=2,3,4: exact values from Appendix A1, Paper 242, N=50000, seed=42.
+// LOW, NORMAL, and all B=5,6 cells: illustrative, coarsely rounded, pending full simulation export.
+// Illustrative cells satisfy: monotone in B; regime order low<normal<high<extreme; safety<=baseline; tail<=baseline.
 const MODEL = {
   low: {
-    baseline: [[8.2,6.8,9.6],[3.1,2.3,4.0],[1.2,0.8,1.6],[0.5,0.3,0.7],[0.2,0.1,0.3]],
-    safety:   [[6.1,4.9,7.3],[2.1,1.5,2.8],[0.8,0.5,1.1],[0.3,0.1,0.5],[0.1,0.05,0.2]],
-    tail:     [[7.4,6.0,8.8],[2.6,1.9,3.4],[0.9,0.6,1.2],[0.35,0.2,0.5],[0.12,0.06,0.18]]
+    baseline: [[1.8,1.1,2.5],[0.10,0.04,0.16],[0.01,0.00,0.02],[0.00,0.00,0.00],[0.00,0.00,0.00]],
+    safety:   [[0.30,0.15,0.45],[0.02,0.00,0.04],[0.00,0.00,0.00],[0.00,0.00,0.00],[0.00,0.00,0.00]],
+    tail:     [[1.4,0.8,2.0],[0.07,0.02,0.12],[0.00,0.00,0.01],[0.00,0.00,0.00],[0.00,0.00,0.00]]
   },
   normal: {
-    baseline: [[14.5,12.1,16.9],[7.2,5.8,8.6],[3.8,2.9,4.7],[1.9,1.3,2.5],[0.9,0.6,1.2]],
-    safety:   [[10.8,8.9,12.7],[4.9,3.8,6.0],[2.3,1.6,3.0],[1.1,0.7,1.5],[0.5,0.3,0.7]],
-    tail:     [[13.0,10.8,15.2],[6.1,4.8,7.4],[3.0,2.2,3.8],[1.4,0.9,1.9],[0.6,0.4,0.8]]
+    baseline: [[3.5,2.5,4.5],[0.40,0.25,0.55],[0.03,0.01,0.05],[0.00,0.00,0.01],[0.00,0.00,0.00]],
+    safety:   [[0.60,0.40,0.80],[0.05,0.02,0.08],[0.00,0.00,0.01],[0.00,0.00,0.00],[0.00,0.00,0.00]],
+    tail:     [[2.8,1.9,3.7],[0.30,0.18,0.42],[0.02,0.01,0.04],[0.00,0.00,0.01],[0.00,0.00,0.00]]
   },
   high: {
-    baseline: [[26.3,22.4,30.2],[15.8,13.2,18.4],[9.4,7.6,11.2],[5.6,4.3,6.9],[3.4,2.5,4.3]],
-    safety:   [[19.7,16.5,22.9],[10.9,8.8,13.0],[5.8,4.4,7.2],[3.1,2.2,4.0],[1.7,1.1,2.3]],
-    tail:     [[23.5,19.8,27.2],[13.4,11.0,15.8],[7.4,5.8,9.0],[4.1,3.0,5.2],[2.3,1.6,3.0]]
+    baseline: [[7.21,6.99,7.44],[0.83,0.75,0.91],[0.08,0.05,0.11],[0.01,0.00,0.02],[0.00,0.00,0.01]],
+    safety:   [[0.95,0.87,1.04],[0.08,0.05,0.11],[0.00,0.00,0.01],[0.00,0.00,0.00],[0.00,0.00,0.00]],
+    tail:     [[5.55,5.35,5.75],[0.52,0.46,0.58],[0.04,0.02,0.06],[0.01,0.00,0.01],[0.00,0.00,0.00]]
   },
   extreme: {
-    baseline: [[42.1,36.8,47.4],[29.6,25.5,33.7],[19.8,16.7,22.9],[13.2,10.8,15.6],[8.7,7.0,10.4]],
-    safety:   [[31.5,27.0,36.0],[20.4,17.2,23.6],[12.5,10.2,14.8],[7.8,6.2,9.4],[4.9,3.8,6.0]],
-    tail:     [[37.8,32.8,42.8],[25.9,22.0,29.8],[16.3,13.5,19.1],[10.1,8.2,12.0],[6.2,4.9,7.5]]
+    baseline: [[12.51,12.22,12.80],[1.76,1.64,1.88],[0.24,0.20,0.28],[0.04,0.02,0.06],[0.01,0.00,0.02]],
+    safety:   [[1.83,1.71,1.95],[0.24,0.20,0.28],[0.02,0.01,0.04],[0.00,0.00,0.01],[0.00,0.00,0.00]],
+    tail:     [[9.31,9.06,9.56],[1.22,1.12,1.32],[0.15,0.12,0.18],[0.03,0.02,0.04],[0.01,0.00,0.01]]
   }
 };
 
+// Expected shortage: [val, lo, hi] at B=[2,3,4,5,6] (demand-days of unmet demand).
+// HIGH and EXTREME at B=2,3,4: exact values from Appendix A1, Paper 242.
+// LOW, NORMAL, and all B=5,6 cells: illustrative, coarsely rounded, pending full simulation export.
 const SHORTAGE_DATA = {
   low: {
-    baseline: [[2.1,1.4,2.8],[0.7,0.4,1.0],[0.22,0.10,0.34],[0.06,0.02,0.10],[0.01,0.0,0.03]],
-    safety:   [[1.5,0.9,2.1],[0.4,0.2,0.6],[0.12,0.05,0.19],[0.03,0.01,0.05],[0.005,0.0,0.01]],
-    tail:     [[1.8,1.1,2.5],[0.55,0.3,0.8],[0.16,0.07,0.25],[0.04,0.01,0.07],[0.008,0.0,0.016]]
+    baseline: [[0.90,0.55,1.25],[0.06,0.02,0.10],[0.003,0.000,0.006],[0.000,0.000,0.001],[0.000,0.000,0.000]],
+    safety:   [[0.11,0.06,0.16],[0.003,0.000,0.007],[0.000,0.000,0.001],[0.000,0.000,0.000],[0.000,0.000,0.000]],
+    tail:     [[0.70,0.40,1.00],[0.04,0.01,0.07],[0.001,0.000,0.003],[0.000,0.000,0.000],[0.000,0.000,0.000]]
   },
   normal: {
-    baseline: [[4.8,3.6,6.0],[2.1,1.4,2.8],[0.9,0.5,1.3],[0.35,0.15,0.55],[0.10,0.03,0.17]],
-    safety:   [[3.2,2.3,4.1],[1.3,0.8,1.8],[0.5,0.25,0.75],[0.17,0.07,0.27],[0.045,0.01,0.08]],
-    tail:     [[4.1,3.0,5.2],[1.7,1.1,2.3],[0.68,0.35,1.01],[0.25,0.10,0.40],[0.07,0.02,0.12]]
+    baseline: [[1.8,1.2,2.4],[0.12,0.07,0.17],[0.005,0.001,0.010],[0.001,0.000,0.002],[0.000,0.000,0.001]],
+    safety:   [[0.22,0.14,0.30],[0.008,0.003,0.013],[0.000,0.000,0.001],[0.000,0.000,0.000],[0.000,0.000,0.000]],
+    tail:     [[1.4,0.9,1.9],[0.09,0.05,0.13],[0.004,0.001,0.008],[0.000,0.000,0.001],[0.000,0.000,0.000]]
   },
   high: {
-    baseline: [[11.2,8.9,13.5],[6.4,4.9,7.9],[3.5,2.5,4.5],[1.8,1.2,2.4],[0.85,0.5,1.2]],
-    safety:   [[7.5,5.8,9.2],[3.9,2.9,4.9],[1.9,1.2,2.6],[0.85,0.5,1.2],[0.36,0.18,0.54]],
-    tail:     [[9.8,7.6,12.0],[5.2,3.9,6.5],[2.7,1.8,3.6],[1.3,0.8,1.8],[0.58,0.33,0.83]]
+    baseline: [[3.703,3.533,3.874],[0.304,0.257,0.350],[0.019,0.011,0.027],[0.003,0.001,0.005],[0.000,0.000,0.001]],
+    safety:   [[0.444,0.390,0.496],[0.022,0.012,0.032],[0.000,0.000,0.001],[0.000,0.000,0.000],[0.000,0.000,0.000]],
+    tail:     [[2.750,2.612,2.896],[0.180,0.149,0.211],[0.010,0.005,0.015],[0.002,0.000,0.004],[0.000,0.000,0.001]]
   },
   extreme: {
-    baseline: [[22.5,18.8,26.2],[15.2,12.4,18.0],[9.4,7.5,11.3],[5.6,4.3,6.9],[3.1,2.3,3.9]],
-    safety:   [[15.3,12.4,18.2],[9.4,7.4,11.4],[5.2,3.9,6.5],[2.8,2.0,3.6],[1.4,0.9,1.9]],
-    tail:     [[19.2,15.7,22.7],[12.2,9.8,14.6],[7.1,5.5,8.7],[3.9,2.9,4.9],[2.0,1.4,2.6]]
+    baseline: [[6.370,6.123,6.617],[0.839,0.767,0.911],[0.088,0.068,0.108],[0.015,0.008,0.022],[0.003,0.001,0.005]],
+    safety:   [[0.849,0.785,0.914],[0.091,0.069,0.112],[0.005,0.001,0.009],[0.001,0.000,0.002],[0.000,0.000,0.001]],
+    tail:     [[4.656,4.457,4.855],[0.570,0.507,0.632],[0.052,0.037,0.067],[0.009,0.004,0.014],[0.002,0.000,0.004]]
   }
 };
 
@@ -1737,6 +1898,9 @@ let _currentStatus = 'loading';
 let _applyingPayload = false;
 let _sliderFetchTimer = null;
 window.__lastSourceSummary = null;
+
+// ── DRAWER TOGGLE (mobile) ────────────────────────────────────────────────
+function toggleDrawer() { document.body.classList.toggle('drawer-open'); }
 
 // ── MODE MANAGEMENT ───────────────────────────────────────────────────────
 function setMode(mode) {
@@ -2307,6 +2471,21 @@ function updateOperatorBanner(meetsTarget, selectedProb, targetProb, minDays, da
         ? `Primary driver: ${mx.label}.  Source confidence: ${conf}.`
         : `Source confidence: ${conf}.`;
     }
+  }
+
+  const warnEl = document.getElementById('operatorWarnings');
+  if (warnEl) {
+    const warns = [];
+    const portStaleFlag = sourceSummary && (
+      sourceSummary.port_signal_stale ||
+      (sourceSummary.port_signal_details && sourceSummary.port_signal_details.port_signal_stale)
+    );
+    if (!trafficEnabled && !isWhatIf && sourceSummary !== null)
+      warns.push('Traffic feed not connected. Live mode cannot reach High or Extreme stress. Use What-if mode to test those regimes.');
+    if (portStaleFlag)
+      warns.push('Port signal is stale (last updated more than 7 days ago). Port stress contribution may not reflect current conditions.');
+    warnEl.textContent = warns.join('  ');
+    warnEl.style.display = warns.length ? 'block' : 'none';
   }
 
   const callout = document.getElementById('chartCallout');

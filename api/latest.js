@@ -215,26 +215,56 @@ async function fetchGA511TrafficEvents() {
 // ── Stockout model (mirrors frontend MODEL object) ────────────────────────────
 // Per-(regime, scenario) curves: [p, lo, hi] at days [2,3,4,5,6]
 // Values are DECIMAL probabilities (0.0–1.0).
+// Stockout model: [p, lo, hi] at B=[2,3,4,5,6] (decimal, 0.0-1.0).
+// HIGH and EXTREME at B=2,3,4: exact values from Appendix A1, Paper 242, N=50000, seed=42.
+// LOW, NORMAL, and all B=5,6 cells: illustrative, coarsely rounded, pending full simulation export.
+// Illustrative cells satisfy: monotone in B; regime order low<normal<high<extreme; safety<=baseline; tail<=baseline.
 const MODEL = {
   low: {
-    baseline: [[0.082, 0.068, 0.096], [0.031, 0.023, 0.040], [0.012, 0.008, 0.016], [0.005, 0.003, 0.007], [0.002, 0.001, 0.003]],
-    safety:   [[0.061, 0.049, 0.073], [0.021, 0.015, 0.028], [0.008, 0.005, 0.011], [0.003, 0.001, 0.005], [0.001, 0.0005, 0.002]],
-    tail:     [[0.074, 0.060, 0.088], [0.026, 0.019, 0.034], [0.009, 0.006, 0.012], [0.0035, 0.002, 0.005], [0.0012, 0.0006, 0.0018]]
+    baseline: [[0.018,0.011,0.025],[0.0010,0.0004,0.0016],[0.0001,0.0000,0.0002],[0.0000,0.0000,0.0000],[0.0000,0.0000,0.0000]],
+    safety:   [[0.0030,0.0015,0.0045],[0.0002,0.0000,0.0004],[0.0000,0.0000,0.0000],[0.0000,0.0000,0.0000],[0.0000,0.0000,0.0000]],
+    tail:     [[0.014,0.008,0.020],[0.0007,0.0002,0.0012],[0.0000,0.0000,0.0001],[0.0000,0.0000,0.0000],[0.0000,0.0000,0.0000]]
   },
   normal: {
-    baseline: [[0.145, 0.121, 0.169], [0.072, 0.058, 0.086], [0.038, 0.029, 0.047], [0.019, 0.013, 0.025], [0.009, 0.006, 0.012]],
-    safety:   [[0.108, 0.089, 0.127], [0.049, 0.038, 0.060], [0.023, 0.016, 0.030], [0.011, 0.007, 0.015], [0.005, 0.003, 0.007]],
-    tail:     [[0.130, 0.108, 0.152], [0.061, 0.048, 0.074], [0.030, 0.022, 0.038], [0.014, 0.009, 0.019], [0.006, 0.004, 0.008]]
+    baseline: [[0.035,0.025,0.045],[0.0040,0.0025,0.0055],[0.0003,0.0001,0.0005],[0.0000,0.0000,0.0001],[0.0000,0.0000,0.0000]],
+    safety:   [[0.0060,0.0040,0.0080],[0.0005,0.0002,0.0008],[0.0000,0.0000,0.0001],[0.0000,0.0000,0.0000],[0.0000,0.0000,0.0000]],
+    tail:     [[0.028,0.019,0.037],[0.0030,0.0018,0.0042],[0.0002,0.0001,0.0004],[0.0000,0.0000,0.0001],[0.0000,0.0000,0.0000]]
   },
   high: {
-    baseline: [[0.263, 0.224, 0.302], [0.158, 0.132, 0.184], [0.094, 0.076, 0.112], [0.056, 0.043, 0.069], [0.034, 0.025, 0.043]],
-    safety:   [[0.197, 0.165, 0.229], [0.109, 0.088, 0.130], [0.058, 0.044, 0.072], [0.031, 0.022, 0.040], [0.017, 0.011, 0.023]],
-    tail:     [[0.235, 0.198, 0.272], [0.134, 0.110, 0.158], [0.074, 0.058, 0.090], [0.041, 0.030, 0.052], [0.023, 0.016, 0.030]]
+    baseline: [[0.0721,0.0699,0.0744],[0.0083,0.0075,0.0091],[0.0008,0.0005,0.0011],[0.0001,0.0000,0.0002],[0.0000,0.0000,0.0001]],
+    safety:   [[0.0095,0.0087,0.0104],[0.0008,0.0005,0.0011],[0.0000,0.0000,0.0001],[0.0000,0.0000,0.0000],[0.0000,0.0000,0.0000]],
+    tail:     [[0.0555,0.0535,0.0575],[0.0052,0.0046,0.0058],[0.0004,0.0002,0.0006],[0.0001,0.0000,0.0001],[0.0000,0.0000,0.0000]]
   },
   extreme: {
-    baseline: [[0.421, 0.368, 0.474], [0.296, 0.255, 0.337], [0.198, 0.167, 0.229], [0.132, 0.108, 0.156], [0.087, 0.070, 0.104]],
-    safety:   [[0.315, 0.270, 0.360], [0.204, 0.172, 0.236], [0.125, 0.102, 0.148], [0.078, 0.062, 0.094], [0.049, 0.038, 0.060]],
-    tail:     [[0.378, 0.328, 0.428], [0.259, 0.220, 0.298], [0.163, 0.135, 0.191], [0.101, 0.082, 0.120], [0.062, 0.049, 0.075]]
+    baseline: [[0.1251,0.1222,0.1280],[0.0176,0.0164,0.0188],[0.0024,0.0020,0.0028],[0.0004,0.0002,0.0006],[0.0001,0.0000,0.0002]],
+    safety:   [[0.0183,0.0171,0.0195],[0.0024,0.0020,0.0028],[0.0002,0.0001,0.0004],[0.0000,0.0000,0.0001],[0.0000,0.0000,0.0000]],
+    tail:     [[0.0931,0.0906,0.0956],[0.0122,0.0112,0.0132],[0.0015,0.0012,0.0018],[0.0003,0.0002,0.0004],[0.0001,0.0000,0.0001]]
+  }
+};
+
+// Expected shortage table: [val, lo, hi] at B=[2,3,4,5,6] (demand-days of unmet demand).
+// HIGH and EXTREME at B=2,3,4: exact values from Appendix A1, Paper 242.
+// LOW, NORMAL, and all B=5,6 cells: illustrative, coarsely rounded, pending full simulation export.
+const SHORTAGE_DATA = {
+  low: {
+    baseline: [[0.90,0.55,1.25],[0.06,0.02,0.10],[0.003,0.000,0.006],[0.000,0.000,0.001],[0.000,0.000,0.000]],
+    safety:   [[0.11,0.06,0.16],[0.003,0.000,0.007],[0.000,0.000,0.001],[0.000,0.000,0.000],[0.000,0.000,0.000]],
+    tail:     [[0.70,0.40,1.00],[0.04,0.01,0.07],[0.001,0.000,0.003],[0.000,0.000,0.000],[0.000,0.000,0.000]]
+  },
+  normal: {
+    baseline: [[1.8,1.2,2.4],[0.12,0.07,0.17],[0.005,0.001,0.010],[0.001,0.000,0.002],[0.000,0.000,0.001]],
+    safety:   [[0.22,0.14,0.30],[0.008,0.003,0.013],[0.000,0.000,0.001],[0.000,0.000,0.000],[0.000,0.000,0.000]],
+    tail:     [[1.4,0.9,1.9],[0.09,0.05,0.13],[0.004,0.001,0.008],[0.000,0.000,0.001],[0.000,0.000,0.000]]
+  },
+  high: {
+    baseline: [[3.703,3.533,3.874],[0.304,0.257,0.350],[0.019,0.011,0.027],[0.003,0.001,0.005],[0.000,0.000,0.001]],
+    safety:   [[0.444,0.390,0.496],[0.022,0.012,0.032],[0.000,0.000,0.001],[0.000,0.000,0.000],[0.000,0.000,0.000]],
+    tail:     [[2.750,2.612,2.896],[0.180,0.149,0.211],[0.010,0.005,0.015],[0.002,0.000,0.004],[0.000,0.000,0.001]]
+  },
+  extreme: {
+    baseline: [[6.370,6.123,6.617],[0.839,0.767,0.911],[0.088,0.068,0.108],[0.015,0.008,0.022],[0.003,0.001,0.005]],
+    safety:   [[0.849,0.785,0.914],[0.091,0.069,0.112],[0.005,0.001,0.009],[0.001,0.000,0.002],[0.000,0.000,0.001]],
+    tail:     [[4.656,4.457,4.855],[0.570,0.507,0.632],[0.052,0.037,0.067],[0.009,0.004,0.014],[0.002,0.000,0.004]]
   }
 };
 
@@ -341,6 +371,7 @@ export default async function handler(req, res) {
     const sourceFailures = [];
     if (nwsResult.error) sourceFailures.push(nwsResult.error);
     if (trafficResult.error) sourceFailures.push(trafficResult.error);
+    if (!trafficResult.enabled) sourceFailures.push('ga511_not_configured');
 
     const sourcesUsed = [];
     if (!nwsResult.error) sourcesUsed.push('nws_alerts');
@@ -387,8 +418,10 @@ export default async function handler(req, res) {
     const meetsTarget = stockoutProb <= SERVICE_TARGET;
     const coverageMargin = minFeasible !== null ? selectedDays - minFeasible : null;
 
-    // Expected shortage (simplified linear model)
-    const expectedShortage = parseFloat((stockoutProb * 8.0).toFixed(3));
+    // Expected shortage from table lookup (parallel to stockout table)
+    const shortageCurve = SHORTAGE_DATA[regime]?.[scenario] || SHORTAGE_DATA.normal.baseline;
+    const [shortageVal, shortageCiLow, shortageCiHigh] = shortageCurve[dayIndex] || [0, 0, 0];
+    const expectedShortage = parseFloat(shortageVal.toFixed(3));
 
     // Policy cost index (holding + shortage exposure)
     const holdingIndex = selectedDays * 0.80;
@@ -419,8 +452,10 @@ export default async function handler(req, res) {
       stockout_ci_low:        parseFloat(ciLow.toFixed(4)),
       stockout_ci_high:       parseFloat(ciHigh.toFixed(4)),
 
-      expected_shortage:      expectedShortage,
-      policy_cost_index:      policyCostIndex,
+      expected_shortage:        expectedShortage,
+      expected_shortage_ci_low:  parseFloat(shortageCiLow.toFixed(3)),
+      expected_shortage_ci_high: parseFloat(shortageCiHigh.toFixed(3)),
+      policy_cost_index:        policyCostIndex,
       coverage_margin:        coverageMargin,
       operational_takeaway:   takeaway,
 
@@ -435,6 +470,15 @@ export default async function handler(req, res) {
         calibration_status: 'not_calibrated_to_gpa_operations',
         data_quality:       'illustrative',
         professional_note:  'Phase 0 prototype using public weather and traffic signals, an updateable public/manual port proxy from data/port_signal.json, and precomputed stockout-risk curves. Not calibrated to Georgia Ports Authority operational data, actual throughput, or GPA-specific demand patterns. All outputs are illustrative estimates and should be reviewed with qualified operational context before any planning or decision use.'
+      },
+
+      data_provenance: {
+        published_cells:             'high and extreme at B=2,3,4 (all 3 scenarios, stockout and shortage): Appendix A1, Paper 242, N=50000, seed=42',
+        illustrative_cells:          'low and normal (all B), high and extreme at B=5,6: structurally consistent illustrative estimates, pending full simulation export',
+        stockout_published_count:    18,
+        stockout_illustrative_count: 42,
+        shortage_published_count:    18,
+        shortage_illustrative_count: 42
       },
 
       source_summary: {
@@ -454,10 +498,12 @@ export default async function handler(req, res) {
         port_signal_mode:        portSignalFile?.mode        ?? PORT_SIGNAL.mode,
         port_signal_explanation: portSignalFile?.limitations  ?? PORT_SIGNAL.explanation,
 
-        nws_available:           nwsAvailable,
-        ga511_available:         ga511Available,
-        live_source_count:       liveSourceCount,
-        source_confidence:       sourceConfidence,
+        nws_available:                  nwsAvailable,
+        ga511_available:                ga511Available,
+        live_source_count:              liveSourceCount,
+        source_confidence:              sourceConfidence,
+        regime_ceiling_without_traffic: ga511Available ? null : 'normal',
+        port_signal_stale:              portStale,
 
         port_signal_details: {
           updated_at:          portUpdatedAt,

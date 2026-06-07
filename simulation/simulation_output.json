@@ -1,0 +1,784 @@
+{
+  "run_timestamp": "2026-06-07T00:00:00Z",
+  "paper_id": "242",
+  "n_trials": 50000,
+  "seed": 42,
+  "calibration_status": "partial",
+  "validation_cells_passed": 10,
+  "validation_cells_total": 18,
+  "validation_tolerance_pp": 1.5,
+  "validation_max_diff_pp": 4.61,
+  "parameters": {
+    "alpha": -2.197,
+    "beta": 0.811,
+    "sigma_sev": 1.2,
+    "mu_sev": 0.4055,
+    "severe_cap_hours": 72.0,
+    "base_cv": 0.22,
+    "demand_mu": 1.0,
+    "non_severe_moderate_triangular": [
+      0.5,
+      2.0,
+      1.0
+    ],
+    "non_severe_short_triangular": [
+      0.25,
+      1.0,
+      0.5
+    ]
+  },
+  "results": {
+    "low": {
+      "baseline": [
+        {
+          "B": 2,
+          "p": 0.02726,
+          "p_lo": 0.025833,
+          "p_hi": 0.028687,
+          "p_pct": 2.726,
+          "p_lo_pct": 2.5833,
+          "p_hi_pct": 2.8687,
+          "shortage": 0.0172,
+          "shortage_lo": 0.0163,
+          "shortage_hi": 0.0181
+        },
+        {
+          "B": 3,
+          "p": 0.00702,
+          "p_lo": 0.006288,
+          "p_hi": 0.007752,
+          "p_pct": 0.702,
+          "p_lo_pct": 0.6288,
+          "p_hi_pct": 0.7752,
+          "shortage": 0.0016,
+          "shortage_lo": 0.0014,
+          "shortage_hi": 0.0018
+        },
+        {
+          "B": 4,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        },
+        {
+          "B": 5,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        },
+        {
+          "B": 6,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        }
+      ],
+      "safety": [
+        {
+          "B": 2,
+          "p": 0.0036,
+          "p_lo": 0.003075,
+          "p_hi": 0.004125,
+          "p_pct": 0.36,
+          "p_lo_pct": 0.3075,
+          "p_hi_pct": 0.4125,
+          "shortage": 0.0006,
+          "shortage_lo": 0.0005,
+          "shortage_hi": 0.0007
+        },
+        {
+          "B": 3,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        },
+        {
+          "B": 4,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        },
+        {
+          "B": 5,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        },
+        {
+          "B": 6,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        }
+      ],
+      "tail": [
+        {
+          "B": 2,
+          "p": 0.0178,
+          "p_lo": 0.016641,
+          "p_hi": 0.018959,
+          "p_pct": 1.78,
+          "p_lo_pct": 1.6641,
+          "p_hi_pct": 1.8959,
+          "shortage": 0.0109,
+          "shortage_lo": 0.0102,
+          "shortage_hi": 0.0116
+        },
+        {
+          "B": 3,
+          "p": 0.0006,
+          "p_lo": 0.000385,
+          "p_hi": 0.000815,
+          "p_pct": 0.06,
+          "p_lo_pct": 0.0385,
+          "p_hi_pct": 0.0815,
+          "shortage": 0.0001,
+          "shortage_lo": 0.0001,
+          "shortage_hi": 0.0001
+        },
+        {
+          "B": 4,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        },
+        {
+          "B": 5,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        },
+        {
+          "B": 6,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        }
+      ]
+    },
+    "normal": {
+      "baseline": [
+        {
+          "B": 2,
+          "p": 0.05158,
+          "p_lo": 0.049641,
+          "p_hi": 0.053519,
+          "p_pct": 5.158,
+          "p_lo_pct": 4.9641,
+          "p_hi_pct": 5.3519,
+          "shortage": 0.0361,
+          "shortage_lo": 0.0347,
+          "shortage_hi": 0.0374
+        },
+        {
+          "B": 3,
+          "p": 0.0168,
+          "p_lo": 0.015673,
+          "p_hi": 0.017927,
+          "p_pct": 1.68,
+          "p_lo_pct": 1.5673,
+          "p_hi_pct": 1.7927,
+          "shortage": 0.005,
+          "shortage_lo": 0.0047,
+          "shortage_hi": 0.0053
+        },
+        {
+          "B": 4,
+          "p": 0.00016,
+          "p_lo": 4.9e-05,
+          "p_hi": 0.000271,
+          "p_pct": 0.016,
+          "p_lo_pct": 0.0049,
+          "p_hi_pct": 0.0271,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        },
+        {
+          "B": 5,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        },
+        {
+          "B": 6,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        }
+      ],
+      "safety": [
+        {
+          "B": 2,
+          "p": 0.00842,
+          "p_lo": 0.007619,
+          "p_hi": 0.009221,
+          "p_pct": 0.842,
+          "p_lo_pct": 0.7619,
+          "p_hi_pct": 0.9221,
+          "shortage": 0.0021,
+          "shortage_lo": 0.0019,
+          "shortage_hi": 0.0023
+        },
+        {
+          "B": 3,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        },
+        {
+          "B": 4,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        },
+        {
+          "B": 5,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        },
+        {
+          "B": 6,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        }
+      ],
+      "tail": [
+        {
+          "B": 2,
+          "p": 0.0368,
+          "p_lo": 0.03515,
+          "p_hi": 0.03845,
+          "p_pct": 3.68,
+          "p_lo_pct": 3.515,
+          "p_hi_pct": 3.845,
+          "shortage": 0.0229,
+          "shortage_lo": 0.0219,
+          "shortage_hi": 0.0239
+        },
+        {
+          "B": 3,
+          "p": 0.00268,
+          "p_lo": 0.002227,
+          "p_hi": 0.003133,
+          "p_pct": 0.268,
+          "p_lo_pct": 0.2227,
+          "p_hi_pct": 0.3133,
+          "shortage": 0.0005,
+          "shortage_lo": 0.0004,
+          "shortage_hi": 0.0006
+        },
+        {
+          "B": 4,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        },
+        {
+          "B": 5,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        },
+        {
+          "B": 6,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        }
+      ]
+    },
+    "high": {
+      "baseline": [
+        {
+          "B": 2,
+          "p": 0.10098,
+          "p_lo": 0.098339,
+          "p_hi": 0.103621,
+          "p_pct": 10.098,
+          "p_lo_pct": 9.8339,
+          "p_hi_pct": 10.3621,
+          "shortage": 0.0783,
+          "shortage_lo": 0.0762,
+          "shortage_hi": 0.0803
+        },
+        {
+          "B": 3,
+          "p": 0.03178,
+          "p_lo": 0.030242,
+          "p_hi": 0.033318,
+          "p_pct": 3.178,
+          "p_lo_pct": 3.0242,
+          "p_hi_pct": 3.3318,
+          "shortage": 0.0139,
+          "shortage_lo": 0.0133,
+          "shortage_hi": 0.0146
+        },
+        {
+          "B": 4,
+          "p": 0.00234,
+          "p_lo": 0.001916,
+          "p_hi": 0.002764,
+          "p_pct": 0.234,
+          "p_lo_pct": 0.1916,
+          "p_hi_pct": 0.2764,
+          "shortage": 0.0005,
+          "shortage_lo": 0.0004,
+          "shortage_hi": 0.0006
+        },
+        {
+          "B": 5,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        },
+        {
+          "B": 6,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        }
+      ],
+      "safety": [
+        {
+          "B": 2,
+          "p": 0.02406,
+          "p_lo": 0.022717,
+          "p_hi": 0.025403,
+          "p_pct": 2.406,
+          "p_lo_pct": 2.2717,
+          "p_hi_pct": 2.5403,
+          "shortage": 0.009,
+          "shortage_lo": 0.0085,
+          "shortage_hi": 0.0095
+        },
+        {
+          "B": 3,
+          "p": 0.0011,
+          "p_lo": 0.000809,
+          "p_hi": 0.001391,
+          "p_pct": 0.11,
+          "p_lo_pct": 0.0809,
+          "p_hi_pct": 0.1391,
+          "shortage": 0.0002,
+          "shortage_lo": 0.0002,
+          "shortage_hi": 0.0003
+        },
+        {
+          "B": 4,
+          "p": 2e-05,
+          "p_lo": 0.0,
+          "p_hi": 5.9e-05,
+          "p_pct": 0.002,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0059,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        },
+        {
+          "B": 5,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        },
+        {
+          "B": 6,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        }
+      ],
+      "tail": [
+        {
+          "B": 2,
+          "p": 0.07448,
+          "p_lo": 0.072179,
+          "p_hi": 0.076781,
+          "p_pct": 7.448,
+          "p_lo_pct": 7.2179,
+          "p_hi_pct": 7.6781,
+          "shortage": 0.0522,
+          "shortage_lo": 0.0506,
+          "shortage_hi": 0.0538
+        },
+        {
+          "B": 3,
+          "p": 0.01068,
+          "p_lo": 0.009779,
+          "p_hi": 0.011581,
+          "p_pct": 1.068,
+          "p_lo_pct": 0.9779,
+          "p_hi_pct": 1.1581,
+          "shortage": 0.003,
+          "shortage_lo": 0.0027,
+          "shortage_hi": 0.0032
+        },
+        {
+          "B": 4,
+          "p": 4e-05,
+          "p_lo": 0.0,
+          "p_hi": 9.5e-05,
+          "p_pct": 0.004,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0095,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        },
+        {
+          "B": 5,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        },
+        {
+          "B": 6,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        }
+      ]
+    },
+    "extreme": {
+      "baseline": [
+        {
+          "B": 2,
+          "p": 0.16518,
+          "p_lo": 0.161925,
+          "p_hi": 0.168435,
+          "p_pct": 16.518,
+          "p_lo_pct": 16.1925,
+          "p_hi_pct": 16.8435,
+          "shortage": 0.1458,
+          "shortage_lo": 0.1429,
+          "shortage_hi": 0.1487
+        },
+        {
+          "B": 3,
+          "p": 0.0637,
+          "p_lo": 0.061559,
+          "p_hi": 0.065841,
+          "p_pct": 6.37,
+          "p_lo_pct": 6.1559,
+          "p_hi_pct": 6.5841,
+          "shortage": 0.0383,
+          "shortage_lo": 0.0371,
+          "shortage_hi": 0.0396
+        },
+        {
+          "B": 4,
+          "p": 0.01168,
+          "p_lo": 0.010738,
+          "p_hi": 0.012622,
+          "p_pct": 1.168,
+          "p_lo_pct": 1.0738,
+          "p_hi_pct": 1.2622,
+          "shortage": 0.0044,
+          "shortage_lo": 0.0041,
+          "shortage_hi": 0.0048
+        },
+        {
+          "B": 5,
+          "p": 0.00072,
+          "p_lo": 0.000485,
+          "p_hi": 0.000955,
+          "p_pct": 0.072,
+          "p_lo_pct": 0.0485,
+          "p_hi_pct": 0.0955,
+          "shortage": 0.0002,
+          "shortage_lo": 0.0001,
+          "shortage_hi": 0.0003
+        },
+        {
+          "B": 6,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        }
+      ],
+      "safety": [
+        {
+          "B": 2,
+          "p": 0.048,
+          "p_lo": 0.046126,
+          "p_hi": 0.049874,
+          "p_pct": 4.8,
+          "p_lo_pct": 4.6126,
+          "p_hi_pct": 4.9874,
+          "shortage": 0.0266,
+          "shortage_lo": 0.0255,
+          "shortage_hi": 0.0276
+        },
+        {
+          "B": 3,
+          "p": 0.00754,
+          "p_lo": 0.006782,
+          "p_hi": 0.008298,
+          "p_pct": 0.754,
+          "p_lo_pct": 0.6782,
+          "p_hi_pct": 0.8298,
+          "shortage": 0.0027,
+          "shortage_lo": 0.0024,
+          "shortage_hi": 0.0029
+        },
+        {
+          "B": 4,
+          "p": 0.00062,
+          "p_lo": 0.000402,
+          "p_hi": 0.000838,
+          "p_pct": 0.062,
+          "p_lo_pct": 0.0402,
+          "p_hi_pct": 0.0838,
+          "shortage": 0.0002,
+          "shortage_lo": 0.0001,
+          "shortage_hi": 0.0002
+        },
+        {
+          "B": 5,
+          "p": 8e-05,
+          "p_lo": 2e-06,
+          "p_hi": 0.000158,
+          "p_pct": 0.008,
+          "p_lo_pct": 0.0002,
+          "p_hi_pct": 0.0158,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        },
+        {
+          "B": 6,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        }
+      ],
+      "tail": [
+        {
+          "B": 2,
+          "p": 0.12726,
+          "p_lo": 0.124339,
+          "p_hi": 0.130181,
+          "p_pct": 12.726,
+          "p_lo_pct": 12.4339,
+          "p_hi_pct": 13.0181,
+          "shortage": 0.1031,
+          "shortage_lo": 0.1007,
+          "shortage_hi": 0.1055
+        },
+        {
+          "B": 3,
+          "p": 0.03128,
+          "p_lo": 0.029754,
+          "p_hi": 0.032806,
+          "p_pct": 3.128,
+          "p_lo_pct": 2.9754,
+          "p_hi_pct": 3.2806,
+          "shortage": 0.0148,
+          "shortage_lo": 0.0141,
+          "shortage_hi": 0.0156
+        },
+        {
+          "B": 4,
+          "p": 0.00172,
+          "p_lo": 0.001357,
+          "p_hi": 0.002083,
+          "p_pct": 0.172,
+          "p_lo_pct": 0.1357,
+          "p_hi_pct": 0.2083,
+          "shortage": 0.0005,
+          "shortage_lo": 0.0004,
+          "shortage_hi": 0.0005
+        },
+        {
+          "B": 5,
+          "p": 2e-05,
+          "p_lo": 0.0,
+          "p_hi": 5.9e-05,
+          "p_pct": 0.002,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0059,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        },
+        {
+          "B": 6,
+          "p": 0.0,
+          "p_lo": 0.0,
+          "p_hi": 0.0,
+          "p_pct": 0.0,
+          "p_lo_pct": 0.0,
+          "p_hi_pct": 0.0,
+          "shortage": 0.0,
+          "shortage_lo": 0.0,
+          "shortage_hi": 0.0
+        }
+      ]
+    }
+  }
+}

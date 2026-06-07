@@ -1206,6 +1206,10 @@
               <div class="assump-row"><span class="assump-key">Tail mitigation scenario</span><span class="assump-val">Tail truncation, 5–6d benefit</span></div>
               <div class="assump-row"><span class="assump-key">Service constraint</span><span class="assump-val">P(stockout) ≤ selected target</span></div>
               <div class="assump-row"><span class="assump-key">SKU scope</span><span class="assump-val">Aggregate lane-level estimate</span></div>
+              <div class="assump-row"><span class="assump-key">Simulation trials</span><span class="assump-val">N=50,000 · seed=42</span></div>
+              <div class="assump-row"><span class="assump-key">Severe delay logistic</span><span class="assump-val">α=−2.197 · β=0.811</span></div>
+              <div class="assump-row"><span class="assump-key">Severe delay tail</span><span class="assump-val">LogNormal σ=1.2 · cap=72h</span></div>
+              <div class="assump-row"><span class="assump-key">Directionality pass rate</span><span class="assump-val">94.7% (paper verification)</span></div>
             </div>
           </div>
         </div>
@@ -1675,6 +1679,18 @@
             <div>This app does not directly observe store shelves, exact inventory levels, truck GPS feeds, or realized demand. It estimates risk from proxy disruption signals.</div>
             <div>Recommendations are decision support, not a guarantee of stock availability.</div>
             <div>Historical backtesting against lane-level replenishment outcomes and demand calibration would improve confidence in future versions.</div>
+          </div>
+        </div>
+
+        <div class="mt-card">
+          <div class="panel-hdr"><div class="panel-title">Source Paper</div></div>
+          <div class="card-body">
+            <div><strong>Title:</strong> Stress Conditioned Monte Carlo Modeling of Stockout Risk on the Savannah to Atlanta Lane</div>
+            <div><strong>Author:</strong> Neil Sharma</div>
+            <div><strong>ID:</strong> Paper 242</div>
+            <div><strong>Model parameters:</strong> α=−2.197 · β=0.811 · σ<sub>sev</sub>=1.2 · severe delay cap=72h · N=50,000 · seed=42</div>
+            <div><strong>Validation:</strong> Directionality pass rate 94.7%. Sensitivity sweeps across β, σ<sub>sev</sub>, delay cap, and demand CV completed (see paper Appendix). Historical backtesting against lane disruption events is pending.</div>
+            <div style="margin-top:4px;font-size:11px;color:var(--muted,#888);">Dashboard curves for High and Extreme at B=2 to B=4 match paper Appendix A1 exactly. Low, Normal, and B=5 to B=6 are illustrative and pending full simulation export.</div>
           </div>
         </div>
 

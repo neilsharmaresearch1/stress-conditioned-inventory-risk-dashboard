@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-18T00:00:00Z",
+  "updated_at": "2026-06-07T00:00:00Z",
   "mode": "public_proxy_v1",
   "port_score": 0.22,
   "components": {
@@ -16,5 +16,6 @@
     "GPA vessel schedule"
   ],
   "confidence": "medium",
-  "limitations": "Public proxy only. Not connected to secure GPA operational APIs."
+  "limitations": "Public proxy only. Not connected to secure GPA operational APIs.",
+  "review_notes": "Score manually reviewed and confirmed 2026-06-07. No significant port disruptions or congestion events observed on public GPA channels. Score held at 0.22 (medium baseline)."
 }

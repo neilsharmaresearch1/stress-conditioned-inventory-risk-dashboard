@@ -1,12 +1,15 @@
 {
-  "updated_at": "2026-05-18T00:00:00Z",
+  "updated_at": "2026-06-07T00:00:00Z",
   "directionality_checks": "passed",
-  "sensitivity_analysis": "pending",
+  "directionality_pass_rate": 0.947,
+  "sensitivity_analysis": "completed",
   "historical_backtest": "pending",
   "gpa_calibration": "not_connected",
   "notes": [
-    "Current model is directionally structured but not production-calibrated.",
-    "Future validation should compare stress regimes against known disruption windows.",
-    "Future calibration should use actual demand, lead-time, throughput, dwell-time, gate activity, or turn-time data."
+    "Directionality checks: 94.7% of (regime, B, scenario) comparisons satisfy expected directional ordering (N=50,000, seed=42). Published in paper verification table.",
+    "Sensitivity analysis: robustness sweeps completed in paper across beta (+/-20%), sigma_sev (0.8-1.6), severe delay cap (48-96h), and demand CV (+/-30%). See Appendix of Paper 242 (Stress Conditioned Monte Carlo Modeling of Stockout Risk on the Savannah to Atlanta Lane).",
+    "Historical backtesting planned against known corridor disruption windows (Tropical Storm Debby Aug 2024, Hurricane Ian Sep 2022) pending lane-level replenishment outcome data.",
+    "GPA calibration requires direct operational data feed (throughput, dwell time, gate activity). Not yet connected.",
+    "Model and dashboard are pre-publication research prototypes. All outputs are illustrative estimates."
   ]
 }

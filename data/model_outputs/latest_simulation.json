@@ -1,8 +1,34 @@
 {
-  "model_version": "phase0_static_curves",
-  "run_timestamp": "2026-05-18T00:00:00Z",
-  "n_trials": null,
-  "status": "placeholder_structure",
-  "source": "Current api/latest.js MODEL object remains active. This file shows the intended Phase 2 structure for versioned simulation outputs.",
-  "next_step": "Replace with calibrated Monte Carlo simulation output after validation and backtesting."
+  "model_version": "phase0_v1_partial",
+  "run_timestamp": "2026-06-07T00:00:00Z",
+  "paper_id": "242",
+  "paper_title": "Stress Conditioned Monte Carlo Modeling of Stockout Risk on the Savannah to Atlanta Lane",
+  "n_trials": 50000,
+  "seed": 42,
+  "status": "partial_published",
+  "published_cells": {
+    "description": "High and Extreme regimes at B=2,3,4 (all 3 scenarios). Exact values from Appendix A1.",
+    "count": 18,
+    "regimes": ["high", "extreme"],
+    "b_values": [2, 3, 4],
+    "scenarios": ["baseline", "safety", "tail"]
+  },
+  "illustrative_cells": {
+    "description": "Low and Normal regimes (all B), High and Extreme at B=5,6. Structurally consistent illustrative values pending full simulation export.",
+    "count": 42
+  },
+  "model_parameters": {
+    "severe_delay_logistic_alpha": -2.197,
+    "severe_delay_logistic_beta": 0.811,
+    "severe_delay_lognormal_sigma": 1.2,
+    "severe_delay_cap_hours": 72,
+    "demand_cv_normal_regime": 0.22,
+    "service_target": 0.02
+  },
+  "validation": {
+    "directionality_pass_rate": 0.947,
+    "sensitivity_analysis": "completed",
+    "historical_backtest": "pending"
+  },
+  "next_step": "Export Low and Normal curves plus High/Extreme B=5,6 from full Monte Carlo run. Replace illustrative cells in both MODEL tables."
 }

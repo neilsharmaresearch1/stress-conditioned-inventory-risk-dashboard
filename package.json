@@ -1,0 +1,10 @@
+{
+  "type": "module",
+  "dependencies": {
+    "@vercel/kv": "^3.0.0"
+  },
+  "scripts": {
+    "test": "node --test tests/model.test.js",
+    "test:model": "node --test tests/model.test.js"
+  }
+}

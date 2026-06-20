@@ -9,6 +9,14 @@
       "memory": 128,
       "maxDuration": 5,
       "includeFiles": "data/**"
+    },
+    "api/snapshot.js": {
+      "memory": 128,
+      "maxDuration": 10
+    },
+    "api/status.js": {
+      "memory": 128,
+      "maxDuration": 5
     }
   }
 }

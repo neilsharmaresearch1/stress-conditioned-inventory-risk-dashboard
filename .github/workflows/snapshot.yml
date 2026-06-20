@@ -1,0 +1,64 @@
+name: Hourly Lane Stress Snapshot
+
+# Captures a lane stress snapshot every hour by POSTing to the deployed
+# /api/snapshot endpoint. Uses GitHub Actions cron (not Vercel Cron) to
+# avoid plan-tier frequency limits and keep the schedule portable.
+#
+# Required GitHub Actions secrets:
+#   SNAPSHOT_TOKEN    -- same value as the SNAPSHOT_TOKEN Vercel env var
+#   DEPLOYED_URL      -- base URL of the Vercel deployment, no trailing slash
+#                        e.g. https://stress-conditioned-inventory-risk-dashboard-8p6jb8f8l.vercel.app
+#
+# The job will:
+#   1. POST to /api/snapshot with Bearer token auth
+#   2. Log the response (regime + stressIndex + feedHealth)
+#   3. Fail if the HTTP response is not 2xx
+
+on:
+  schedule:
+    # Runs every hour at minute 0
+    - cron: '0 * * * *'
+  # Allow manual trigger from Actions tab for testing
+  workflow_dispatch:
+
+jobs:
+  capture-snapshot:
+    name: Capture hourly snapshot
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: POST to /api/snapshot
+        env:
+          SNAPSHOT_TOKEN: ${{ secrets.SNAPSHOT_TOKEN }}
+          DEPLOYED_URL:   ${{ secrets.DEPLOYED_URL }}
+        run: |
+          echo "Triggering snapshot capture at $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+
+          RESPONSE=$(curl \
+            --silent \
+            --show-error \
+            --fail-with-body \
+            --max-time 30 \
+            --request POST \
+            --header "Authorization: Bearer ${SNAPSHOT_TOKEN}" \
+            --header "Content-Type: application/json" \
+            "${DEPLOYED_URL}/api/snapshot")
+
+          echo "Response: ${RESPONSE}"
+
+          # Extract key fields for the job log (jq is available on ubuntu-latest)
+          REGIME=$(echo "${RESPONSE}" | jq -r '.regime // "unknown"')
+          STRESS=$(echo "${RESPONSE}" | jq -r '.stressIndex // "unknown"')
+          OK=$(echo "${RESPONSE}" | jq -r '.ok // false')
+
+          echo "Regime:       ${REGIME}"
+          echo "Stress index: ${STRESS}"
+          echo "OK:           ${OK}"
+
+          if [ "${OK}" != "true" ]; then
+            echo "::error::Snapshot capture returned ok=false"
+            exit 1
+          fi
+
+          echo "Snapshot captured successfully."

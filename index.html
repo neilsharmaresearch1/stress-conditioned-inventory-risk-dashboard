@@ -1094,6 +1094,7 @@
         <div id="operatorActionSub" class="op-sub">Connecting to live risk estimate and latest source signals.</div>
         <div id="operatorDriverConf" class="op-driver-conf"></div>
         <div id="operatorWarnings" style="font-size:10px;color:var(--warn);margin-top:3px;font-weight:500;line-height:1.4;display:none;"></div>
+        <div id="operatorTrendContext" style="font-size:10px;color:var(--text-muted);margin-top:3px;line-height:1.4;display:none;"></div>
       </div>
       <div class="op-cards">
         <div class="op-card">
@@ -1469,8 +1470,8 @@
     <div id="tab-history" class="tab-pane">
 
       <div class="ht-disclaimer">
-        <span class="ht-disclaimer-badge">Prototype Sample History</span>
-        <span>Prototype/sample history only. Not validated GPA operational history. All values derived from public proxies and are illustrative estimates.</span>
+        <span id="htDisclaimerBadge" class="ht-disclaimer-badge">Prototype Sample History</span>
+        <span id="htDisclaimerText">Prototype/sample history only. Not validated GPA operational history. All values derived from public proxies and are illustrative estimates.</span>
       </div>
 
       <div class="ht-content">
@@ -1482,9 +1483,9 @@
             <div class="chart-hdr">
               <div>
                 <div class="chart-ttl">Disruption Stress Over Time</div>
-                <div class="chart-sub">Composite stress score · weather, traffic, port contributions · sample/prototype data</div>
+                <div id="htStressChartSub" class="chart-sub">Composite stress score · weather, traffic, port contributions · sample/prototype data</div>
               </div>
-              <span class="sim-note">SAMPLE HISTORY</span>
+              <span id="htStressSimNote" class="sim-note">SAMPLE HISTORY</span>
             </div>
             <div class="ht-chart-wrap"><canvas id="htStressChart"></canvas></div>
           </div>
@@ -1493,9 +1494,9 @@
             <div class="chart-hdr">
               <div>
                 <div class="chart-ttl">Stockout Risk &amp; Recommended Coverage</div>
-                <div class="chart-sub">Estimated stockout probability and recommended days of cover · sample/prototype data</div>
+                <div id="htRiskChartSub" class="chart-sub">Estimated stockout probability and recommended days of cover · sample/prototype data</div>
               </div>
-              <span class="sim-note">SAMPLE HISTORY</span>
+              <span id="htRiskSimNote" class="sim-note">SAMPLE HISTORY</span>
             </div>
             <div class="ht-chart-wrap"><canvas id="htRiskChart"></canvas></div>
           </div>
@@ -1902,6 +1903,11 @@ function buildPolicyIdeas(regime, scenario, minDays, daysOfCover, meetsTarget, c
     ideas.push(`Monitor NWS alerts for active corridor weather events — current signal: ${stressScore < 0.2 ? 'no active alerts' : 'disruption signals present'}.`);
   return ideas.slice(0, 5);
 }
+
+// ── FRAMING MODE (set via ?mode=foodbank URL param) ──────────────────────
+const _framingMode = (typeof window !== 'undefined' && window.location)
+  ? (new URLSearchParams(window.location.search).get('mode') || 'corporate')
+  : 'corporate';
 
 // ── STATE ─────────────────────────────────────────────────────────────────
 let state = {
@@ -2658,7 +2664,9 @@ function bindEventHandlers() {
 const LiveData = (() => {
   const POLL_INTERVAL = 60_000;
   function buildEndpoint() {
-    return '/api/latest?' + new URLSearchParams({ days: state.daysOfCover, scenario: state.scenario });
+    const params = { days: state.daysOfCover, scenario: state.scenario };
+    if (_framingMode !== 'corporate') params.mode = _framingMode;
+    return '/api/latest?' + new URLSearchParams(params);
   }
   let lastSuccessTime = null, lastPayload = null, pollTimer = null;
 
@@ -2906,12 +2914,66 @@ let _htStressChart = null, _htRiskChart = null;
 const REGIME_COLORS = { low:'#3fa8b8', normal:'#5aaa38', high:'#e08030', extreme:'#cf4e4e' };
 const CONF_COLOR    = { high:'var(--ok)', medium:'#B26B00', low:'var(--err)' };
 
+function updateTrendFromHistory(pts, source, updatedAt) {
+  // ── Data source labels ──────────────────────────────────────────────────
+  const isLive    = source === 'kv';
+  const badgeEl   = document.getElementById('htDisclaimerBadge');
+  const textEl    = document.getElementById('htDisclaimerText');
+  const stressNote = document.getElementById('htStressSimNote');
+  const riskNote   = document.getElementById('htRiskSimNote');
+  const stressSub  = document.getElementById('htStressChartSub');
+  const riskSub    = document.getElementById('htRiskChartSub');
+
+  if (isLive) {
+    if (badgeEl)    { badgeEl.textContent = 'Live KV Data'; badgeEl.style.background = 'var(--ok)'; }
+    if (textEl)     textEl.textContent = 'Hourly snapshots captured from live NWS, GA-511, and port signals. Values are model estimates derived from public proxies.';
+    if (stressNote) { stressNote.textContent = 'LIVE KV DATA'; stressNote.style.color = 'var(--ok)'; }
+    if (riskNote)   { riskNote.textContent   = 'LIVE KV DATA'; riskNote.style.color   = 'var(--ok)'; }
+    if (stressSub)  stressSub.textContent = 'Composite stress score · weather, traffic, port contributions · live captured data';
+    if (riskSub)    riskSub.textContent   = 'Estimated stockout probability and recommended days of cover · live captured data';
+  }
+
+  // ── Trend direction from last 3 points ─────────────────────────────────
+  if (!pts || pts.length < 2) return;
+  const tail   = pts.slice(-3);
+  const latest = tail[tail.length - 1];
+  const oldest = tail[0];
+  const delta  = (latest.stress_score - oldest.stress_score);
+  const absDelta = Math.abs(delta);
+
+  let trendMsg = '';
+  if (absDelta < 0.02) {
+    trendMsg = 'Trend: stable over recent observations. No directional shift detected.';
+  } else if (delta > 0) {
+    trendMsg = `Trend: stress rising (+${(delta * 100).toFixed(1)} pts over last ${tail.length} observations). Monitor for regime escalation.`;
+  } else {
+    trendMsg = `Trend: stress easing (${(delta * 100).toFixed(1)} pts over last ${tail.length} observations). Conditions improving.`;
+  }
+
+  // Append last-captured time if available
+  const ts = updatedAt || latest.timestamp;
+  if (ts) {
+    try {
+      const d = new Date(ts);
+      const fmt = d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
+      trendMsg += `  Last snapshot: ${fmt}.`;
+    } catch (_) {}
+  }
+
+  const trendEl = document.getElementById('operatorTrendContext');
+  if (trendEl) { trendEl.textContent = trendMsg; trendEl.style.display = 'block'; }
+}
+
 function loadHistory() {
   _historyLoaded = true;
   const msgEl = document.getElementById('htLoadMsg');
   const chartsEl = document.getElementById('htCharts');
 
-  fetch('/api/history', { cache: 'no-store' })
+  const histParams = new URLSearchParams();
+  if (_framingMode !== 'corporate') histParams.set('mode', _framingMode);
+  const histUrl = '/api/history' + (histParams.toString() ? '?' + histParams.toString() : '');
+
+  fetch(histUrl, { cache: 'no-store' })
     .then(r => r.ok ? r.json() : Promise.reject('HTTP ' + r.status))
     .then(data => {
       if (!data || !Array.isArray(data.points) || data.points.length === 0) {
@@ -2924,6 +2986,7 @@ function loadHistory() {
       renderHistoryTable(data.points);
       const countEl = document.getElementById('htPointCount');
       if (countEl) countEl.textContent = data.points.length + ' points';
+      updateTrendFromHistory(data.points, data.source || 'static_file', data.updated_at || null);
     })
     .catch(err => {
       if (msgEl) msgEl.textContent = 'Could not load historical data (' + err + ').';
@@ -3085,6 +3148,14 @@ document.addEventListener("DOMContentLoaded", () => {
   initChart();
   updateDashboard();
   LiveData.startPolling();
+  loadHistory();
+  if (_framingMode === 'foodbank') {
+    const modeTag = document.createElement('span');
+    modeTag.textContent = 'Food-Bank Distribution Mode';
+    modeTag.style.cssText = 'display:inline-block;margin-left:10px;padding:2px 8px;border-radius:4px;background:#065F46;color:#D1FAE5;font-size:9px;font-weight:700;letter-spacing:.06em;vertical-align:middle';
+    const nav = document.querySelector('.page-tabs');
+    if (nav) nav.appendChild(modeTag);
+  }
 });
 </script>
 </body>

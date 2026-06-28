@@ -7,7 +7,10 @@ name: Hourly Lane Stress Snapshot
 # Required GitHub Actions secrets:
 #   SNAPSHOT_TOKEN    -- same value as the SNAPSHOT_TOKEN Vercel env var
 #   DEPLOYED_URL      -- base URL of the Vercel deployment, no trailing slash
-#                        e.g. https://stress-conditioned-inventory-risk-dashboard-8p6jb8f8l.vercel.app
+#                        canonical alias: https://stress-conditioned-inventory-risk-d.vercel.app
+#   HEALTHCHECK_URL   -- (optional) healthchecks.io ping URL
+#                        If set, pings start/success/fail on each run.
+#                        If unset, the dead-man's switch is inactive.
 #
 # The job will:
 #   1. POST to /api/snapshot with Bearer token auth
@@ -30,9 +33,14 @@ jobs:
     steps:
       - name: POST to /api/snapshot
         env:
-          SNAPSHOT_TOKEN: ${{ secrets.SNAPSHOT_TOKEN }}
-          DEPLOYED_URL:   ${{ secrets.DEPLOYED_URL }}
+          SNAPSHOT_TOKEN:  ${{ secrets.SNAPSHOT_TOKEN }}
+          DEPLOYED_URL:    ${{ secrets.DEPLOYED_URL }}
+          HEALTHCHECK_URL: ${{ secrets.HEALTHCHECK_URL }}
         run: |
+          # Signal run start to dead-man's switch (no-op if HEALTHCHECK_URL not set)
+          [ -n "${HEALTHCHECK_URL}" ] && \
+            curl -fsS --retry 3 --max-time 5 "${HEALTHCHECK_URL}/start" >/dev/null 2>&1 || true
+
           echo "Triggering snapshot capture at $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 
           RESPONSE=$(curl \
@@ -58,7 +66,13 @@ jobs:
 
           if [ "${OK}" != "true" ]; then
             echo "::error::Snapshot capture returned ok=false"
+            [ -n "${HEALTHCHECK_URL}" ] && \
+              curl -fsS --retry 3 --max-time 5 "${HEALTHCHECK_URL}/fail" >/dev/null 2>&1 || true
             exit 1
           fi
+
+          # Signal success to dead-man's switch
+          [ -n "${HEALTHCHECK_URL}" ] && \
+            curl -fsS --retry 3 --max-time 5 "${HEALTHCHECK_URL}" >/dev/null 2>&1 || true
 
           echo "Snapshot captured successfully."

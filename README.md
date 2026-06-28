@@ -1,6 +1,6 @@
 # Stress Conditioned Inventory Risk Dashboard (SLRIS)
 
-**Live demo:** https://stress-conditioned-inventory-risk-dashboard-8p6jb8f8l.vercel.app/
+**Live demo:** https://stress-conditioned-inventory-risk-d.vercel.app/
 **Author:** Neil Sharma
 **Source paper:** Stress Conditioned Monte Carlo Modeling of Stockout Risk on the Savannah to Atlanta Lane (Paper 242)
 
@@ -84,7 +84,7 @@ Note: Vercel's built-in KV product is deprecated. Use the Upstash Redis integrat
 1. Go to your GitHub repository > **Settings** > **Secrets and variables** > **Actions**.
 2. Add two secrets:
    - `SNAPSHOT_TOKEN`: same value as the Vercel env var
-   - `DEPLOYED_URL`: your Vercel deployment URL (e.g. `https://stress-conditioned-inventory-risk-dashboard-8p6jb8f8l.vercel.app`)
+   - `DEPLOYED_URL`: your Vercel deployment URL (canonical alias, no trailing slash: `https://stress-conditioned-inventory-risk-d.vercel.app`)
 3. The workflow at `.github/workflows/snapshot.yml` will run automatically at the top of every hour.
 4. You can also trigger it manually from the Actions tab for testing.
 

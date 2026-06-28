@@ -1,0 +1,56 @@
+name: Daily SLRIS Heartbeat
+
+# Sends a daily status email via /api/heartbeat at 09:00 UTC.
+# Confirms that the Resend email pipeline is operational independently
+# of MBG state transitions. If this email stops arriving, the email
+# pipeline is broken even if hourly snapshots are writing correctly.
+#
+# Required GitHub Actions secrets:
+#   SNAPSHOT_TOKEN    Same token used for /api/snapshot
+#   DEPLOYED_URL      Canonical base URL, no trailing slash
+
+on:
+  schedule:
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  send-heartbeat:
+    name: Send daily status heartbeat
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: POST to /api/heartbeat
+        env:
+          SNAPSHOT_TOKEN: ${{ secrets.SNAPSHOT_TOKEN }}
+          DEPLOYED_URL:   ${{ secrets.DEPLOYED_URL }}
+        run: |
+          echo "Sending daily heartbeat at $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+
+          RESPONSE=$(curl \
+            --silent \
+            --show-error \
+            --fail-with-body \
+            --max-time 30 \
+            --request POST \
+            --header "Authorization: Bearer ${SNAPSHOT_TOKEN}" \
+            --header "Content-Type: application/json" \
+            "${DEPLOYED_URL}/api/heartbeat")
+
+          echo "Response: ${RESPONSE}"
+
+          OK=$(echo "${RESPONSE}" | jq -r '.ok // false')
+          STATE=$(echo "${RESPONSE}" | jq -r '.mbgState // "unknown"')
+          SENT=$(echo "${RESPONSE}" | jq -r '[.fired.sent // []] | @json')
+
+          echo "OK:        ${OK}"
+          echo "MBG state: ${STATE}"
+          echo "Channels:  ${SENT}"
+
+          if [ "${OK}" != "true" ]; then
+            echo "::error::Heartbeat returned ok=false"
+            exit 1
+          fi
+
+          echo "Daily heartbeat sent."

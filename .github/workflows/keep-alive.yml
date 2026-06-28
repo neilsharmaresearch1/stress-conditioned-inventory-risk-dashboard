@@ -1,0 +1,31 @@
+name: Keep Workflows Alive
+
+# GitHub disables scheduled workflows after 60 days of repo inactivity.
+# This workflow runs on the 1st of each month and creates an empty commit
+# so snapshot.yml and daily-heartbeat.yml stay enabled automatically.
+#
+# Uses the default GITHUB_TOKEN. No additional secrets required.
+
+on:
+  schedule:
+    - cron: '0 10 1 * *'
+  workflow_dispatch:
+
+jobs:
+  keep-alive:
+    name: Monthly keep-alive commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create keep-alive commit
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit --allow-empty -m "chore: monthly keep-alive [skip ci]"
+          git push

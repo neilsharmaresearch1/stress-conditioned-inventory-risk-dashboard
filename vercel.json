@@ -21,6 +21,10 @@
     "api/alert-test.js": {
       "memory": 128,
       "maxDuration": 10
+    },
+    "api/heartbeat.js": {
+      "memory": 128,
+      "maxDuration": 10
     }
   }
 }

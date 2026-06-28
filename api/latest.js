@@ -48,6 +48,7 @@ import { WEIGHTS } from '../lib/constants.js';
 
 import { buildTakeaway, computeTwoSignalScore, mbgDecision } from '../lib/decision.js';
 import { getMbgState, setMbgState, getLatestSnapshot } from '../lib/kv.js';
+import { checkFreshness } from '../lib/freshness.js';
 
 const GA511_KEY = process.env.GA511_API_KEY || null;
 
@@ -209,15 +210,15 @@ export default async function handler(req, res) {
     const portScore    = portScoreValid ? rawPortScore : PORT_SIGNAL.score;
     const portFallback = !portScoreValid;
 
-    const portUpdatedAt = portSignalFile?.updated_at ?? null;
-    let portAgeHours = null, portStale = true;
-    if (portUpdatedAt) {
-      const ms = Date.now() - new Date(portUpdatedAt).getTime();
-      if (isFinite(ms) && ms >= 0) {
-        portAgeHours = parseFloat((ms / 3_600_000).toFixed(2));
-        portStale    = portAgeHours > 168;
-      }
-    }
+    const portUpdatedAt  = portSignalFile?.updated_at ?? null;
+    const freshnessGuard = checkFreshness({
+      nwsOk:        !nwsResult.error,
+      ga511Ok:      trafficResult.enabled && !trafficResult.error,
+      ga511Enabled: trafficResult.enabled,
+      portUpdatedAt
+    });
+    const portAgeHours = freshnessGuard.port.ageHours;
+    const portStale    = freshnessGuard.port.status === 'stale' || freshnessGuard.port.status === 'expired';
 
     // ── Core model computation (delegated to lib/model.js) ───────────────────
     const riskState = computeRiskState({ nwsAlertCount, trafficScore, portScore });
@@ -266,6 +267,16 @@ export default async function handler(req, res) {
       : meetsTarget ? 'meets_estimated_target' : 'below_estimated_target';
     const recNextStep   = 'Validate against GPA throughput records, actual demand history, and port-specific lead-time distributions before any operational or planning use.';
 
+    // Suppress actionable recommendation when any source has exceeded its maximum age.
+    // Stockout estimates are still returned. The four actionable fields are set to null
+    // and operational_takeaway is replaced with a plain-language explanation.
+    const suppressRec     = !freshnessGuard.systemOk;
+    const suppressionNote = suppressRec
+      ? (freshnessGuard.warning === 'port_signal_expired'
+          ? 'Recommendation suppressed. Port signal has not been updated in more than 7 days. Refresh data/port_signal.json before using this output for planning.'
+          : 'Recommendation suppressed. One or more live data feeds failed on this request. Check feed health in the Data Health section and retry.')
+      : null;
+
     // ── Build payload (contract preserved verbatim) ───────────────────────────
     const payload = {
       timestamp:              new Date().toISOString(),
@@ -273,8 +284,8 @@ export default async function handler(req, res) {
       stress_score:           stressScore,
       scenario,
       selected_days_of_cover: selectedDays,
-      recommended_days:       recommendedDays,
-      minimum_feasible_days:  minFeasible,
+      recommended_days:       suppressRec ? null : recommendedDays,
+      minimum_feasible_days:  suppressRec ? null : minFeasible,
 
       stockout_probability:   parseFloat(stockoutProb.toFixed(4)),
       stockout_ci_low:        parseFloat(ciLow.toFixed(4)),
@@ -284,8 +295,10 @@ export default async function handler(req, res) {
       expected_shortage_ci_low:  parseFloat(shortageCiLow.toFixed(3)),
       expected_shortage_ci_high: parseFloat(shortageCiHigh.toFixed(3)),
       policy_cost_index:         policyCostIndex,
-      coverage_margin:           coverageMargin,
-      operational_takeaway:      takeaway,
+      coverage_margin:           suppressRec ? null : coverageMargin,
+      operational_takeaway:      suppressionNote ?? takeaway,
+      recommendation_suppressed: suppressRec,
+      suppression_reason:        suppressRec ? (freshnessGuard.warning ?? null) : null,
 
       recommendation_basis:      recBasis,
       recommendation_confidence: recConfidence,
@@ -347,14 +360,16 @@ export default async function handler(req, res) {
         },
 
         data_freshness: {
-          nws:           nwsAvailable   ? 'live' : 'unavailable',
-          ga511:         ga511Available ? 'live' : 'unavailable',
-          port_signal:   'manual_or_public_proxy',
+          nws:           freshnessGuard.nws.status,
+          ga511:         freshnessGuard.ga511.status,
+          port_signal:   freshnessGuard.port.status,
           model_outputs: 'precomputed_static_curves'
         }
       },
 
       validation_status:    validationFile ?? VALIDATION_FALLBACK,
+
+      freshness_guard: freshnessGuard,
 
       operational_readiness: {
         current_level:           'pilot',

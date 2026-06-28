@@ -29,6 +29,7 @@ import { computeRiskState, getMinFeasible, DAYS, VALID_SCENARIOS, SERVICE_TARGET
 import { buildDecisionOutput, buildAlertPayload, mbgDecision }                      from '../lib/decision.js';
 import { writeSnapshot, getPreviousSnapshot, getAlertState, setAlertState,
          getMbgState, setMbgState, getMbgAlertState, setMbgAlertState }            from '../lib/kv.js';
+import { checkFreshness }                                                           from '../lib/freshness.js';
 import { shouldFireAlert, fireAlert, shouldFireMbgAlert, buildMbgAlertEmail }       from '../lib/alerts.js';
 
 const GA511_KEY = process.env.GA511_API_KEY || null;
@@ -102,7 +103,7 @@ async function loadPortScore() {
 }
 
 // ── Snapshot schema ───────────────────────────────────────────────────────────
-function buildSnapshot(rawInputs, riskState, feedHealth, timestamp, mbgState) {
+function buildSnapshot(rawInputs, riskState, feedHealth, timestamp, mbgState, freshnessGuard) {
   return {
     timestamp,
     rawInputs,
@@ -111,7 +112,8 @@ function buildSnapshot(rawInputs, riskState, feedHealth, timestamp, mbgState) {
     regime:              riskState.regime,
     pStockout:           riskState.pStockout,
     feedHealth,
-    mbgState:            mbgState ?? null
+    mbgState:            mbgState      ?? null,
+    freshnessGuard:      freshnessGuard ?? null
   };
 }
 
@@ -148,13 +150,16 @@ export default async function handler(req, res) {
       portScore:        portData.score
     };
 
+    const freshnessGuard = checkFreshness({
+      nwsOk:        !nws.error,
+      ga511Ok:      traffic.enabled && !traffic.error,
+      ga511Enabled: traffic.enabled,
+      portUpdatedAt: portData.updatedAt
+    });
     const feedHealth = {
-      nws:   nws.error   ? 'failed' : 'ok',
+      nws:   nws.error        ? 'failed'         : 'ok',
       ga511: !traffic.enabled ? 'not_configured' : traffic.error ? 'failed' : 'ok',
-      port:  portData.updatedAt ? (() => {
-        const ageH = (Date.now() - new Date(portData.updatedAt).getTime()) / 3_600_000;
-        return ageH > 168 ? 'stale' : 'ok';
-      })() : 'unknown'
+      port:  freshnessGuard.port.status === 'fresh' ? 'ok' : freshnessGuard.port.status
     };
 
     // Core model computation
@@ -168,7 +173,7 @@ export default async function handler(req, res) {
     setMbgState({ consecutiveElevated: mbgResult.newConsecutiveElevated })
       .catch(e => console.warn('[snapshot] mbg kv write failed:', e.message));
 
-    const snapshot = buildSnapshot(rawInputs, riskState, feedHealth, timestamp, mbgResult.state);
+    const snapshot = buildSnapshot(rawInputs, riskState, feedHealth, timestamp, mbgResult.state, freshnessGuard);
 
     // Write to KV
     const writeResult = await writeSnapshot(snapshot);
@@ -218,6 +223,7 @@ export default async function handler(req, res) {
       stressIndex:  riskState.stressScore,
       mbgState:     mbgResult.state,
       feedHealth,
+      freshnessGuard,
       kvWrite:      writeResult,
       alertCheck:   { shouldFire: fire,    reason,    result: alertResult },
       mbgAlertCheck: { shouldFire: mbgFire, reason: mbgReason, result: mbgAlertResult }

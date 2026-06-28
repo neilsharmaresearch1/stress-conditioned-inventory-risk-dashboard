@@ -2340,8 +2340,17 @@ function updateOperationalCards(d) {
   setText('psAge',       psd.port_signal_age_hours !== null && psd.port_signal_age_hours !== undefined ? psd.port_signal_age_hours : '—');
   const staleEl = document.getElementById('psStale');
   if (staleEl) {
-    staleEl.textContent  = psd.port_signal_stale ? 'Yes' : 'No';
-    staleEl.style.color  = psd.port_signal_stale ? 'var(--err)' : 'var(--ok)';
+    const portFgStatus = d.freshness_guard?.port?.status;
+    const staleLabel = portFgStatus === 'expired' ? 'Expired'
+      : portFgStatus === 'stale'                  ? 'Stale'
+      : portFgStatus === 'fresh'                  ? 'Fresh'
+      : psd.port_signal_stale                     ? 'Stale' : 'Fresh';
+    const staleColor = portFgStatus === 'expired'
+      ? 'var(--err)'
+      : (portFgStatus === 'stale' || psd.port_signal_stale) ? 'var(--warn)'
+      : 'var(--ok)';
+    staleEl.textContent  = staleLabel;
+    staleEl.style.color  = staleColor;
     staleEl.style.fontWeight = '700';
   }
   setText('psSource', Array.isArray(psd.source_notes) && psd.source_notes.length ? psd.source_notes.join('; ') : '—');
@@ -2355,12 +2364,37 @@ function updateOperationalCards(d) {
   if (limEl) limEl.textContent = psd.limitations || '';
 
   // ── Data Health ────────────────────────────────────────────────────────
-  const LABEL_DISPLAY = { 'manual_or_public_proxy':'Manual/public proxy', 'precomputed_static_curves':'Precomputed model curves', 'live':'Live', 'unavailable':'Unavailable', 'static_phase_0_proxy':'Static proxy', 'public_proxy_v1':'Public proxy' };
-  const fmt = v => v ? (LABEL_DISPLAY[v] || (v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g,' '))) : '—';
-  setText('dhNws',   fmt(df.nws));
-  setText('dhGa511', fmt(df.ga511));
-  setText('dhPort',  fmt(df.port_signal));
-  setText('dhModel', fmt(df.model_outputs));
+  const fg = d.freshness_guard || {};
+  const FRESHNESS_LABELS = {
+    live: 'Live', fresh: 'Fresh', stale: 'Stale', expired: 'Expired',
+    fetch_failed: 'Fetch failed', not_configured: 'Not configured', unknown: 'Unknown',
+    unavailable: 'Unavailable', manual_or_public_proxy: 'Manual/public proxy',
+    precomputed_static_curves: 'Precomputed model curves',
+    static_phase_0_proxy: 'Static proxy', public_proxy_v1: 'Public proxy'
+  };
+  const freshnessColor = s => (s === 'live' || s === 'fresh')          ? 'var(--ok)'
+    : s === 'stale'                                                     ? 'var(--warn)'
+    : (s === 'expired' || s === 'fetch_failed')                        ? 'var(--err)'
+    : '';
+  const fmtFresh = (status, extra) => {
+    const label = FRESHNESS_LABELS[status] || (status ? status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g,' ') : '—');
+    return extra ? label + ' (' + extra + ')' : label;
+  };
+  const setFreshEl = (id, status, extra) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent    = fmtFresh(status, extra);
+    el.style.color    = freshnessColor(status);
+    el.style.fontWeight = (status === 'expired' || status === 'fetch_failed' || status === 'stale') ? '700' : '';
+  };
+  const nwsFgSt   = fg.nws?.status   || df.nws         || 'unknown';
+  const ga511FgSt = fg.ga511?.status  || df.ga511       || 'unknown';
+  const portFgSt  = fg.port?.status   || df.port_signal || 'unknown';
+  const portAgeDisp = fg.port?.ageHours != null ? fg.port.ageHours + 'h' : null;
+  setFreshEl('dhNws',   nwsFgSt,   null);
+  setFreshEl('dhGa511', ga511FgSt, null);
+  setFreshEl('dhPort',  portFgSt,  portAgeDisp);
+  setText('dhModel', FRESHNESS_LABELS[df.model_outputs] || 'Precomputed model curves');
   const confRaw = ss.source_confidence;
   const dhConfEl = document.getElementById('dhConf');
   if (dhConfEl) {
@@ -2626,8 +2660,13 @@ function updateOperatorBanner(meetsTarget, selectedProb, targetProb, minDays, da
     );
     if (!trafficEnabled && !isWhatIf && sourceSummary !== null)
       warns.push('Traffic feed not connected. Live mode cannot reach High or Extreme stress. Use What-if mode to test those regimes.');
-    if (portStaleFlag)
-      warns.push('Port signal is stale (last updated more than 7 days ago). Port stress contribution may not reflect current conditions.');
+    if (portStaleFlag) {
+      const portFreshStatus = sourceSummary?.data_freshness?.port_signal;
+      if (portFreshStatus === 'expired')
+        warns.push('Port signal is expired (last updated more than 7 days ago). Port stress contribution may not reflect current conditions.');
+      else
+        warns.push('Port signal is stale (last updated more than 3 days ago). Consider refreshing data/port_signal.json.');
+    }
     warnEl.textContent = warns.join('  ');
     warnEl.style.display = warns.length ? 'block' : 'none';
   }

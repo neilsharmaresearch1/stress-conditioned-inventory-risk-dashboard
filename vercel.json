@@ -17,6 +17,10 @@
     "api/status.js": {
       "memory": 128,
       "maxDuration": 5
+    },
+    "api/alert-test.js": {
+      "memory": 128,
+      "maxDuration": 10
     }
   }
 }

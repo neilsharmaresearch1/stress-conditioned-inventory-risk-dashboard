@@ -3,3 +3,9 @@ node_modules/
 .env
 .env.local
 *.env
+
+# Backtest: large NOAA source files are re-downloadable via build_corridor_daily.py
+backtest/raw/*.csv.gz
+
+.vercel
+.env*.local

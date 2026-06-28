@@ -18,16 +18,18 @@
  *   GA511_API_KEY        Enables live traffic scoring
  *   ALERT_WEBHOOK_URL    Webhook URL for regime-transition alerts
  *   RESEND_API_KEY       Resend API key for email alerts
- *   ALERT_TO_EMAIL       Recipient email for Resend alerts
+ *   ALERT_RECIPIENT      Primary recipient for MBG state alerts (ALERT_TO_EMAIL as fallback)
+ *   ALERT_ESCALATION     Additional recipient for SUSTAINED state transitions only
  */
 
 import { readFile } from 'fs/promises';
 import { join }     from 'path';
 
 import { computeRiskState, getMinFeasible, DAYS, VALID_SCENARIOS, SERVICE_TARGET } from '../lib/model.js';
-import { buildDecisionOutput, buildAlertPayload }                                    from '../lib/decision.js';
-import { writeSnapshot, getPreviousSnapshot, getAlertState, setAlertState }         from '../lib/kv.js';
-import { shouldFireAlert, fireAlert }                                                from '../lib/alerts.js';
+import { buildDecisionOutput, buildAlertPayload, mbgDecision }                      from '../lib/decision.js';
+import { writeSnapshot, getPreviousSnapshot, getAlertState, setAlertState,
+         getMbgState, setMbgState, getMbgAlertState, setMbgAlertState }            from '../lib/kv.js';
+import { shouldFireAlert, fireAlert, shouldFireMbgAlert, buildMbgAlertEmail }       from '../lib/alerts.js';
 
 const GA511_KEY = process.env.GA511_API_KEY || null;
 
@@ -100,7 +102,7 @@ async function loadPortScore() {
 }
 
 // ── Snapshot schema ───────────────────────────────────────────────────────────
-function buildSnapshot(rawInputs, riskState, feedHealth, timestamp) {
+function buildSnapshot(rawInputs, riskState, feedHealth, timestamp, mbgState) {
   return {
     timestamp,
     rawInputs,
@@ -108,7 +110,8 @@ function buildSnapshot(rawInputs, riskState, feedHealth, timestamp) {
     stressContributions: riskState.stressContributions,
     regime:              riskState.regime,
     pStockout:           riskState.pStockout,
-    feedHealth
+    feedHealth,
+    mbgState:            mbgState ?? null
   };
 }
 
@@ -129,11 +132,13 @@ export default async function handler(req, res) {
   try {
     const timestamp = new Date().toISOString();
 
-    // Fetch all feeds in parallel; failures are tolerated
-    const [nws, traffic, portData] = await Promise.all([
+    // Fetch all feeds and KV state in parallel; failures are tolerated
+    const [nws, traffic, portData, prevMbgState, prevMbgAlertState] = await Promise.all([
       fetchNWSAlerts(),
       fetchGA511(),
-      loadPortScore()
+      loadPortScore(),
+      getMbgState(),
+      getMbgAlertState()
     ]);
 
     const rawInputs = {
@@ -154,7 +159,16 @@ export default async function handler(req, res) {
 
     // Core model computation
     const riskState = computeRiskState(rawInputs);
-    const snapshot  = buildSnapshot(rawInputs, riskState, feedHealth, timestamp);
+
+    // MBG three-state nowcast
+    const mbgResult = mbgDecision(
+      riskState.weatherScore, portData.score,
+      prevMbgState.consecutiveElevated || 0, portData.updatedAt
+    );
+    setMbgState({ consecutiveElevated: mbgResult.newConsecutiveElevated })
+      .catch(e => console.warn('[snapshot] mbg kv write failed:', e.message));
+
+    const snapshot = buildSnapshot(rawInputs, riskState, feedHealth, timestamp, mbgResult.state);
 
     // Write to KV
     const writeResult = await writeSnapshot(snapshot);
@@ -174,21 +188,39 @@ export default async function handler(req, res) {
       alertResult = await fireAlert(alertPayload);
     }
 
-    // Update alert state in KV
+    // Update four-regime alert state in KV
     await setAlertState({
       currentRegime:    riskState.regime,
       lastFiredAt:      fire ? timestamp : (alertState?.lastFiredAt ?? null),
       lastFiredRegime:  fire ? riskState.regime : (alertState?.lastFiredRegime ?? null)
     });
 
+    // MBG alert check
+    let mbgAlertResult = null;
+    const { fire: mbgFire, reason: mbgReason } = shouldFireMbgAlert(mbgResult.state, prevMbgAlertState);
+    if (mbgFire) {
+      const emailPayload = buildMbgAlertEmail(
+        mbgResult, prevMbgAlertState?.lastKnownState ?? null,
+        timestamp, timestamp, feedHealth
+      );
+      mbgAlertResult = await fireAlert(emailPayload);
+    }
+    await setMbgAlertState({
+      lastKnownState: mbgResult.state,
+      lastFiredState: mbgFire ? mbgResult.state : (prevMbgAlertState?.lastFiredState ?? null),
+      lastFiredAt:    mbgFire ? timestamp        : (prevMbgAlertState?.lastFiredAt   ?? null)
+    });
+
     return res.status(200).json({
-      ok:          true,
+      ok:           true,
       timestamp,
-      regime:      riskState.regime,
-      stressIndex: riskState.stressScore,
+      regime:       riskState.regime,
+      stressIndex:  riskState.stressScore,
+      mbgState:     mbgResult.state,
       feedHealth,
-      kvWrite:     writeResult,
-      alertCheck:  { shouldFire: fire, reason, result: alertResult }
+      kvWrite:      writeResult,
+      alertCheck:   { shouldFire: fire,    reason,    result: alertResult },
+      mbgAlertCheck: { shouldFire: mbgFire, reason: mbgReason, result: mbgAlertResult }
     });
 
   } catch (err) {

@@ -1,12 +1,9 @@
 /**
- * /api/latest -- Stress-Aware Inventory Dashboard, Phase 0 GPA-Facing Prototype
+ * /api/latest -- SLRIS: Stress-conditioned Lane Risk Intelligence System
  *
- * PROTOTYPE NOTICE: This is a Phase 0 exploratory prototype for evaluation and
- * discussion purposes only. It is NOT a production Georgia Ports Authority model
- * and has NOT been calibrated to GPA operational data, actual port throughput,
- * real demand patterns, or GPA-specific parameters. All outputs are illustrative
- * estimates derived from public weather and traffic signals only. Review all
- * results with qualified operational context before any planning or decision use.
+ * GET /api/latest returns the current risk state for the Savannah-to-Atlanta
+ * replenishment lane. Model parameters are frozen; see backtest/VALIDATION.md.
+ * Two-signal backtest validated at ROC AUC 0.9055 on 1,795 days (Aug 2017 to Jun 2022).
  *
  * Deployed as a Vercel serverless function at /api/latest.
  * Model computation is delegated to lib/model.js (pure function, deterministic).
@@ -47,8 +44,10 @@ import {
   DAYS,
   SERVICE_TARGET
 } from '../lib/model.js';
+import { WEIGHTS } from '../lib/constants.js';
 
-import { buildTakeaway } from '../lib/decision.js';
+import { buildTakeaway, computeTwoSignalScore, mbgDecision } from '../lib/decision.js';
+import { getMbgState, setMbgState, getLatestSnapshot } from '../lib/kv.js';
 
 const GA511_KEY = process.env.GA511_API_KEY || null;
 
@@ -176,12 +175,14 @@ export default async function handler(req, res) {
     const rawScenario  = reqUrl.searchParams.get('scenario') ?? 'baseline';
     const scenario     = VALID_SCENARIOS.includes(rawScenario) ? rawScenario : 'baseline';
 
-    // Live signal fetch
-    const [portSignalFile, validationFile, nwsResult, trafficResult] = await Promise.all([
+    // Live signal fetch (includes MBG counter read in parallel)
+    const [portSignalFile, validationFile, nwsResult, trafficResult, prevMbgState, latestSnapshot] = await Promise.all([
       loadJsonFile('data/port_signal.json', null),
       loadJsonFile('data/validation_status.json', null),
       fetchNWSAlerts(),
-      fetchGA511TrafficEvents()
+      fetchGA511TrafficEvents(),
+      getMbgState(),
+      getLatestSnapshot()
     ]);
 
     const nwsAlertCount    = nwsResult.count;
@@ -242,9 +243,23 @@ export default async function handler(req, res) {
     const shortageIndex    = expectedShortage * 18;
     const policyCostIndex  = parseFloat((holdingIndex + shortageIndex).toFixed(2));
 
+    // ── MBG food-bank decision layer ─────────────────────────────────────────
+    // Thresholds the two-signal score (weather + port, traffic excluded) to match
+    // the exact quantity validated in backtest/validate_model.py. See the
+    // accuracy constraint comment in lib/decision.js::computeTwoSignalScore().
+    const mbgResult = mbgDecision(
+      weatherScore,
+      portScore,
+      prevMbgState.consecutiveElevated || 0,
+      portUpdatedAt
+    );
+    // Persist updated counter across invocations (fire-and-forget; non-fatal)
+    setMbgState({ consecutiveElevated: mbgResult.newConsecutiveElevated })
+      .catch(e => console.warn('[api/latest] mbg kv write failed:', e.message));
+
     const takeaway = buildTakeaway(regime, scenario, selectedDays, minFeasible, meetsTarget, coverageMargin);
 
-    const recBasis      = `Phase 0 illustrative model: regime "${regime}", scenario "${scenario}", ${liveSourceCount} live public signal source(s). No GPA operational or demand data ingested.`;
+    const recBasis      = `Regime "${regime}", scenario "${scenario}", ${liveSourceCount} live public signal source(s). Two-signal backtest validated (ROC AUC 0.9055, PR AUC 0.5913). See backtest/VALIDATION.md.`;
     const recConfidence = liveSourceCount >= 2 ? 'low' : liveSourceCount === 1 ? 'very_low' : 'minimal';
     const recStability  = minFeasible === null
       ? 'target_unreachable_in_range'
@@ -278,11 +293,11 @@ export default async function handler(req, res) {
       next_validation_step:      recNextStep,
 
       model_metadata: {
-        model_status:       'phase0_prototype',
-        model_mode:         'illustrative_live_signal_overlay',
-        calibration_status: 'not_calibrated_to_gpa_operations',
-        data_quality:       'illustrative',
-        professional_note:  'Phase 0 prototype using public weather and traffic signals, an updateable public/manual port proxy from data/port_signal.json, and precomputed stockout-risk curves. Not calibrated to Georgia Ports Authority operational data, actual throughput, or GPA-specific demand patterns. All outputs are illustrative estimates and should be reviewed with qualified operational context before any planning or decision use.'
+        model_status:       'validated_pilot',
+        model_mode:         'live_signal',
+        calibration_status: 'two_signal_backtest_validated',
+        data_quality:       'live_public_signals_plus_port_proxy',
+        professional_note:  'Live public weather and traffic signals plus a public/manual port proxy. Two-signal backtest validated at ROC AUC 0.9055 on 1,795 days. All outputs are model estimates. Review with operational context before acting.'
       },
 
       data_provenance: {
@@ -304,7 +319,7 @@ export default async function handler(req, res) {
         sources_used:           sourcesUsed,
         source_failures:        sourceFailures,
 
-        stress_formula_weights:  { weather: 0.45, traffic: 0.35, port: 0.20 },
+        stress_formula_weights:  WEIGHTS,
         stress_contributions:    stressContributions,
         stress_score_raw:        parseFloat(stressScoreRaw.toFixed(4)),
         stress_score_capped:     stressScore,
@@ -342,14 +357,30 @@ export default async function handler(req, res) {
       validation_status:    validationFile ?? VALIDATION_FALLBACK,
 
       operational_readiness: {
-        current_level:           'operational_grade_prototype',
+        current_level:           'pilot',
         production_ready:        false,
         missing_for_production:  [
           'direct GPA operational data feed',
-          'historical backtesting',
-          'demand and lead-time calibration',
+          'demand and lead-time calibration with real throughput data',
           'versioned simulation engine'
         ]
+      },
+
+      last_cron_run_at: latestSnapshot?.timestamp ?? null,
+
+      // MBG food-bank nowcast decision (threshold on two-signal score only)
+      // See lib/decision.js::mbgDecision() and backtest/VALIDATION.md Section 4
+      mbg_decision: {
+        state:                  mbgResult.state,
+        primaryAction:          mbgResult.primaryAction,
+        secondaryContext:       mbgResult.secondaryContext,
+        framingText:            mbgResult.framingText,
+        twoSignalScore:         mbgResult.twoSignalScore,
+        consecutiveElevated:    mbgResult.newConsecutiveElevated,
+        threshold:              mbgResult.threshold,
+        sustainedN:             mbgResult.sustainedN,
+        sustainedNote:          mbgResult.sustainedNote,
+        portDataUpdatedAt:      portUpdatedAt,
       }
     };
 

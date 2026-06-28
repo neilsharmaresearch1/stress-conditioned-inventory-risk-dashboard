@@ -308,6 +308,71 @@
       color: var(--text); margin-top: 4px; line-height: 1.25;
     }
 
+    /* ─── MBG FOOD-BANK NOWCAST PANEL ───────────────────────────────────── */
+    /* Only rendered when ?mode=foodbank. Never shown in default corporate mode. */
+    .mbg-panel {
+      display: none;
+      flex-direction: column;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .mbg-panel.visible { display: flex }
+
+    .mbg-top {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 14px;
+      align-items: start;
+      padding: 16px 20px 12px;
+    }
+    .mbg-state-col { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; flex-shrink: 0 }
+    .mbg-badge {
+      font-size: 10px; font-weight: 700; letter-spacing: .10em; text-transform: uppercase;
+      padding: 4px 13px; border-radius: 999px; white-space: nowrap;
+    }
+    .mbg-badge[data-state="normal"]   { background: var(--ok-bg);   color: var(--ok);   border: 1px solid rgba(15,157,122,.28) }
+    .mbg-badge[data-state="elevated"] { background: #FFF7E6;        color: #92400E;     border: 1px solid #FCD34D }
+    .mbg-badge[data-state="sustained"]{ background: var(--err-bg);  color: var(--err);  border: 1px solid rgba(200,30,91,.28) }
+    .mbg-cadence {
+      font-size: 9px; font-weight: 600; color: var(--text-faint);
+      padding: 2px 8px; border-radius: 3px; background: var(--surface-2);
+      border: 1px solid var(--border); white-space: nowrap; letter-spacing: .02em;
+    }
+
+    .mbg-action-col { min-width: 0 }
+    .mbg-primary {
+      font-size: 1rem; font-weight: 700; color: var(--text); line-height: 1.35;
+      letter-spacing: -.01em;
+    }
+    .mbg-secondary {
+      font-size: 12px; color: var(--text-muted); margin-top: 5px; line-height: 1.5;
+      font-weight: 500;
+    }
+
+    .mbg-framing {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      border-top: 1px solid var(--divider);
+      background: var(--surface-2);
+    }
+    .mbg-note {
+      padding: 9px 14px;
+      border-right: 1px solid var(--divider);
+      font-size: 10px; color: var(--text-faint); line-height: 1.5;
+    }
+    .mbg-note:last-child { border-right: none }
+    .mbg-note-lbl {
+      font-size: 8px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+      color: var(--text-faint); margin-bottom: 3px;
+      opacity: .75;
+    }
+    @media (max-width: 900px) {
+      .mbg-top { grid-template-columns: 1fr }
+      .mbg-framing { grid-template-columns: 1fr 1fr }
+      .mbg-note:nth-child(2) { border-right: none }
+    }
+
     /* ─── HERO BAR ───────────────────────────────────────────────────────── */
     .hero {
       background: #FFFFFF;
@@ -1112,6 +1177,40 @@
       </div>
     </div>
 
+    <!-- ── MBG FOOD-BANK NOWCAST PANEL ──────────────────────────────────── -->
+    <!-- Visible only when ?mode=foodbank. Rendered by renderMbgPanel() in JS. -->
+    <!-- No probabilities, AUC, regime labels, or model internals shown here.  -->
+    <div id="mbgPanel" class="mbg-panel" role="region" aria-label="Food-bank supply signal">
+      <div class="mbg-top">
+        <div class="mbg-state-col">
+          <div id="mbgBadge" class="mbg-badge" data-state="normal">Normal</div>
+          <div class="mbg-cadence">Port-data cadence: monthly</div>
+        </div>
+        <div class="mbg-action-col">
+          <div id="mbgPrimary" class="mbg-primary">Connecting to supply signal&hellip;</div>
+          <div id="mbgSecondary" class="mbg-secondary"></div>
+        </div>
+      </div>
+      <div class="mbg-framing">
+        <div class="mbg-note">
+          <div class="mbg-note-lbl">What this covers</div>
+          <div id="mbgScope"></div>
+        </div>
+        <div class="mbg-note">
+          <div class="mbg-note-lbl">Upstream lag</div>
+          <div id="mbgLag"></div>
+        </div>
+        <div class="mbg-note">
+          <div class="mbg-note-lbl">Local inventory</div>
+          <div id="mbgLocalKnowledge"></div>
+        </div>
+        <div class="mbg-note">
+          <div class="mbg-note-lbl">Data freshness</div>
+          <div id="mbgFreshness"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- ── HERO ──────────────────────────────────────────────────────────── -->
     <div class="hero">
       <div class="hero-mode-label live-lbl" id="heroModeLabel">LIVE SIGNAL MODE</div>
@@ -1189,7 +1288,6 @@
             <div class="leg-item"><div class="leg-dot" style="background:var(--primary)"></div>Selection</div>
             <div class="leg-item"><div class="leg-dot" style="background:var(--ok)"></div>Min Required</div>
           </div>
-          <div style="font-size:10px;color:var(--muted,#8898aa);margin:2px 0 4px 0;line-height:1.4;">High and Extreme at B2 to B4: published values (Appendix A1, Paper 242, N=50,000, seed 42). Low, Normal, and B5 to B6: illustrative, pending full simulation export.</div>
           <div class="chart-wrap">
             <canvas id="riskChart"></canvas>
           </div>
@@ -1211,6 +1309,7 @@
               <div class="assump-row"><span class="assump-key">Severe delay logistic</span><span class="assump-val">α=−2.197 · β=0.811</span></div>
               <div class="assump-row"><span class="assump-key">Severe delay tail</span><span class="assump-val">LogNormal σ=1.2 · cap=72h</span></div>
               <div class="assump-row"><span class="assump-key">Directionality pass rate</span><span class="assump-val">94.7% (paper verification)</span></div>
+              <div class="assump-row"><span class="assump-key">Data provenance</span><span class="assump-val">High and Extreme at B=2,3,4: published (Appendix A1, Paper 242, N=50,000, seed 42). Low, Normal, and B=5,6: structurally consistent estimates, pending full simulation export.</span></div>
             </div>
           </div>
         </div>
@@ -1553,6 +1652,12 @@
               <span class="ms-label">Sensitivity</span>     <span class="ms-val" id="vsSens">—</span>
               <span class="ms-label">Backtest</span>        <span class="ms-val" id="vsBacktest">—</span>
               <span class="ms-label">GPA calibration</span> <span class="ms-val" id="vsGpa">—</span>
+              <span class="ms-label">ROC AUC</span>            <span class="ms-val" id="vsRocAuc">—</span>
+              <span class="ms-label">PR AUC</span>             <span class="ms-val" id="vsPrAuc">—</span>
+              <span class="ms-label">Backtest days</span>       <span class="ms-val" id="vsBacktestDays">—</span>
+              <span class="ms-label">CV recall</span>           <span class="ms-val" id="vsCvRecall">—</span>
+              <span class="ms-label">CV FPR</span>             <span class="ms-val" id="vsCvFpr">—</span>
+              <span class="ms-label">Run date</span>            <span class="ms-val" id="vsRunDate">—</span>
             </div>
             <ul class="ms-note" id="vsNotesList" style="margin-top:6px;padding-left:14px"></ul>
           </div>
@@ -1679,7 +1784,7 @@
           <div class="card-body">
             <div>This app does not directly observe store shelves, exact inventory levels, truck GPS feeds, or realized demand. It estimates risk from proxy disruption signals.</div>
             <div>Recommendations are decision support, not a guarantee of stock availability.</div>
-            <div>Historical backtesting against lane-level replenishment outcomes and demand calibration would improve confidence in future versions.</div>
+            <div>Two-signal backtesting completed 2026-06-23 (ROC AUC 0.9055, 1,795-day corridor dataset). Demand calibration and traffic-signal backtesting remain future work.</div>
           </div>
         </div>
 
@@ -1690,7 +1795,7 @@
             <div><strong>Author:</strong> Neil Sharma</div>
             <div><strong>ID:</strong> Paper 242</div>
             <div><strong>Model parameters:</strong> α=−2.197 · β=0.811 · σ<sub>sev</sub>=1.2 · severe delay cap=72h · N=50,000 · seed=42</div>
-            <div><strong>Validation:</strong> Directionality pass rate 94.7%. Sensitivity sweeps across β, σ<sub>sev</sub>, delay cap, and demand CV completed (see paper Appendix). Historical backtesting against lane disruption events is pending.</div>
+            <div><strong>Validation:</strong> Directionality pass rate 94.7%. Sensitivity sweeps across β, σ<sub>sev</sub>, delay cap, and demand CV completed (see paper Appendix). Two-signal backtesting completed 2026-06-23 (ROC AUC 0.9055, PR AUC 0.5913, 1,795 days).</div>
             <div style="margin-top:4px;font-size:11px;color:var(--muted,#888);">Dashboard curves for High and Extreme at B=2 to B=4 match paper Appendix A1 exactly. Low, Normal, and B=5 to B=6 are illustrative and pending full simulation export.</div>
           </div>
         </div>
@@ -2024,14 +2129,17 @@ function buildTicksFromPayload(d) {
   const wScore = typeof ss.weather_score === 'number' ? ss.weather_score.toFixed(3) : '?';
   const pScore = typeof ss.baseline_port_score === 'number' ? ss.baseline_port_score.toFixed(3) : '?';
   const sScore = typeof d.stress_score === 'number' ? d.stress_score.toFixed(3) : '?';
-  const rl = { low:'Low Stress', normal:'Normal Stress', high:'High Stress', extreme:'Extreme Stress' }[d.regime] || d.regime;
+  const mbgState = d.mbg_decision && d.mbg_decision.state;
+  const rl = mbgState
+    ? ({ NORMAL:'Normal Conditions', ELEVATED:'Elevated Conditions', SUSTAINED:'Sustained Elevated Conditions' }[mbgState] || mbgState)
+    : ({ low:'Low Stress', normal:'Normal Stress', high:'High Stress', extreme:'Extreme Stress' }[d.regime] || d.regime);
   const tEnabled = ss.traffic_source_enabled;
   return [
-    { tag:'MODE',   msg:`Live regime set by API stress score — <strong>${rl}</strong>` },
+    { tag:'MODE',   msg:`Supply corridor: <strong>${rl}</strong>` },
     { tag:'SOURCE', msg:`NWS checked: <strong>${nwsAlerts}</strong> active corridor alert${nwsAlerts !== 1 ? 's' : ''}` },
     { tag:'SOURCE', msg:`Traffic feed: <strong>${tEnabled === true ? ((ss.traffic_event_count ?? 0) + ' events (Georgia 511)') : 'not connected'}</strong>` },
     { tag:'DATA',   msg:`Weather score <strong>${wScore}</strong>, port baseline <strong>${pScore}</strong>` },
-    { tag:'RISK',   msg:`Composite stress <strong>${sScore}</strong> → <strong>${rl}</strong>` },
+    { tag:'RISK',   msg:`Composite stress <strong>${sScore}</strong> · corridor: <strong>${rl}</strong>` },
     { tag:'POLICY', msg:`Scenario ${d.scenario || state.scenario}, ${typeof d.recommended_days === 'number' ? d.recommended_days : '?'}d recommended` },
     { tag:'DATA',   msg:`Next refresh in <strong>60 seconds</strong>` }
   ];
@@ -2071,7 +2179,14 @@ function updateHero(score, regime, recDays, stockPct, stockLo, stockHi, scenario
 
 
   const tsEl = document.getElementById('hkpiLastTs');
-  if (tsEl && ts) tsEl.textContent = new Date(ts).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  if (tsEl) {
+    if (ts) {
+      const tsd = new Date(ts);
+      tsEl.textContent = tsd.toLocaleDateString([], { month:'short', day:'numeric' }) + ' ' + tsd.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    } else {
+      tsEl.textContent = 'No snapshot yet';
+    }
+  }
 
   const dot = document.getElementById('heroStatusDot');
   const lbl = document.getElementById('heroStatusLbl');
@@ -2261,7 +2376,7 @@ function updateOperationalCards(d) {
   }
 
   // ── Validation Status ──────────────────────────────────────────────────
-  const statusColor = v => v === 'passed' ? 'var(--ok)' : v === 'pending' ? 'var(--warn)' : v === 'not_connected' ? 'var(--text-faint)' : '';
+  const statusColor = v => (v === 'passed' || v === 'completed') ? 'var(--ok)' : v === 'pending' ? 'var(--warn)' : v === 'not_connected' ? 'var(--text-faint)' : '';
   const statusFmt   = v => v ? (v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g,' ')) : '—';
   ['vsDir','vsSens','vsBacktest','vsGpa'].forEach((id, i) => {
     const keys = ['directionality_checks','sensitivity_analysis','historical_backtest','gpa_calibration'];
@@ -2279,6 +2394,13 @@ function updateOperationalCards(d) {
       ? vs.notes.map(n => `<li>${n}</li>`).join('')
       : '';
   }
+  const numFmt = (v, dec) => (v !== undefined && v !== null) ? Number(v).toFixed(dec) : '—';
+  setText('vsRocAuc',       numFmt(vs.backtest_roc_auc, 4));
+  setText('vsPrAuc',        numFmt(vs.backtest_pr_auc,  4));
+  setText('vsBacktestDays', vs.backtest_days ? vs.backtest_days + ' days (' + (vs.backtest_disruption_days || '?') + ' disruption)' : '—');
+  setText('vsCvRecall',     numFmt(vs.backtest_cv_recall, 3));
+  setText('vsCvFpr',        numFmt(vs.backtest_cv_fpr,   3));
+  setText('vsRunDate',      vs.backtest_run_date || '—');
 }
 
 // ── POLICY IDEAS RENDER ───────────────────────────────────────────────────
@@ -2683,6 +2805,43 @@ const LiveData = (() => {
     updateHero(sc, state.regime, recDays, sp, sl, sh, state.scenario, isoTs, status);
   }
 
+  // ── MBG panel renderer ────────────────────────────────────────────────────
+  // Only called when _framingMode === 'foodbank'. Does NOT show probabilities,
+  // AUC, regime labels, stressScore, or any model internals.
+  function renderMbgPanel(mbg) {
+    if (!mbg) return;
+    const panel = document.getElementById('mbgPanel');
+    if (!panel) return;
+
+    const stateRaw  = (typeof mbg.state === 'string') ? mbg.state : 'NORMAL';
+    const stateLow  = stateRaw.toLowerCase();
+
+    const badge = document.getElementById('mbgBadge');
+    if (badge) {
+      badge.textContent    = stateRaw;
+      badge.dataset.state  = stateLow;
+    }
+
+    const primary = document.getElementById('mbgPrimary');
+    if (primary && typeof mbg.primaryAction === 'string') {
+      primary.textContent = mbg.primaryAction;
+    }
+    const secondary = document.getElementById('mbgSecondary');
+    if (secondary && typeof mbg.secondaryContext === 'string') {
+      secondary.textContent = mbg.secondaryContext;
+    }
+
+    const ft = mbg.framingText || {};
+    const scopeEl = document.getElementById('mbgScope');
+    const lagEl   = document.getElementById('mbgLag');
+    const localEl = document.getElementById('mbgLocalKnowledge');
+    const freshEl = document.getElementById('mbgFreshness');
+    if (scopeEl && ft.scope)          scopeEl.textContent = ft.scope;
+    if (lagEl   && ft.lag)            lagEl.textContent   = ft.lag;
+    if (localEl && ft.localKnowledge) localEl.textContent = ft.localKnowledge;
+    if (freshEl && ft.dataFreshness)  freshEl.textContent = ft.dataFreshness;
+  }
+
   function applyPayload(d) {
     if (!d) return;
 
@@ -2697,6 +2856,15 @@ const LiveData = (() => {
     updateHeroPrimaryDriver(d.source_summary || null);
     updateOperationalCards(d);
     updateOperationalReadiness(d);
+
+    // MBG nowcast panel: visible in live mode for all framing modes
+    if (d.mbg_decision) {
+      renderMbgPanel(d.mbg_decision);
+      if (_mode === 'live') {
+        const mbgPanelEl = document.getElementById('mbgPanel');
+        if (mbgPanelEl && !mbgPanelEl.classList.contains('visible')) mbgPanelEl.classList.add('visible');
+      }
+    }
 
     if (d.regime) _liveRegime = d.regime;
 
@@ -2753,9 +2921,16 @@ const LiveData = (() => {
         const covM2  = minD2 !== null ? state.daysOfCover - minD2 : null;
         const metT2  = sp2pct <= state.targetProb;
 
-        updateHero(liveScore, liveRegime, recD2, sp2, sl2, sh2, liveScenario, d.timestamp, 'live');
+        updateHero(liveScore, liveRegime, recD2, sp2, sl2, sh2, liveScenario, d.last_cron_run_at || null, 'live');
+        if (d.mbg_decision && d.mbg_decision.state) {
+          const regimeLblEl = document.getElementById('heroRegimeLabel');
+          if (regimeLblEl) regimeLblEl.textContent = d.mbg_decision.state;
+        }
 
-        if (exec) exec.innerHTML = buildExecSummary(liveRegime, liveScenario, state.daysOfCover, sp2pct, minD2, false);
+        const mbgExecLabel = d.mbg_decision && d.mbg_decision.state
+          ? ({ NORMAL:'Normal', ELEVATED:'Elevated', SUSTAINED:'Sustained' }[d.mbg_decision.state] || d.mbg_decision.state)
+          : null;
+        if (exec) exec.innerHTML = buildExecSummary(mbgExecLabel || liveRegime, liveScenario, state.daysOfCover, sp2pct, minD2, false);
 
         const apiOutputs = {
           regime: liveRegime, scenario: liveScenario, daysOfCover: state.daysOfCover,
@@ -3155,6 +3330,10 @@ document.addEventListener("DOMContentLoaded", () => {
     modeTag.style.cssText = 'display:inline-block;margin-left:10px;padding:2px 8px;border-radius:4px;background:#065F46;color:#D1FAE5;font-size:9px;font-weight:700;letter-spacing:.06em;vertical-align:middle';
     const nav = document.querySelector('.page-tabs');
     if (nav) nav.appendChild(modeTag);
+
+    // Show the MBG nowcast panel
+    const mbgPanel = document.getElementById('mbgPanel');
+    if (mbgPanel) mbgPanel.classList.add('visible');
   }
 });
 </script>

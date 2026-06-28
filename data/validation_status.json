@@ -1,15 +1,23 @@
 {
-  "updated_at": "2026-06-07T00:00:00Z",
+  "updated_at": "2026-06-23T00:00:00Z",
   "directionality_checks": "passed",
   "directionality_pass_rate": 0.947,
   "sensitivity_analysis": "completed",
-  "historical_backtest": "pending",
+  "historical_backtest": "completed",
+  "backtest_run_date": "2026-06-23",
+  "backtest_days": 1795,
+  "backtest_disruption_days": 344,
+  "backtest_roc_auc": 0.9055,
+  "backtest_pr_auc": 0.5913,
+  "backtest_cv_recall": 0.333,
+  "backtest_cv_fpr": 0.359,
+  "mbg_threshold": 0.0862,
   "gpa_calibration": "not_connected",
   "notes": [
-    "Directionality checks: 94.7% of (regime, B, scenario) comparisons satisfy expected directional ordering (N=50,000, seed=42). Published in paper verification table.",
-    "Sensitivity analysis: robustness sweeps completed in paper across beta (+/-20%), sigma_sev (0.8-1.6), severe delay cap (48-96h), and demand CV (+/-30%). See Appendix of Paper 242 (Stress Conditioned Monte Carlo Modeling of Stockout Risk on the Savannah to Atlanta Lane).",
-    "Historical backtesting planned against known corridor disruption windows (Tropical Storm Debby Aug 2024, Hurricane Ian Sep 2022) pending lane-level replenishment outcome data.",
-    "GPA calibration requires direct operational data feed (throughput, dwell time, gate activity). Not yet connected.",
-    "Model and dashboard are pre-publication research prototypes. All outputs are illustrative estimates."
+    "Two-signal backtest (weather 45% + port 20%) on 1,795-day corridor dataset (Aug 2017 to Jun 2022). ROC AUC 0.9055. PR AUC 0.5913.",
+    "344 labeled disruption days. MBG threshold 0.0862 selected by time-blocked 5-fold CV (asymmetric Youden J). See backtest/VALIDATION.md.",
+    "Traffic signal (35% weight) excluded from backtest (NPMRDS historical archive unavailable). Validated via live GA511 deployment since Jun 2026.",
+    "Directionality: 94.7% pass rate on Paper 242 Monte Carlo outputs (N=50,000, seed 42).",
+    "GPA calibration: not connected. Port proxy uses public BTS TEU normalization."
   ]
 }

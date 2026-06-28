@@ -13,6 +13,7 @@
  */
 
 import { getLatestSnapshot } from '../lib/kv.js';
+import { WEIGHTS }           from '../lib/constants.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'GET required' });
@@ -86,7 +87,7 @@ export default async function handler(req, res) {
       author:       'Neil Sharma',
       paper_id:     'Paper 242',
       parameters: {
-        stress_weights:    { weather: 0.45, traffic: 0.35, port: 0.20 },
+        stress_weights:    WEIGHTS,
         regime_cutoffs:    { low_to_normal: 0.30, normal_to_high: 0.60, high_to_extreme: 0.80 },
         logistic_alpha:    -2.197,
         logistic_beta:     0.811,

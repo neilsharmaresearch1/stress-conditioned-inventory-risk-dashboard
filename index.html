@@ -287,6 +287,20 @@
     .op-driver-conf {
       font-size: 11px; color: var(--text-faint); margin-top: 5px; font-weight: 500; line-height: 1.45;
     }
+    .op-freshness-strip {
+      display: flex; align-items: center; gap: 6px; margin-top: 5px; flex-wrap: wrap;
+    }
+    .op-fresh-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 9px; font-weight: 700; letter-spacing: .04em;
+      padding: 2px 7px; border-radius: 999px;
+      background: var(--surface-2); color: var(--text-faint); border: 1px solid var(--border);
+    }
+    .op-fresh-pill[data-status="ok"]           { background: var(--ok-bg);   color: var(--ok);   border-color: rgba(15,157,122,.28) }
+    .op-fresh-pill[data-status="stale"]        { background: var(--warn-bg); color: var(--warn); border-color: rgba(139,92,246,.24) }
+    .op-fresh-pill[data-status="expired"]      { background: var(--err-bg);  color: var(--err);  border-color: rgba(200,30,91,.22) }
+    .op-fresh-pill[data-status="fetch_failed"] { background: var(--err-bg);  color: var(--err);  border-color: rgba(200,30,91,.22) }
+    .op-fresh-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0 }
     .op-cards {
       display: grid;
       grid-template-columns: repeat(3, minmax(150px, 1fr));
@@ -1158,6 +1172,7 @@
         <div id="operatorActionTitle" class="op-title">Loading recommendation…</div>
         <div id="operatorActionSub" class="op-sub">Connecting to live risk estimate and latest source signals.</div>
         <div id="operatorDriverConf" class="op-driver-conf"></div>
+        <div id="opFreshnessStrip" class="op-freshness-strip"></div>
         <div id="operatorWarnings" style="font-size:10px;color:var(--warn);margin-top:3px;font-weight:500;line-height:1.4;display:none;"></div>
         <div id="operatorTrendContext" style="font-size:10px;color:var(--text-muted);margin-top:3px;line-height:1.4;display:none;"></div>
       </div>
@@ -2024,7 +2039,8 @@ let _liveRegime = 'normal';
 let _currentStatus = 'loading';
 let _applyingPayload = false;
 let _sliderFetchTimer = null;
-window.__lastSourceSummary = null;
+window.__lastSourceSummary  = null;
+window.__lastFreshnessGuard = null;
 
 // ── DRAWER TOGGLE (mobile) ────────────────────────────────────────────────
 function toggleDrawer() { document.body.classList.toggle('drawer-open'); }
@@ -2675,6 +2691,39 @@ function updateOperatorBanner(meetsTarget, selectedProb, targetProb, minDays, da
   if (callout) callout.textContent = `Recommended: ${minDays != null ? minDays + ' days' : '6d+'}`;
 }
 
+// ── FRESHNESS STRIP ───────────────────────────────────────────────────────
+function renderFreshnessStrip() {
+  const strip = document.getElementById('opFreshnessStrip');
+  if (!strip) return;
+  const fg = window.__lastFreshnessGuard;
+  if (!fg) { strip.innerHTML = ''; return; }
+
+  const FRESH_LABELS = {
+    live: 'Live', fresh: 'Fresh', stale: 'Stale', expired: 'Expired',
+    fetch_failed: 'Failed', not_configured: 'Not configured', unknown: 'Unknown'
+  };
+
+  function freshPillStatus(status) {
+    if (status === 'live' || status === 'fresh') return 'ok';
+    if (status === 'stale') return 'stale';
+    if (status === 'expired' || status === 'fetch_failed') return 'expired';
+    return 'unknown';
+  }
+
+  const nwsSt   = fg.nws?.status  || 'unknown';
+  const ga511St = fg.ga511?.status || 'unknown';
+  const portSt  = fg.port?.status  || 'unknown';
+  const portAge = fg.port?.ageHours != null ? ' (' + fg.port.ageHours + 'h)' : '';
+
+  function freshPill(label, status, extra) {
+    const ps   = freshPillStatus(status);
+    const text = (FRESH_LABELS[status] || status) + (extra || '');
+    return '<span class="op-fresh-pill" data-status="' + ps + '"><span class="op-fresh-dot"></span>' + label + ': ' + text + '</span>';
+  }
+
+  strip.innerHTML = freshPill('NWS', nwsSt, '') + freshPill('GA511', ga511St, '') + freshPill('Port', portSt, portAge);
+}
+
 function updateDashboard() {
   const { regime, scenario, daysOfCover, targetProb, holdingCost, shortageCost } = state;
   const curve    = getCurve(regime, scenario);
@@ -2884,10 +2933,9 @@ const LiveData = (() => {
   function applyPayload(d) {
     if (!d) return;
 
-    // Save source_summary globally so all helpers can read it
-    if (d.source_summary) {
-      window.__lastSourceSummary = d.source_summary;
-    }
+    // Save source_summary and freshness_guard globally so all helpers can read them
+    if (d.source_summary)  window.__lastSourceSummary  = d.source_summary;
+    if (d.freshness_guard) window.__lastFreshnessGuard = d.freshness_guard;
 
     // Update the traffic-confidence row immediately
     updateTrafficConfidence(d.source_summary);
@@ -3000,6 +3048,7 @@ const LiveData = (() => {
 
         // User-required: refresh operator banner with API values + live source_summary so traffic-trust text updates
         updateOperatorBanner(metT2, sp2pct, state.targetProb, minD2, state.daysOfCover, liveScore, d.source_summary || window.__lastSourceSummary || null, liveScenario, false);
+        renderFreshnessStrip();
       }
 
       // Always update drivers (live source layer — shown in both modes)

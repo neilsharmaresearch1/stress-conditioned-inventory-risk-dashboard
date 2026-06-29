@@ -496,6 +496,10 @@
       flex-shrink: 0;
     }
     .readout-bar strong { color: var(--text); font-weight: 600 }
+    #slrisScope {
+      padding: 8px 20px; font-size: 10px; color: var(--text-faint);
+      border-top: 1px solid var(--border); line-height: 1.55; flex-shrink: 0;
+    }
     .readout-bar .readout-title {
       font-size: 9px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
       color: var(--text-faint); margin-bottom: 4px;
@@ -1276,6 +1280,8 @@
       <div class="readout-title">Current Readout</div>
       <span id="execSummary">Connecting to live data feed…</span>
     </div>
+
+    <div id="slrisScope">SLRIS is a real-time congestion nowcast for the Savannah-to-Atlanta supply corridor. It combines live weather alerts, Georgia 511 traffic data, and port activity signals to estimate current disruption stress and recommend inventory buffer days. It is not a demand forecast, a financial model, or a commercial operations system.</div>
 
     <!-- ── MAIN CONTENT ─────────────────────────────────────────────────── -->
     <div class="content">

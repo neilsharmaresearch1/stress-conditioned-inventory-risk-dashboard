@@ -2039,8 +2039,10 @@ let _liveRegime = 'normal';
 let _currentStatus = 'loading';
 let _applyingPayload = false;
 let _sliderFetchTimer = null;
-window.__lastSourceSummary  = null;
-window.__lastFreshnessGuard = null;
+window.__lastSourceSummary            = null;
+window.__lastFreshnessGuard           = null;
+window.__lastRecommendationSuppressed = false;
+window.__lastSuppressionTakeaway      = null;
 
 // ── DRAWER TOGGLE (mobile) ────────────────────────────────────────────────
 function toggleDrawer() { document.body.classList.toggle('drawer-open'); }
@@ -2683,6 +2685,8 @@ function updateOperatorBanner(meetsTarget, selectedProb, targetProb, minDays, da
       else
         warns.push('Port signal is stale (last updated more than 3 days ago). Consider refreshing data/port_signal.json.');
     }
+    if (window.__lastRecommendationSuppressed && window.__lastSuppressionTakeaway)
+      warns.push(window.__lastSuppressionTakeaway);
     warnEl.textContent = warns.join('  ');
     warnEl.style.display = warns.length ? 'block' : 'none';
   }
@@ -2933,9 +2937,12 @@ const LiveData = (() => {
   function applyPayload(d) {
     if (!d) return;
 
-    // Save source_summary and freshness_guard globally so all helpers can read them
+    // Save source_summary, freshness_guard, and suppression state globally so all helpers can read them
     if (d.source_summary)  window.__lastSourceSummary  = d.source_summary;
     if (d.freshness_guard) window.__lastFreshnessGuard = d.freshness_guard;
+    window.__lastRecommendationSuppressed = d.recommendation_suppressed === true;
+    window.__lastSuppressionTakeaway      = (d.recommendation_suppressed === true && typeof d.operational_takeaway === 'string')
+      ? d.operational_takeaway : null;
 
     // Update the traffic-confidence row immediately
     updateTrafficConfidence(d.source_summary);

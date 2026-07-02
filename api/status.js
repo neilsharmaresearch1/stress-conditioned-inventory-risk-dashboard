@@ -13,7 +13,7 @@
  */
 
 import { getLatestSnapshot } from '../lib/kv.js';
-import { WEIGHTS }           from '../lib/constants.js';
+import { WEIGHTS, LOGISTIC_ALPHA, LOGISTIC_BETA } from '../lib/constants.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'GET required' });
@@ -65,7 +65,7 @@ export default async function handler(req, res) {
     ],
 
     snapshot_capture: {
-      method:       'GitHub Actions cron, hourly (*/60 * * * *)',
+      method:       'GitHub Actions cron, hourly (0 * * * *)',
       endpoint:     'POST /api/snapshot',
       auth:         'Bearer token (SNAPSHOT_TOKEN)',
       kv_store:     kvConfigured ? 'connected (Vercel KV)' : 'not_configured -- set KV_REST_API_URL and KV_REST_API_TOKEN',
@@ -89,8 +89,8 @@ export default async function handler(req, res) {
       parameters: {
         stress_weights:    WEIGHTS,
         regime_cutoffs:    { low_to_normal: 0.30, normal_to_high: 0.60, high_to_extreme: 0.80 },
-        logistic_alpha:    -2.197,
-        logistic_beta:     0.811,
+        logistic_alpha:    LOGISTIC_ALPHA,
+        logistic_beta:     LOGISTIC_BETA,
         sigma_sev:         1.2,
         severe_delay_cap:  '72 hours',
         simulation_trials: 50000,

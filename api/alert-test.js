@@ -15,11 +15,12 @@
 
 import { fireAlert, buildMbgAlertEmail } from '../lib/alerts.js';
 import { getLatestSnapshot }             from '../lib/kv.js';
+import { MBG_THRESHOLD }                 from '../lib/constants.js';
 
 const TEST_MBG_DECISION = {
   state:            'ELEVATED (TEST)',
   twoSignalScore:   0.0950,
-  threshold:        0.0862,
+  threshold:        MBG_THRESHOLD,
   primaryAction:    'TEST ALERT: Upstream port congestion detected. Add a modest buffer to your next ACFB order while supply is still normal. (This is a test -- no real transition occurred.)',
   secondaryContext: 'This is a system integration test fired from /api/alert-test. No real signal change occurred. Disregard for operational purposes.',
   framingText: {

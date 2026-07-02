@@ -46,8 +46,8 @@ import {
 } from '../lib/model.js';
 import { WEIGHTS } from '../lib/constants.js';
 
-import { buildTakeaway, computeTwoSignalScore, mbgDecision } from '../lib/decision.js';
-import { getMbgState, setMbgState, getLatestSnapshot } from '../lib/kv.js';
+import { buildTakeaway, computeTwoSignalScore, mbgDecision, mbgActionsForState } from '../lib/decision.js';
+import { getMbgState, getLatestSnapshot } from '../lib/kv.js';
 import { checkFreshness } from '../lib/freshness.js';
 
 const GA511_KEY = process.env.GA511_API_KEY || null;
@@ -254,9 +254,10 @@ export default async function handler(req, res) {
       prevMbgState.consecutiveElevated || 0,
       portUpdatedAt
     );
-    // Persist updated counter across invocations (fire-and-forget; non-fatal)
-    setMbgState({ consecutiveElevated: mbgResult.newConsecutiveElevated })
-      .catch(e => console.warn('[api/latest] mbg kv write failed:', e.message));
+    // Read-only: /api/latest does not write MBG state. Only /api/snapshot (cron) advances the counter.
+    // State and actions come from the last KV snapshot; twoSignalScore is computed live.
+    const kvMbgState   = latestSnapshot?.mbgState ?? mbgResult.state;
+    const kvMbgActions = mbgActionsForState(kvMbgState);
 
     const takeaway = buildTakeaway(regime, scenario, selectedDays, minFeasible, meetsTarget, coverageMargin);
 
@@ -386,12 +387,12 @@ export default async function handler(req, res) {
       // MBG food-bank nowcast decision (threshold on two-signal score only)
       // See lib/decision.js::mbgDecision() and backtest/VALIDATION.md Section 4
       mbg_decision: {
-        state:                  mbgResult.state,
-        primaryAction:          mbgResult.primaryAction,
-        secondaryContext:       mbgResult.secondaryContext,
+        state:                  kvMbgState,
+        primaryAction:          kvMbgActions.primaryAction,
+        secondaryContext:       kvMbgActions.secondaryContext,
         framingText:            mbgResult.framingText,
         twoSignalScore:         mbgResult.twoSignalScore,
-        consecutiveElevated:    mbgResult.newConsecutiveElevated,
+        consecutiveElevated:    prevMbgState.consecutiveElevated,
         threshold:              mbgResult.threshold,
         sustainedN:             mbgResult.sustainedN,
         sustainedNote:          mbgResult.sustainedNote,

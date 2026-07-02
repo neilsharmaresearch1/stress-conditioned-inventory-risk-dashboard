@@ -103,6 +103,11 @@ async function loadPortScore() {
 }
 
 // ── Snapshot schema ───────────────────────────────────────────────────────────
+// Snapshots are stored pre-suppression. The freshness_guard field is included but
+// the four suppression nulls (recommended_days, minimum_feasible_days,
+// coverage_margin, operational_takeaway) are applied only by /api/latest at
+// response time. Any future consumer reading KV directly must call checkFreshness()
+// and apply suppression before surfacing recommendations.
 function buildSnapshot(rawInputs, riskState, feedHealth, timestamp, mbgState, freshnessGuard) {
   return {
     timestamp,
@@ -170,10 +175,26 @@ export default async function handler(req, res) {
       riskState.weatherScore, portData.score,
       prevMbgState.consecutiveElevated || 0, portData.updatedAt
     );
-    setMbgState({ consecutiveElevated: mbgResult.newConsecutiveElevated })
-      .catch(e => console.warn('[snapshot] mbg kv write failed:', e.message));
+    // Write MBG counter; one retry with 500 ms backoff.
+    // setMbgState() is internally try-catch wrapped and returns { ok, reason } without throwing,
+    // but a defensive outer try-catch guards against unexpected regressions in kv.js.
+    let mbgWriteResult = { ok: false, reason: 'not_attempted' };
+    try {
+      mbgWriteResult = await setMbgState({ consecutiveElevated: mbgResult.newConsecutiveElevated });
+      if (!mbgWriteResult.ok) {
+        await new Promise(r => setTimeout(r, 500));
+        mbgWriteResult = await setMbgState({ consecutiveElevated: mbgResult.newConsecutiveElevated });
+        if (!mbgWriteResult.ok) {
+          console.error('[snapshot] mbg state write failed after retry:', mbgWriteResult.reason);
+        }
+      }
+    } catch (err) {
+      mbgWriteResult = { ok: false, reason: err.message };
+      console.error('[snapshot] mbg state write threw unexpectedly:', err.message);
+    }
 
     const snapshot = buildSnapshot(rawInputs, riskState, feedHealth, timestamp, mbgResult.state, freshnessGuard);
+    if (!mbgWriteResult.ok) snapshot.mbgStateWriteError = mbgWriteResult.reason;
 
     // Write to KV
     const writeResult = await writeSnapshot(snapshot);
@@ -225,6 +246,7 @@ export default async function handler(req, res) {
       feedHealth,
       freshnessGuard,
       kvWrite:      writeResult,
+      mbgStateWrite: mbgWriteResult,
       alertCheck:   { shouldFire: fire,    reason,    result: alertResult },
       mbgAlertCheck: { shouldFire: mbgFire, reason: mbgReason, result: mbgAlertResult }
     });
